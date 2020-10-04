@@ -23,8 +23,8 @@ func NewServiceClient() (ServiceClient, error) {
 
 // GetUserByID ..
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (shared.ByIDResponse, error) {
-	ep := serviceendpoints.NewUserByIDServiceEndpoint(ctx, id, client.Router)
-	ep.Build()
-	ep.Exec()
-	return ep.GetResult()
+	serviceClient := serviceendpoints.NewUserByIDServiceClient(ctx, id, client.Router)
+	serviceClient.BuildEndpoints()
+	serviceClient.Exec()
+	return serviceClient.GetResult()
 }
