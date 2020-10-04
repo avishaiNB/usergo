@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/url"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/shared"
 
 	"github.com/go-kit/kit/endpoint"
@@ -19,16 +20,14 @@ func NewUserByIDEndpoint(id int) (endpoint.Endpoint, error) {
 	// TODO: how do we set different strategies for sd based on consul and coreDNS
 	// TODO: how CB is handled?
 	// TODO: how to retry?
-	baseURL, err := url.Parse("http://localhost:8080/")
+	router := mux.NewRouter()
+	u, err := router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 
 	if err != nil {
 		return nil, err
 	}
-	endpoint := httptransport.NewClient(
-		"GET",
-		shared.CopyURL(baseURL, "/user/1"),
-		shared.EncodeRequestToJSON,
-		decodeGetUserByIDResponse).Endpoint()
+
+	endpoint := httptransport.NewClient("GET", u, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint()
 
 	return endpoint, nil
 }

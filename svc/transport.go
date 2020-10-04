@@ -52,7 +52,7 @@ func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 func MakeServer(endpoints Endpoints, errChan chan error) Server {
 	router := mux.NewRouter()
 	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, shared.EncodeReponseToJSON)
-	router.Methods("GET").Path("/user/{id}").Handler(getUserByIDHandler)
+	router.Methods("GET").Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
 
 	server := Server{
 		Handler:   handlers.LoggingHandler(os.Stdout, router),
