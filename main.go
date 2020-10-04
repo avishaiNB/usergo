@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	user "github.com/thelotter-enterprise/usergo/svc"
+	"github.com/thelotter-enterprise/usergo/svc"
 )
 
 func main() {
@@ -25,13 +23,11 @@ func main() {
 	}()
 
 	go func() {
-		ctx := context.Background()
-		repo := user.NewRepository()
-		srv := user.NewService(repo)
-		endpoints := user.MakeEndpoints(srv)
-		handler := user.NewServer(ctx, endpoints)
-		fmt.Println("Listernning on port 8080")
-		errs <- http.ListenAndServe(":8080", handler)
+		repo := svc.NewRepository()
+		srv := svc.NewService(repo)
+		endpoints := svc.MakeEndpoints(srv)
+		server := svc.MakeServer(endpoints, errs)
+		server.Run()
 	}()
 
 	<-done

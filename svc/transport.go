@@ -1,7 +1,8 @@
-package user
+package svc
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,6 +17,18 @@ import (
 // Endpoints holds all the endpoints which are supported by the service
 type Endpoints struct {
 	GetUserByID endpoint.Endpoint
+}
+
+// Server ...
+type Server struct {
+	Handler   http.Handler
+	ErrorChan chan error
+}
+
+// Run ...
+func (server *Server) Run() {
+	fmt.Println("Listernning on port 8080")
+	server.ErrorChan <- http.ListenAndServe(":8080", server.Handler)
 }
 
 // MakeEndpoints creates an instance of Endpoints
@@ -33,15 +46,20 @@ func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 	}
 }
 
-// NewServer will create an instance handlers for incoming requests
+// MakeServer will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func NewServer(ctx context.Context, endpoints Endpoints) http.Handler {
+func MakeServer(endpoints Endpoints, errChan chan error) Server {
 	router := mux.NewRouter()
 	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, shared.EncodeReponseToJSON)
 	router.Methods("GET").Path("/user/{id}").Handler(getUserByIDHandler)
 
-	return handlers.LoggingHandler(os.Stdout, router)
+	server := Server{
+		Handler:   handlers.LoggingHandler(os.Stdout, router),
+		ErrorChan: errChan,
+	}
+
+	return server
 }
 
 // decoding request into object (acting as anti corruption layer)
