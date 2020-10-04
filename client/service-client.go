@@ -22,7 +22,7 @@ func NewServiceClient() (ServiceClient, error) {
 }
 
 // GetUserByID ..
-func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (shared.ByIDResponse, error) {
+func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTTPResponse {
 	serviceClient := serviceendpoints.NewUserByIDServiceClient(client.Router)
 	serviceClient.WithContext(ctx)
 	serviceClient.WithParams(map[string]interface{}{"ID": id})

@@ -27,6 +27,7 @@ type UserByIDServiceClient struct {
 	HystrixCommandName   string
 	Params               map[string]interface{}
 	Context              context.Context
+	Response             shared.HTTPResponse
 	// TODO we need a result and we need to include if circuit was opened
 	Result shared.ByIDResponse
 	Err    error
@@ -69,7 +70,7 @@ func (serviceClient *UserByIDServiceClient) BuildEndpoints() {
 	hystrix.ConfigureCommand(serviceClient.HystrixCommandName, serviceClient.HystrixCommandConfig)
 	breaker := circuitbreaker.Hystrix(serviceClient.HystrixCommandName)
 
-	url1, _ := serviceClient.Router.Schemes("http").Host("localhost:8082").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
+	url1, _ := serviceClient.Router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 	ep1 := breaker(httptransport.NewClient("GET", url1, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint())
 
 	// This is a non existing URL
@@ -89,22 +90,28 @@ func (serviceClient *UserByIDServiceClient) Exec() {
 	var err error
 	endpointer := sd.FixedEndpointer(serviceClient.Endpoints)
 	balancer := lb.NewRoundRobin(endpointer)
-	retry := lb.Retry(1000, 10000*time.Millisecond, balancer)
+	retry := lb.Retry(100, 1000*time.Millisecond, balancer)
 
+	circuitOpen := false
+	statusCode := 200
 	if res, err = retry(serviceClient.Context, id); err != nil {
-		panic(err)
+		circuitOpen = true
+		statusCode = 500
 	}
 
-	response := res.(shared.ByIDResponse)
-	serviceClient.Result = response
-	serviceClient.Err = err
+	serviceClient.Response = shared.HTTPResponse{
+		Result:        res, //.(shared.ByIDResponse),
+		Error:         err,
+		CircuitOpened: circuitOpen,
+		StatusCode:    statusCode,
+	}
 
 	return
 }
 
 // GetResult ...GetResult
-func (serviceClient *UserByIDServiceClient) GetResult() (shared.ByIDResponse, error) {
-	return serviceClient.Result, serviceClient.Err
+func (serviceClient *UserByIDServiceClient) GetResult() shared.HTTPResponse {
+	return serviceClient.Response
 }
 
 func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}, error) {

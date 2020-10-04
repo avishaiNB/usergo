@@ -1,5 +1,18 @@
 package shared
 
+import "context"
+
+// HTTPResponse is a base response
+type HTTPResponse struct {
+	Error         error
+	Result        interface{}
+	CircuitOpened bool
+	Context       context.Context
+	StatusCode    int
+	// CorrelactionID
+	// timeout
+}
+
 // User ...
 type User struct {
 	ID        int    `json:"id"`
