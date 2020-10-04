@@ -10,13 +10,16 @@ func TestClientIntegration(t *testing.T) {
 	ctx := context.Background()
 	id := 1
 
-	response, err := client.GetUserByID(ctx, id)
+	for i := 0; i < 10; i++ {
 
-	if err != nil {
-		t.Error(err)
-	}
+		response, err := client.GetUserByID(ctx, id)
 
-	if response.User.ID != id {
-		t.Error("ID not equal to 1")
+		if err != nil {
+			t.Error(err)
+		}
+
+		if response.User.ID != id {
+			t.Error("ID not equal to 1")
+		}
 	}
 }

@@ -6,10 +6,13 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/afex/hystrix-go/hystrix"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/shared"
 
+	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
@@ -18,31 +21,60 @@ import (
 
 // UserByIDServiceClient ...
 type UserByIDServiceClient struct {
-	Router    *mux.Router
-	Endpoints []endpoint.Endpoint
-	ID        int
-	Context   context.Context
-	Result    shared.ByIDResponse
-	Err       error
+	Router               *mux.Router
+	Endpoints            []endpoint.Endpoint
+	HystrixCommandConfig hystrix.CommandConfig
+	HystrixCommandName   string
+	Params               map[string]interface{}
+	Context              context.Context
+	// TODO we need a result and we need to include if circuit was opened
+	Result shared.ByIDResponse
+	Err    error
 }
 
 // NewUserByIDServiceClient ...
-func NewUserByIDServiceClient(ctx context.Context, id int, router *mux.Router) UserByIDServiceClient {
+func NewUserByIDServiceClient(router *mux.Router) UserByIDServiceClient {
 	return UserByIDServiceClient{
-		Context: ctx,
-		ID:      id,
-		Router:  router,
+		Router: router,
 	}
+}
+
+// WithParams ...
+func (serviceClient *UserByIDServiceClient) WithParams(params map[string]interface{}) {
+	serviceClient.Params = params
+}
+
+// WithContext ...
+func (serviceClient *UserByIDServiceClient) WithContext(ctx context.Context) {
+	serviceClient.Context = ctx
+}
+
+// WithCircuitBreaker ...
+func (serviceClient *UserByIDServiceClient) WithCircuitBreaker(commandName string, config shared.HystrixCommandConfig) {
+	c := hystrix.CommandConfig{
+		ErrorPercentThreshold:  config.ErrorPercentThreshold,
+		MaxConcurrentRequests:  config.MaxConcurrentRequests,
+		RequestVolumeThreshold: config.RequestVolumeThreshold,
+		SleepWindow:            config.SleepWindow,
+		Timeout:                config.Timeout,
+	}
+	serviceClient.HystrixCommandConfig = c
+	serviceClient.HystrixCommandName = commandName
 }
 
 // BuildEndpoints will look for all the service endpoints
 func (serviceClient *UserByIDServiceClient) BuildEndpoints() {
-	url1, _ := serviceClient.Router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(serviceClient.ID))
-	ep1 := httptransport.NewClient("GET", url1, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint()
+	id := serviceClient.Params["ID"].(int)
+
+	hystrix.ConfigureCommand(serviceClient.HystrixCommandName, serviceClient.HystrixCommandConfig)
+	breaker := circuitbreaker.Hystrix(serviceClient.HystrixCommandName)
+
+	url1, _ := serviceClient.Router.Schemes("http").Host("localhost:8082").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
+	ep1 := breaker(httptransport.NewClient("GET", url1, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint())
 
 	// This is a non existing URL
-	url2, _ := serviceClient.Router.Schemes("http").Host("localhost:8081").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(serviceClient.ID))
-	ep2 := httptransport.NewClient("GET", url2, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint()
+	url2, _ := serviceClient.Router.Schemes("http").Host("localhost:8081").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
+	ep2 := breaker(httptransport.NewClient("GET", url2, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint())
 
 	serviceClient.Endpoints = []endpoint.Endpoint{
 		ep2,
@@ -50,45 +82,24 @@ func (serviceClient *UserByIDServiceClient) BuildEndpoints() {
 	}
 }
 
-// Build ...
-func (serviceClient *UserByIDServiceClient) BuildCircuitBreaker() {
-	// Set some parameters for our client.
-	// var (
-	// 	maxAttempts = 3                      // per request, before giving up
-	// 	maxTime     = 250 * time.Millisecond // wallclock time, before giving up
-	// )
-
-	// var endpointer sd.FixedEndpointer
-	// var e endpoint.Endpoint = ep.EP
-	// endpointer = append(endpointer, e)
-
-	// // Now, build a single, retrying, load-balancing endpoint out of all of
-	// // those individual endpoints.
-	// balancer := lb.NewRoundRobin(endpointer)
-	// retry := lb.Retry(maxAttempts, maxTime, balancer)
-
-	return
-}
-
 // Exec ...
 func (serviceClient *UserByIDServiceClient) Exec() {
-	endpointer := sd.FixedEndpointer(serviceClient.Endpoints)
-	balancer := lb.NewRoundRobin(endpointer)
-
+	id := serviceClient.Params["ID"].(int)
 	var res interface{}
 	var err error
-	for i := 0; i < len(serviceClient.Endpoints); i++ {
-		ep, _ := balancer.Endpoint()
-		res, err = ep(serviceClient.Context, serviceClient.ID)
+	endpointer := sd.FixedEndpointer(serviceClient.Endpoints)
+	balancer := lb.NewRoundRobin(endpointer)
+	retry := lb.Retry(1000, 10000*time.Millisecond, balancer)
 
-		if err == nil {
-			break
-		}
+	if res, err = retry(serviceClient.Context, id); err != nil {
+		panic(err)
 	}
 
 	response := res.(shared.ByIDResponse)
 	serviceClient.Result = response
 	serviceClient.Err = err
+
+	return
 }
 
 // GetResult ...GetResult

@@ -23,7 +23,10 @@ func NewServiceClient() (ServiceClient, error) {
 
 // GetUserByID ..
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (shared.ByIDResponse, error) {
-	serviceClient := serviceendpoints.NewUserByIDServiceClient(ctx, id, client.Router)
+	serviceClient := serviceendpoints.NewUserByIDServiceClient(client.Router)
+	serviceClient.WithContext(ctx)
+	serviceClient.WithParams(map[string]interface{}{"ID": id})
+	serviceClient.WithCircuitBreaker("get-user-by-id", shared.NewHystrixCommandConfig())
 	serviceClient.BuildEndpoints()
 	serviceClient.Exec()
 	return serviceClient.GetResult()
