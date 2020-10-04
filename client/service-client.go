@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gorilla/mux"
+	"github.com/thelotter-enterprise/usergo/client/serviceendpoints"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -22,8 +23,8 @@ func NewServiceClient() (ServiceClient, error) {
 
 // GetUserByID ..
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (shared.ByIDResponse, error) {
-	ep := newUserByIDEndpoint(ctx, id, client.Router)
-	ep.build()
-	ep.exec()
-	return ep.result()
+	ep := serviceendpoints.NewUserByIDServiceEndpoint(ctx, id, client.Router)
+	ep.Build()
+	ep.Exec()
+	return ep.GetResult()
 }

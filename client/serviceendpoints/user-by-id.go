@@ -1,4 +1,4 @@
-package client
+package serviceendpoints
 
 import (
 	"context"
@@ -15,7 +15,8 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
-type userByIDEndpoint struct {
+// UserByIDServiceEndpoint ...
+type UserByIDServiceEndpoint struct {
 	Router  *mux.Router
 	EP      endpoint.Endpoint
 	URL     *url.URL
@@ -25,16 +26,17 @@ type userByIDEndpoint struct {
 	Err     error
 }
 
-func newUserByIDEndpoint(ctx context.Context, id int, router *mux.Router) userByIDEndpoint {
-	return userByIDEndpoint{
+// NewUserByIDServiceEndpoint ...
+func NewUserByIDServiceEndpoint(ctx context.Context, id int, router *mux.Router) UserByIDServiceEndpoint {
+	return UserByIDServiceEndpoint{
 		Context: ctx,
 		ID:      id,
 		Router:  router,
 	}
 }
 
-// MakeUserByIDEndpoint ...
-func (ep *userByIDEndpoint) build() {
+// Build ...
+func (ep *UserByIDServiceEndpoint) Build() {
 	// TODO: how do we get the base URL? we need SD
 	// TODO: how do we set different strategies for sd based on consul and coreDNS
 	// TODO: how CB is handled?
@@ -45,14 +47,16 @@ func (ep *userByIDEndpoint) build() {
 	return
 }
 
-func (ep *userByIDEndpoint) exec() {
+// Exec ...
+func (ep *UserByIDServiceEndpoint) Exec() {
 	res, err := ep.EP(ep.Context, ep.ID)
 	response := res.(shared.ByIDResponse)
 	ep.Result = response
 	ep.Err = err
 }
 
-func (ep *userByIDEndpoint) result() (shared.ByIDResponse, error) {
+// GetResult ...GetResult
+func (ep *UserByIDServiceEndpoint) GetResult() (shared.ByIDResponse, error) {
 	return ep.Result, ep.Err
 }
 
