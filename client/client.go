@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	om "github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // ServiceClient ...
@@ -17,9 +17,9 @@ func NewServiceClient() (ServiceClient, error) {
 }
 
 // GetUserByID ..
-func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (om.ByIDResponse, error) {
+func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (shared.ByIDResponse, error) {
 	ep, _ := NewUserByIDEndpoint(id)
 	res, _ := ep(ctx, id)
-	response := res.(om.ByIDResponse)
+	response := res.(shared.ByIDResponse)
 	return response, nil
 }

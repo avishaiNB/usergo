@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,7 +10,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	om "github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // Endpoints holds all the endpoints which are supported by the service
@@ -28,9 +27,9 @@ func MakeEndpoints(s Service) Endpoints {
 
 func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(om.ByIDRequest)
+		req := request.(shared.ByIDRequest)
 		user, err := s.GetUserByID(ctx, req.ID)
-		return om.NewUserResponse(user), err
+		return shared.NewUserResponse(user), err
 	}
 }
 
@@ -39,16 +38,10 @@ func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 // decoding requests may be used for anti corruption layers
 func NewServer(ctx context.Context, endpoints Endpoints) http.Handler {
 	router := mux.NewRouter()
-	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, encodeReponseToJSON)
+	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, shared.EncodeReponseToJSON)
 	router.Methods("GET").Path("/user/{id}").Handler(getUserByIDHandler)
 
 	return handlers.LoggingHandler(os.Stdout, router)
-}
-
-// encoding the response into json
-// e.g. GetUsetByIDResponse --> json
-func encodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	return json.NewEncoder(w).Encode(response)
 }
 
 // decoding request into object (acting as anti corruption layer)
@@ -56,6 +49,6 @@ func encodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response in
 func decodeUserByIDRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
-	req := om.NewByIDRequest(id)
+	req := shared.NewByIDRequest(id)
 	return req, nil
 }

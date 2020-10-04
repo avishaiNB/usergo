@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	om "github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/shared"
 
 	"github.com/go-kit/kit/endpoint"
 	httptransport "github.com/go-kit/kit/transport/http"
@@ -26,8 +26,8 @@ func NewUserByIDEndpoint(id int) (endpoint.Endpoint, error) {
 	}
 	endpoint := httptransport.NewClient(
 		"GET",
-		copyURL(baseURL, "/user/1"),
-		encodeHTTPGenericRequest,
+		shared.CopyURL(baseURL, "/user/1"),
+		shared.EncodeRequestToJSON,
 		decodeGetUserByIDResponse).Endpoint()
 
 	return endpoint, nil
@@ -37,7 +37,7 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 	if r.StatusCode != http.StatusOK {
 		return nil, errors.New(r.Status)
 	}
-	var resp om.ByIDResponse
+	var resp shared.ByIDResponse
 	err := json.NewDecoder(r.Body).Decode(&resp)
 	return resp, err
 }

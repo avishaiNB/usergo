@@ -3,12 +3,12 @@ package user
 import (
 	"context"
 
-	om "github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // Service API
 type Service interface {
-	GetUserByID(ctx context.Context, userID int) (om.User, error)
+	GetUserByID(ctx context.Context, userID int) (shared.User, error)
 }
 
 type service struct {
@@ -24,7 +24,7 @@ func NewService(repo Repository) Service {
 }
 
 // GetUserByID will execute business logic for getting user information by id
-func (s *service) GetUserByID(ctx context.Context, userID int) (om.User, error) {
+func (s *service) GetUserByID(ctx context.Context, userID int) (shared.User, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	return user, err
 }

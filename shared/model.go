@@ -1,4 +1,4 @@
-package om
+package shared
 
 // User ...
 type User struct {
