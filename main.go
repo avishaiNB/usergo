@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"example/user"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	user "usergo/usersvc"
 )
 
 func main() {

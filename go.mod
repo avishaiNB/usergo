@@ -1,4 +1,4 @@
-module example
+module usergo
 
 go 1.15
 
