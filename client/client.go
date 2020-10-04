@@ -17,10 +17,9 @@ func NewServiceClient() (ServiceClient, error) {
 }
 
 // GetUserByID ..
-// TODO: we should not return the User we need to have some kind of a wrapper
-func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (om.User, error) {
+func (client *ServiceClient) GetUserByID(ctx context.Context, id int) (om.ByIDResponse, error) {
 	ep, _ := NewUserByIDEndpoint(id)
-	println(ep)
-	var user om.User
-	return user, nil
+	res, _ := ep(ctx, id)
+	response := res.(om.ByIDResponse)
+	return response, nil
 }
