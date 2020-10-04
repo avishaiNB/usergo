@@ -1,10 +1,14 @@
 package user
 
-import "context"
+import (
+	"context"
+
+	om "github.com/thelotter-enterprise/usergo/usershared"
+)
 
 // Repository ..
 type Repository interface {
-	GetUserByID(ctx context.Context, userID int) (User, error)
+	GetUserByID(ctx context.Context, userID int) (om.User, error)
 }
 
 type repo struct {
@@ -17,9 +21,9 @@ func NewRepository() Repository {
 }
 
 // GetUserByID ...
-func (r repo) GetUserByID(ctx context.Context, userID int) (User, error) {
+func (r repo) GetUserByID(ctx context.Context, userID int) (om.User, error) {
 
-	user := User{
+	user := om.User{
 		ID:        userID,
 		Email:     "guyk@net-bet.net",
 		FirstName: "guy",

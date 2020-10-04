@@ -12,6 +12,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	om "github.com/thelotter-enterprise/usergo/usershared"
 )
 
 // Endpoints holds all the endpoints which are supported by the service
@@ -28,9 +29,9 @@ func MakeEndpoints(s Service) Endpoints {
 
 func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(ByIDRequest)
+		req := request.(om.ByIDRequest)
 		user, err := s.GetUserByID(ctx, req.ID)
-		return NewUserResponse(user), err
+		return om.NewUserResponse(user), err
 	}
 }
 
@@ -56,7 +57,7 @@ func encodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response in
 func decodeUserByIDRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	id, _ := strconv.Atoi(vars["id"])
-	req := NewByIDRequest(id)
+	req := om.NewByIDRequest(id)
 	fmt.Println(req)
 	return req, nil
 }

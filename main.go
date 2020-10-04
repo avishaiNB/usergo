@@ -7,7 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	user "usergo/usersvc"
+
+	user "github.com/thelotter-enterprise/usergo/usersvc"
 )
 
 func main() {

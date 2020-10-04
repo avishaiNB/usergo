@@ -1,4 +1,4 @@
-module usergo
+module github.com/thelotter-enterprise/usergo
 
 go 1.15
 
