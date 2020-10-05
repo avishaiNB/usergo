@@ -34,9 +34,9 @@ type ProxyMiddleware struct {
 	This endpoint.Endpoint
 }
 
-// ProxyMiddlewareInput holds all the input data required to generate a middleware which supports
+// ProxyCommandData holds all the input data required to generate a middleware which supports
 // endpoints, circuit breaker, rate limit and timeouts
-type ProxyMiddlewareInput struct {
+type ProxyCommandData struct {
 	Context            context.Context
 	HystrixCommandName string
 	HystrixConfig      hystrix.CommandConfig
@@ -46,8 +46,8 @@ type ProxyMiddlewareInput struct {
 	MaxTimeout         time.Duration
 }
 
-// MakeDefaultMiddlewareInput creates an opinonated instance of ProxyMiddlewareInput which is common to many simple endpoints
-func MakeDefaultMiddlewareInput(ctx context.Context, commandName string, proxyEndpoints []ProxyEndpoint) ProxyMiddlewareInput {
+// MakeDefaultProxyCommandData creates an opinonated instance of ProxyMiddlewareInput which is common to many simple endpoints
+func MakeDefaultProxyCommandData(ctx context.Context, commandName string, proxyEndpoints []ProxyEndpoint) ProxyCommandData {
 	var (
 		qps         = 100                    // beyond which we will return an error
 		maxAttempts = 3                      // per request, before giving up
@@ -65,7 +65,7 @@ func MakeDefaultMiddlewareInput(ctx context.Context, commandName string, proxyEn
 		Timeout: config.Timeout,
 	}
 
-	return ProxyMiddlewareInput{
+	return ProxyCommandData{
 		Context:            ctx,
 		HystrixCommandName: commandName,
 		HystrixConfig:      hystrixConfig,

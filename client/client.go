@@ -10,12 +10,12 @@ import (
 // If an error occurs it will hold error information that cab be used to decide how to proceed
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTTPResponse {
 	var svc UserServiceClient
-	commandName := "GetUserByID"
-
+	commandName := "get_user_by_id"
 	endpoints := makeUserByIDEndpoints(id)
-	input := shared.MakeDefaultMiddlewareInput(ctx, commandName, endpoints)
-	proxyMiddleware := makeUserByIDMiddleware(input)
-	svc = proxyMiddleware(svc)
+	input := shared.MakeDefaultProxyCommandData(ctx, commandName, endpoints)
+
+	svc = makeUserByIDCommandMiddleware(input)(svc)
 	svc = makeLoggingMiddleware(client.Logger)(svc)
+	svc = makeInstrumentingMiddleware(client.Name, commandName)(svc)
 	return svc.GetUserByID(id)
 }

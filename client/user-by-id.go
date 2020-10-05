@@ -20,7 +20,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func makeUserByIDMiddleware(in shared.ProxyMiddlewareInput) UserServiceClientMiddleware {
+func makeUserByIDCommandMiddleware(in shared.ProxyCommandData) UserServiceClientMiddleware {
 	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
 	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer

@@ -9,16 +9,16 @@ import (
 
 func makeLoggingMiddleware(logger log.Logger) UserServiceClientMiddleware {
 	return func(next UserServiceClient) UserServiceClient {
-		return logmw{logger, next}
+		return loggingMiddleware{logger, next}
 	}
 }
 
-type logmw struct {
+type loggingMiddleware struct {
 	logger log.Logger
 	UserServiceClient
 }
 
-func (mw logmw) GetUserByID(id int) (response shared.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByID(id int) (response shared.HTTPResponse) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByID",
@@ -32,7 +32,7 @@ func (mw logmw) GetUserByID(id int) (response shared.HTTPResponse) {
 	return mw.UserServiceClient.GetUserByID(id)
 }
 
-func (mw logmw) GetUserByEmail(email string) (response shared.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByEmail(email string) (response shared.HTTPResponse) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByEmail",
