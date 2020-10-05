@@ -7,7 +7,7 @@ import (
 
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/transport/http"
+	httpkit "github.com/go-kit/kit/transport/http"
 )
 
 // ProxyEndpoint holds the information needed to build a go-kit Client
@@ -15,8 +15,16 @@ import (
 type ProxyEndpoint struct {
 	Method string
 	Tgt    *url.URL
-	Enc    http.EncodeRequestFunc
-	Dec    http.DecodeResponseFunc
+	Enc    httpkit.EncodeRequestFunc
+	Dec    httpkit.DecodeResponseFunc
+}
+
+// ServerEndpoint holds the information needed to build a server endpoint which client can call upon
+type ServerEndpoint struct {
+	Method   string
+	Endpoint func(ctx context.Context, request interface{}) (interface{}, error)
+	Dec      httpkit.DecodeRequestFunc
+	Enc      httpkit.EncodeResponseFunc
 }
 
 // ProxyMiddleware holds the return value when we make a middleware

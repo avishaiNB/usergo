@@ -13,25 +13,25 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
-// Endpoints holds all the endpoints which are supported by the service
-type Endpoints struct {
-	GetUserByID endpoint.Endpoint
-}
-
 // MakeEndpoints creates an instance of Endpoints
-func MakeEndpoints(s Service) Endpoints {
-	userbyidEndpoint := makeUserByIDEndpoint(s)
-	//userbyidEndpoint = zipkin.TraceEndpoint(zipkinTracer, "Sum")(userbyidEndpoint)
-	//shared.ProxyEndpoint
-	return Endpoints{
-		GetUserByID: userbyidEndpoint,
+func MakeEndpoints(s Service) []shared.ServerEndpoint {
+	var serverEndpoints []shared.ServerEndpoint
+
+	userbyid := shared.ServerEndpoint{
+		Endpoint: makeUserByIDEndpoint(s),
+		Enc:      shared.EncodeReponseToJSON,
+		Dec:      decodeUserByIDRequest,
+		Method:   "GET",
 	}
+
+	serverEndpoints = append(serverEndpoints, userbyid)
+	return serverEndpoints
 }
 
-func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
+func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(shared.ByIDRequest)
-		user, err := s.GetUserByID(ctx, req.ID)
+		user, err := service.GetUserByID(ctx, req.ID)
 		return shared.NewUserResponse(user), err
 	}
 }
@@ -39,10 +39,14 @@ func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 // MakeServer will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func MakeServer(serviceName, hostAdress, zipkinURL string, endpoints Endpoints, errChan chan error) Server {
+func MakeServer(serviceName, hostAdress, zipkinURL string, endpoints []shared.ServerEndpoint, errChan chan error) Server {
 	server := NewServer(serviceName, hostAdress, zipkinURL, errChan)
-	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, shared.EncodeReponseToJSON)
-	server.Router.Methods("GET").Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
+
+	for _, endpoint := range endpoints {
+		getUserByIDHandler := httptransport.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc)
+		server.Router.Methods("GET").Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
+	}
+
 	server.SetHandler(handlers.LoggingHandler(os.Stdout, server.Router))
 	return server
 }
