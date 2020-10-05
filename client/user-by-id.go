@@ -94,5 +94,6 @@ func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
 func (mw ProxyMiddleware) GetUserByEmail(email string) shared.HTTPResponse {
-	return mw.Out.Next.GetUserByEmail(email)
+	svc := mw.Out.Next.(UserServiceClient)
+	return svc.GetUserByEmail(email)
 }

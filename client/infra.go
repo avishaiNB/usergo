@@ -35,8 +35,7 @@ type ProxyMiddlewareOutput struct {
 	// We need to use Next, since it is used to satisfy the middleware pattern
 	// Each middleware is responbsible for a single API, yet, due to the service interface,
 	// it need to implement all the service interface APIs. To support it, we use Next to obstract the implementation
-	//TODO: refactor to make this a generic contact
-	Next UserServiceClient
+	Next interface{}
 
 	// This is the current API which we plan to support in the service interface contract
 	This endpoint.Endpoint
