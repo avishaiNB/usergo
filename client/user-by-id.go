@@ -20,14 +20,14 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func makeUserByIDMiddleware(in ProxyMiddlewareInput) UserServiceClientMiddleware {
+func makeUserByIDMiddleware(in shared.ProxyMiddlewareInput) UserServiceClientMiddleware {
 	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
 	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer
 
 	for _, proxyEndpoint := range in.ProxyEndpoints {
 		var e endpoint.Endpoint
-		e = httptransport.NewClient(proxyEndpoint.method, proxyEndpoint.tgt, proxyEndpoint.enc, proxyEndpoint.dec).Endpoint()
+		e = httptransport.NewClient(proxyEndpoint.Method, proxyEndpoint.Tgt, proxyEndpoint.Enc, proxyEndpoint.Dec).Endpoint()
 		e = breaker(e)
 		e = ratelimit.NewErroringLimiter(rate.NewLimiter(rate.Every(time.Second), in.MaxQueryPerSecond))(e)
 		endpointer = append(endpointer, e)
@@ -37,24 +37,28 @@ func makeUserByIDMiddleware(in ProxyMiddlewareInput) UserServiceClientMiddleware
 	retry := lb.Retry(in.RetryAttempts, in.MaxTimeout, balancer)
 
 	return func(next UserServiceClient) UserServiceClient {
-		out := ProxyMiddlewareOutput{in.Context, next, retry}
-		return ProxyMiddleware{
-			Out: out,
-			In:  in,
+		out := shared.ProxyMiddleware{
+			Context: in.Context,
+			Next:    next,
+			This:    retry,
+		}
+
+		return userByIDProxyMiddleware{
+			mw: out,
 		}
 	}
 }
 
-func makeUserByIDEndpoints(id int) []ProxyEndpoint {
-	var endpoints []ProxyEndpoint
+func makeUserByIDEndpoints(id int) []shared.ProxyEndpoint {
+	var endpoints []shared.ProxyEndpoint
 	router := mux.NewRouter()
 	tgt, _ := router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 
-	endpoint1 := ProxyEndpoint{
-		method: "GET",
-		tgt:    tgt,
-		enc:    shared.EncodeRequestToJSON,
-		dec:    decodeGetUserByIDResponse,
+	endpoint1 := shared.ProxyEndpoint{
+		Method: "GET",
+		Tgt:    tgt,
+		Enc:    shared.EncodeRequestToJSON,
+		Dec:    decodeGetUserByIDResponse,
 	}
 
 	endpoints = append(endpoints, endpoint1)
@@ -70,14 +74,18 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 	return resp, err
 }
 
+type userByIDProxyMiddleware struct {
+	mw shared.ProxyMiddleware
+}
+
 // GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
-func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
+func (proxymw userByIDProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 	var res interface{}
 	var err error
 	circuitOpen := false
 	statusCode := 200
 
-	if res, err = mw.Out.This(mw.In.Context, id); err != nil {
+	if res, err = proxymw.mw.This(proxymw.mw.Context, id); err != nil {
 		// TODO: need a refactor to analyze the response
 		circuitOpen = true
 		statusCode = 500
@@ -93,7 +101,7 @@ func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
-func (mw ProxyMiddleware) GetUserByEmail(email string) shared.HTTPResponse {
-	svc := mw.Out.Next.(UserServiceClient)
+func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) shared.HTTPResponse {
+	svc := proxymw.mw.Next.(UserServiceClient)
 	return svc.GetUserByEmail(email)
 }

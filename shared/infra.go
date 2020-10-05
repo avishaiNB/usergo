@@ -1,4 +1,4 @@
-package client
+package shared
 
 import (
 	"context"
@@ -8,26 +8,19 @@ import (
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/transport/http"
-	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // ProxyEndpoint holds the information needed to build a go-kit Client
 // A Client than can be constructed for a single remote method.
 type ProxyEndpoint struct {
-	method string
-	tgt    *url.URL
-	enc    http.EncodeRequestFunc
-	dec    http.DecodeResponseFunc
+	Method string
+	Tgt    *url.URL
+	Enc    http.EncodeRequestFunc
+	Dec    http.DecodeResponseFunc
 }
 
-// ProxyMiddleware holds the input and output data, which our middleware should have
+// ProxyMiddleware holds the return value when we make a middleware
 type ProxyMiddleware struct {
-	In  ProxyMiddlewareInput
-	Out ProxyMiddlewareOutput
-}
-
-// ProxyMiddlewareOutput holds the return value when we make a middleware
-type ProxyMiddlewareOutput struct {
 	// Context holds the context
 	Context context.Context
 
@@ -61,7 +54,7 @@ func MakeDefaultMiddlewareInput(ctx context.Context, commandName string, proxyEn
 		maxTime     = 250 * time.Millisecond // wallclock time, before giving up
 	)
 
-	config := shared.NewHystrixCommandConfig()
+	config := NewHystrixCommandConfig()
 
 	hystrixConfig := hystrix.CommandConfig{
 		ErrorPercentThreshold:  config.ErrorPercentThreshold,
