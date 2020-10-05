@@ -11,10 +11,11 @@ import (
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTTPResponse {
 	var svc UserServiceClient
 	commandName := "get_user_by_id"
-	endpoints := makeUserByIDEndpoints(id)
-	input := shared.MakeDefaultProxyCommandData(ctx, commandName, endpoints)
 
-	svc = makeUserByIDCommandMiddleware(input)(svc)
+	endpoints := makeEndpoints(id)
+	input := shared.MakeProxyMiddlewareData(ctx, commandName, endpoints)
+
+	svc = makeProxyMiddleware(input)(svc)
 	svc = makeLoggingMiddleware(client.Logger)(svc)
 	svc = makeInstrumentingMiddleware(client.Name, commandName)(svc)
 	return svc.GetUserByID(id)

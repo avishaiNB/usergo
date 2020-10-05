@@ -20,7 +20,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func makeUserByIDCommandMiddleware(in shared.ProxyCommandData) UserServiceClientMiddleware {
+func makeProxyMiddleware(in shared.ProxyMiddlewareData) UserServiceClientMiddleware {
 	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
 	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer
@@ -49,7 +49,7 @@ func makeUserByIDCommandMiddleware(in shared.ProxyCommandData) UserServiceClient
 	}
 }
 
-func makeUserByIDEndpoints(id int) []shared.ProxyEndpoint {
+func makeEndpoints(id int) []shared.ProxyEndpoint {
 	var endpoints []shared.ProxyEndpoint
 	router := mux.NewRouter()
 	tgt, _ := router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
