@@ -20,7 +20,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func proxyingMiddleware(in ProxyMiddlewareInput) ServiceMiddleware {
+func makeUserByIDMiddleware(in ProxyMiddlewareInput) UserServiceClientMiddleware {
 	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
 	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer
@@ -36,7 +36,7 @@ func proxyingMiddleware(in ProxyMiddlewareInput) ServiceMiddleware {
 	balancer := lb.NewRoundRobin(endpointer)
 	retry := lb.Retry(in.RetryAttempts, in.MaxTimeout, balancer)
 
-	return func(next UserService) UserService {
+	return func(next UserServiceClient) UserServiceClient {
 		out := ProxyMiddlewareOutput{in.Context, next, retry}
 		return ProxyMiddleware{
 			Out: out,
@@ -45,36 +45,20 @@ func proxyingMiddleware(in ProxyMiddlewareInput) ServiceMiddleware {
 	}
 }
 
-func makeProxyEndpoint(id int) ProxyEndpoint {
+func makeUserByIDEndpoints(id int) []ProxyEndpoint {
+	var endpoints []ProxyEndpoint
 	router := mux.NewRouter()
 	tgt, _ := router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 
-	return ProxyEndpoint{
+	endpoint1 := ProxyEndpoint{
 		method: "GET",
 		tgt:    tgt,
 		enc:    shared.EncodeRequestToJSON,
 		dec:    decodeGetUserByIDResponse,
 	}
-}
 
-func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
-	var res interface{}
-	var err error
-	circuitOpen := false
-	statusCode := 200
-
-	if res, err = mw.Out.This(mw.In.Context, id); err != nil {
-		circuitOpen = true
-		statusCode = 500
-	}
-
-	return shared.HTTPResponse{
-		// shared.ByIDResponse,
-		Result:        res,
-		Error:         err,
-		CircuitOpened: circuitOpen,
-		StatusCode:    statusCode,
-	}
+	endpoints = append(endpoints, endpoint1)
+	return endpoints
 }
 
 func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}, error) {
@@ -84,4 +68,25 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 	var resp shared.ByIDResponse
 	err := json.NewDecoder(r.Body).Decode(&resp)
 	return resp, err
+}
+
+// GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
+func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
+	var res interface{}
+	var err error
+	circuitOpen := false
+	statusCode := 200
+
+	if res, err = mw.Out.This(mw.In.Context, id); err != nil {
+		// TODO: need a refactor to analyze the response
+		circuitOpen = true
+		statusCode = 500
+	}
+
+	return shared.HTTPResponse{
+		Result:        res,
+		Error:         err,
+		CircuitOpened: circuitOpen,
+		StatusCode:    statusCode,
+	}
 }

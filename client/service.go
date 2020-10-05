@@ -4,8 +4,21 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
-type ServiceMiddleware func(UserService) UserService
+// UserServiceClientMiddleware used to chain behaviors on the UserService using middleware pattern
+type UserServiceClientMiddleware func(UserServiceClient) UserServiceClient
 
-type UserService interface {
+// UserServiceClient defines all the APIs available for the service
+type UserServiceClient interface {
+	// Gets the user by an ID
 	GetUserByID(id int) shared.HTTPResponse
+}
+
+// ServiceClient is a facade for all APIs exposed by the service
+type ServiceClient struct {
+}
+
+// NewServiceClient will create a new instance of ServiceClient
+func NewServiceClient() ServiceClient {
+	client := ServiceClient{}
+	return client
 }
