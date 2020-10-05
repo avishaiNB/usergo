@@ -31,3 +31,12 @@ func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTT
 	serviceClient.Exec()
 	return serviceClient.GetResult()
 }
+
+// GetUserByID2 ..
+func (client *ServiceClient) GetUserByID2(ctx context.Context, id int) shared.HTTPResponse {
+	var svc UserService
+	var endpoints []ProxyEndpoint
+	endpoints = append(endpoints, makeProxyEndpoint(id))
+	svc = proxyingMiddleware(context.Background(), endpoints)(svc)
+	return svc.GetUserByID(id)
+}

@@ -28,9 +28,6 @@ type UserByIDServiceClient struct {
 	Params               map[string]interface{}
 	Context              context.Context
 	Response             shared.HTTPResponse
-	// TODO we need a result and we need to include if circuit was opened
-	Result shared.ByIDResponse
-	Err    error
 }
 
 // NewUserByIDServiceClient ...
@@ -73,12 +70,7 @@ func (serviceClient *UserByIDServiceClient) BuildEndpoints() {
 	url1, _ := serviceClient.Router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 	ep1 := breaker(httptransport.NewClient("GET", url1, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint())
 
-	// This is a non existing URL
-	url2, _ := serviceClient.Router.Schemes("http").Host("localhost:8081").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
-	ep2 := breaker(httptransport.NewClient("GET", url2, shared.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint())
-
 	serviceClient.Endpoints = []endpoint.Endpoint{
-		ep2,
 		ep1,
 	}
 }
