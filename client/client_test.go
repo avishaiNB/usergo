@@ -1,16 +1,18 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
+
+	"github.com/thelotter-enterprise/usergo/client"
 )
 
 func TestClientIntegration(t *testing.T) {
-	client := NewServiceClient()
+	c := client.NewServiceClient()
 	ctx := context.Background()
 	id := 1
 
-	response := client.GetUserByID(ctx, id)
+	response := c.GetUserByID(ctx, id)
 
 	if response.Result == nil {
 		t.Fail()
