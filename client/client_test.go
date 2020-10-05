@@ -10,7 +10,7 @@ import (
 func TestClientIntegration(t *testing.T) {
 	c := client.NewServiceClient()
 	ctx := context.Background()
-	id := 2
+	id := 1
 
 	response := c.GetUserByID(ctx, id)
 

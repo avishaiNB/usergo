@@ -10,19 +10,40 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
-// MakeEndpoints creates an instance of Endpoints
-func MakeEndpoints(s Service) []shared.ServerEndpoint {
+// Endpoints ...
+type Endpoints struct {
+	Logger  *Logger
+	Tracer  *Tracer
+	Service *Service
+
+	ServerEndpoints []shared.ServerEndpoint
+}
+
+// NewEndpoints ...
+func NewEndpoints(logger *Logger, tracer *Tracer, service *Service) Endpoints {
+	endpoints := Endpoints{
+		Logger:  logger,
+		Tracer:  tracer,
+		Service: service,
+	}
+
+	endpoints.AddEndpoints()
+
+	return endpoints
+}
+
+// AddEndpoints ...
+func (endpoints *Endpoints) AddEndpoints() {
 	var serverEndpoints []shared.ServerEndpoint
 
 	userbyid := shared.ServerEndpoint{
-		Endpoint: makeUserByIDEndpoint(s),
+		Endpoint: makeUserByIDEndpoint(*endpoints.Service),
 		Enc:      shared.EncodeReponseToJSON,
 		Dec:      decodeUserByIDRequest,
 		Method:   "GET",
 	}
 
-	serverEndpoints = append(serverEndpoints, userbyid)
-	return serverEndpoints
+	endpoints.ServerEndpoints = append(serverEndpoints, userbyid)
 }
 
 func makeUserByIDEndpoint(service Service) endpoint.Endpoint {

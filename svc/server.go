@@ -18,12 +18,12 @@ type Server struct {
 	Router  *mux.Router
 	Handler http.Handler
 	Error   chan error
-	Logger  Logger
-	Tracer  Tracer
+	Logger  *Logger
+	Tracer  *Tracer
 }
 
 // NewServer ...
-func NewServer(logger Logger, tracer Tracer, serviceName string, hostAddress string, errChan chan error) Server {
+func NewServer(logger *Logger, tracer *Tracer, serviceName string, hostAddress string, errChan chan error) Server {
 
 	return Server{
 		Name:    serviceName,
@@ -38,9 +38,9 @@ func NewServer(logger Logger, tracer Tracer, serviceName string, hostAddress str
 // Run will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func (server Server) Run(endpoints []shared.ServerEndpoint) {
+func (server Server) Run(endpoints *Endpoints) {
 
-	for _, endpoint := range endpoints {
+	for _, endpoint := range endpoints.ServerEndpoints {
 		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc)
 		server.Router.Methods(endpoint.Method).Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
 	}

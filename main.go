@@ -24,9 +24,11 @@ func main() {
 
 	logger := svc.NewLogger()
 	tracer := svc.NewTracer(serviceName, hostAddress, zipkinURL)
+
 	repo := svc.NewRepository()
-	service := svc.NewService(logger, tracer, repo)
-	server := svc.NewServer(logger, tracer, serviceName, hostAddress, errs)
+	service := svc.NewService(&logger, &tracer, repo)
+	endpoints := svc.NewEndpoints(&logger, &tracer, &service)
+	server := svc.NewServer(&logger, &tracer, serviceName, hostAddress, errs)
 
 	go func() {
 		sig := <-sigs
@@ -36,7 +38,7 @@ func main() {
 	}()
 
 	go func() {
-		server.Run(svc.MakeEndpoints(service))
+		server.Run(&endpoints)
 	}()
 
 	<-done
