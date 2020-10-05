@@ -10,10 +10,23 @@ import (
 )
 
 func main() {
+
+	var (
+		serviceName string = "user"
+		hostAddress string = "localhost:8080"
+		zipkinURL   string = "http://localhost:9411/api/v2/spans"
+	)
+
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 	errs := make(chan error)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	logger := svc.NewLogger()
+	tracer := svc.NewTracer(serviceName, hostAddress, zipkinURL)
+	repo := svc.NewRepository()
+	service := svc.NewService(logger, tracer, repo)
+	server := svc.NewServer(logger, tracer, serviceName, hostAddress, errs)
 
 	go func() {
 		sig := <-sigs
@@ -23,11 +36,7 @@ func main() {
 	}()
 
 	go func() {
-		repo := svc.NewRepository()
-		srv := svc.NewService(repo)
-		endpoints := svc.MakeEndpoints(srv)
-		server := svc.MakeServer("user", "localhost:8080", "http://localhost:9411/api/v2/spans", endpoints, errs)
-		server.Run()
+		server.Run(svc.MakeEndpoints(service))
 	}()
 
 	<-done

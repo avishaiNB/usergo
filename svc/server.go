@@ -5,64 +5,47 @@ import (
 	"net/http"
 	"os"
 
+	httpkit "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	zipkingo "github.com/openzipkin/zipkin-go"
-	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
+	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // Server ...
 type Server struct {
-	Tracer  *zipkingo.Tracer
 	Name    string
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
 	Error   chan error
+	Logger  Logger
+	Tracer  Tracer
 }
 
 // NewServer ...
-func NewServer(serviceName string, hostAddress string, zipkinURL string, errChan chan error) Server {
-
-	zipkinTracer := makeZipkinEndpoint(serviceName, hostAddress, zipkinURL)
+func NewServer(logger Logger, tracer Tracer, serviceName string, hostAddress string, errChan chan error) Server {
 
 	return Server{
-		Tracer:  zipkinTracer,
 		Name:    serviceName,
 		Address: hostAddress,
 		Router:  mux.NewRouter(),
 		Error:   errChan,
+		Logger:  logger,
+		Tracer:  tracer,
 	}
 }
 
-// Run ...
-func (s *Server) Run() {
-	fmt.Printf("Listernning on %s", s.Address)
-	s.Error <- http.ListenAndServe(s.Address, s.Handler)
-}
+// Run will create an instance handlers for incoming requests
+// it allow to define for each route: handler, decoding requests and encoding responses
+// decoding requests may be used for anti corruption layers
+func (server Server) Run(endpoints []shared.ServerEndpoint) {
 
-// SetHandler sets the http handler (*mux.route)
-func (s *Server) SetHandler(handler http.Handler) {
-	s.Handler = handler
-}
-
-func makeZipkinEndpoint(serviceName string, hostAddress string, zipkinURL string) *zipkingo.Tracer {
-	var zipkinTracer *zipkingo.Tracer
-	{
-		if zipkinURL != "" {
-			var (
-				err         error
-				hostPort    = hostAddress //"localhost:80"
-				serviceName = serviceName
-				reporter    = zipkinhttp.NewReporter(zipkinURL)
-			)
-			defer reporter.Close()
-			zEP, _ := zipkingo.NewEndpoint(serviceName, hostPort)
-			zipkinTracer, err = zipkingo.NewTracer(reporter, zipkingo.WithLocalEndpoint(zEP))
-
-			if err != nil {
-				os.Exit(1)
-			}
-		}
+	for _, endpoint := range endpoints {
+		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc)
+		server.Router.Methods(endpoint.Method).Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
 	}
-	return zipkinTracer
+
+	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)
+	fmt.Printf("Listernning on %s", server.Address)
+	server.Error <- http.ListenAndServe(server.Address, server.Handler)
 }
