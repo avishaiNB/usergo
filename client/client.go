@@ -16,6 +16,6 @@ func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTT
 	input := shared.MakeDefaultMiddlewareInput(ctx, commandName, endpoints)
 	proxyMiddleware := makeUserByIDMiddleware(input)
 	svc = proxyMiddleware(svc)
-
+	svc = makeLoggingMiddleware(client.Logger)(svc)
 	return svc.GetUserByID(id)
 }
