@@ -2,7 +2,6 @@ package svc
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,22 +18,13 @@ type Endpoints struct {
 	GetUserByID endpoint.Endpoint
 }
 
-// Server ...
-type Server struct {
-	Handler   http.Handler
-	ErrorChan chan error
-}
-
-// Run ...
-func (server *Server) Run() {
-	fmt.Println("Listernning on port 8080")
-	server.ErrorChan <- http.ListenAndServe(":8080", server.Handler)
-}
-
 // MakeEndpoints creates an instance of Endpoints
 func MakeEndpoints(s Service) Endpoints {
+	userbyidEndpoint := makeUserByIDEndpoint(s)
+	//userbyidEndpoint = zipkin.TraceEndpoint(zipkinTracer, "Sum")(userbyidEndpoint)
+	//shared.ProxyEndpoint
 	return Endpoints{
-		GetUserByID: makeUserByIDEndpoint(s),
+		GetUserByID: userbyidEndpoint,
 	}
 }
 
@@ -49,16 +39,11 @@ func makeUserByIDEndpoint(s Service) endpoint.Endpoint {
 // MakeServer will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func MakeServer(endpoints Endpoints, errChan chan error) Server {
-	router := mux.NewRouter()
+func MakeServer(serviceName, hostAdress, zipkinURL string, endpoints Endpoints, errChan chan error) Server {
+	server := NewServer(serviceName, hostAdress, zipkinURL, errChan)
 	getUserByIDHandler := httptransport.NewServer(endpoints.GetUserByID, decodeUserByIDRequest, shared.EncodeReponseToJSON)
-	router.Methods("GET").Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
-
-	server := Server{
-		Handler:   handlers.LoggingHandler(os.Stdout, router),
-		ErrorChan: errChan,
-	}
-
+	server.Router.Methods("GET").Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
+	server.SetHandler(handlers.LoggingHandler(os.Stdout, server.Router))
 	return server
 }
 

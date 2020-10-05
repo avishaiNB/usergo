@@ -26,7 +26,7 @@ func main() {
 		repo := svc.NewRepository()
 		srv := svc.NewService(repo)
 		endpoints := svc.MakeEndpoints(srv)
-		server := svc.MakeServer(endpoints, errs)
+		server := svc.MakeServer("user", "localhost:8080", "http://localhost:9411/api/v2/spans", endpoints, errs)
 		server.Run()
 	}()
 
