@@ -11,6 +11,9 @@ type UserServiceClientMiddleware func(UserServiceClient) UserServiceClient
 type UserServiceClient interface {
 	// Gets the user by an ID
 	GetUserByID(id int) shared.HTTPResponse
+
+	// Gets the user by email
+	GetUserByEmail(email string) shared.HTTPResponse
 }
 
 // ServiceClient is a facade for all APIs exposed by the service
