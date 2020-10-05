@@ -20,49 +20,29 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func proxyingMiddleware(ctx context.Context, proxyEndpoints []ProxyEndpoint) ServiceMiddleware {
-	commandName := "get-user-by-id"
-	config := shared.NewHystrixCommandConfig()
-	hystrixConfig := hystrix.CommandConfig{
-		ErrorPercentThreshold:  config.ErrorPercentThreshold,
-		MaxConcurrentRequests:  config.MaxConcurrentRequests,
-		RequestVolumeThreshold: config.RequestVolumeThreshold,
-		SleepWindow:            config.SleepWindow,
-		Timeout:                config.Timeout,
-	}
-
-	hystrix.ConfigureCommand(commandName, hystrixConfig)
-	breaker := circuitbreaker.Hystrix(commandName)
-
-	var (
-		qps         = 100                    // beyond which we will return an error
-		maxAttempts = 3                      // per request, before giving up
-		maxTime     = 250 * time.Millisecond // wallclock time, before giving up
-	)
-
+func proxyingMiddleware(in ProxyMiddlewareInput) ServiceMiddleware {
+	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
+	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer
 
-	for _, proxyEndpoint := range proxyEndpoints {
+	for _, proxyEndpoint := range in.ProxyEndpoints {
 		var e endpoint.Endpoint
 		e = httptransport.NewClient(proxyEndpoint.method, proxyEndpoint.tgt, proxyEndpoint.enc, proxyEndpoint.dec).Endpoint()
 		e = breaker(e)
-		e = ratelimit.NewErroringLimiter(rate.NewLimiter(rate.Every(time.Second), qps))(e)
+		e = ratelimit.NewErroringLimiter(rate.NewLimiter(rate.Every(time.Second), in.MaxQueryPerSecond))(e)
 		endpointer = append(endpointer, e)
 	}
 
 	balancer := lb.NewRoundRobin(endpointer)
-	retry := lb.Retry(maxAttempts, maxTime, balancer)
+	retry := lb.Retry(in.RetryAttempts, in.MaxTimeout, balancer)
 
-	// And finally, return the ServiceMiddleware, implemented by proxymw.
 	return func(next UserService) UserService {
-		return proxymw{ctx, next, retry}
+		out := ProxyMiddlewareOutput{in.Context, next, retry}
+		return ProxyMiddleware{
+			Out: out,
+			In:  in,
+		}
 	}
-}
-
-type proxymw struct {
-	ctx         context.Context
-	next        UserService       // Serve most requests via this service...
-	getUserByID endpoint.Endpoint // ...except GetUserByID, which gets served by this endpoint
 }
 
 func makeProxyEndpoint(id int) ProxyEndpoint {
@@ -77,13 +57,13 @@ func makeProxyEndpoint(id int) ProxyEndpoint {
 	}
 }
 
-func (mw proxymw) GetUserByID(id int) shared.HTTPResponse {
+func (mw ProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 	var res interface{}
 	var err error
 	circuitOpen := false
 	statusCode := 200
 
-	if res, err = mw.getUserByID(mw.ctx, id); err != nil {
+	if res, err = mw.Out.This(mw.In.Context, id); err != nil {
 		circuitOpen = true
 		statusCode = 500
 	}
