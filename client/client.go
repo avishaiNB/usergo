@@ -17,6 +17,6 @@ func (client *ServiceClient) GetUserByID(ctx context.Context, id int) shared.HTT
 
 	svc = makeProxyMiddleware(input)(svc)
 	svc = makeLoggingMiddleware(client.Logger)(svc)
-	svc = makeInstrumentingMiddleware(client.Name, commandName)(svc)
+	svc = makeInstrumentingMiddleware(client.ServiceName, commandName)(svc)
 	return svc.GetUserByID(id)
 }

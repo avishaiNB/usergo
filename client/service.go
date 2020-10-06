@@ -21,21 +21,25 @@ type UserServiceClient interface {
 
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
-	Logger log.Logger
-
-	// Name is the Service name
-	Name string
+	Logger      log.Logger
+	ServiceName string
+	SD          ServiceDiscovery
 }
 
 // NewServiceClient will create a new instance of ServiceClient
 func NewServiceClient() ServiceClient {
+	consulAddress := "localhost:8080"
+
 	var logger log.Logger
 	logger = log.NewLogfmtLogger(os.Stderr)
 	logger = log.With(logger, "listen", ":8080", "caller", log.DefaultCaller)
 
+	sd, _ := NewServiceDiscovery(logger, consulAddress)
+
 	client := ServiceClient{
-		Logger: logger,
-		Name:   "user",
+		Logger:      logger,
+		ServiceName: "user",
+		SD:          sd,
 	}
 	return client
 }
