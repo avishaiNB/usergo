@@ -19,7 +19,7 @@ func main() {
 
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
-	errs := make(chan error)
+	errs := make(chan error, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	logger := svc.NewLogger()
@@ -28,7 +28,7 @@ func main() {
 	repo := svc.NewRepository()
 	service := svc.NewService(&logger, &tracer, repo)
 	endpoints := svc.NewEndpoints(&logger, &tracer, &service)
-	server := svc.NewServer(&logger, &tracer, serviceName, hostAddress, errs)
+	httpServer := svc.NewHTTPServer(&logger, &tracer, serviceName, hostAddress)
 
 	go func() {
 		sig := <-sigs
@@ -38,7 +38,12 @@ func main() {
 	}()
 
 	go func() {
-		server.Run(&endpoints)
+		err := httpServer.Run(&endpoints)
+		if err != nil {
+			errs <- err
+			fmt.Println(err)
+			done <- true
+		}
 	}()
 
 	<-done

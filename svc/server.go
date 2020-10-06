@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,8 +12,8 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
-// Server ...
-type Server struct {
+// HTTPServer ...
+type HTTPServer struct {
 	Name    string
 	Address string
 	Router  *mux.Router
@@ -22,14 +23,13 @@ type Server struct {
 	Tracer  *Tracer
 }
 
-// NewServer ...
-func NewServer(logger *Logger, tracer *Tracer, serviceName string, hostAddress string, errChan chan error) Server {
+// NewHTTPServer ...
+func NewHTTPServer(logger *Logger, tracer *Tracer, serviceName string, hostAddress string) HTTPServer {
 
-	return Server{
+	return HTTPServer{
 		Name:    serviceName,
 		Address: hostAddress,
 		Router:  mux.NewRouter(),
-		Error:   errChan,
 		Logger:  logger,
 		Tracer:  tracer,
 	}
@@ -38,7 +38,10 @@ func NewServer(logger *Logger, tracer *Tracer, serviceName string, hostAddress s
 // Run will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func (server Server) Run(endpoints *Endpoints) {
+func (server HTTPServer) Run(endpoints *Endpoints) error {
+	if endpoints == nil {
+		return errors.New("no endpoints")
+	}
 
 	for _, endpoint := range endpoints.ServerEndpoints {
 		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc)
@@ -47,5 +50,7 @@ func (server Server) Run(endpoints *Endpoints) {
 
 	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)
 	fmt.Printf("Listernning on %s", server.Address)
-	server.Error <- http.ListenAndServe(server.Address, server.Handler)
+	http.ListenAndServe(server.Address, server.Handler)
+
+	return nil
 }
