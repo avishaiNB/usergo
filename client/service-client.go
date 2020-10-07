@@ -30,10 +30,13 @@ func (client *ServiceClient) GetUserByID(ctx context.Context, id int) core.HTTPR
 	var svc UserService
 	commandName := "get_user_by_id"
 
+	cb := core.NewCircuitBreakerator()
+	breakerMiddleware := cb.NewDefaultHystrixCommandMiddleware(commandName)
+
 	endpoints := makeEndpoints(id)
 	input := core.MakeProxyMiddlewareData(ctx, commandName, endpoints)
 
-	svc = makeProxyMiddleware(input)(svc)
+	svc = makeProxyMiddleware(breakerMiddleware, input)(svc)
 	svc = makeLoggingMiddleware(client.Logger)(svc)
 	svc = makeInstrumentingMiddleware(client.ServiceName, commandName)(svc)
 	return svc.GetUserByID(id)

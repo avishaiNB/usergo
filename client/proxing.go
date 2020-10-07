@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/afex/hystrix-go/hystrix"
-	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/sd"
@@ -21,9 +19,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func makeProxyMiddleware(in core.ProxyMiddlewareData) UserServiceMiddleware {
-	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
-	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
+func makeProxyMiddleware(breaker endpoint.Middleware, in core.ProxyMiddlewareData) UserServiceMiddleware {
 	var endpointer sd.FixedEndpointer
 
 	for _, proxyEndpoint := range in.ProxyEndpoints {
