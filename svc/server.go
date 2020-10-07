@@ -18,7 +18,6 @@ type HTTPServer struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Error   chan error
 	Logger  *Logger
 	Tracer  *Tracer
 }
