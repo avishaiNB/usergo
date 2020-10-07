@@ -8,8 +8,7 @@ import (
 	"github.com/thelotter-enterprise/usergo/core"
 )
 
-func makeInstrumentingMiddleware(serviceName string, api string) UserServiceMiddleware {
-	inst := core.NewInstrumentor(serviceName)
+func makeInstrumentingMiddleware(inst core.Instrumentor, serviceName string, api string) UserServiceMiddleware {
 	counter := inst.AddPromCounter(serviceName, "getuserbyid", core.RequestCount, []string{"method", "error"})
 	requestLatency := inst.AddPromSummary(serviceName, "getuserbyid", core.LatencyInMili, []string{"method", "error"})
 

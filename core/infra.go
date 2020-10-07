@@ -60,7 +60,6 @@ type ProxyMiddlewareData struct {
 	HystrixCommandName string
 	HystrixConfig      hystrix.CommandConfig
 	ProxyEndpoints     []ProxyEndpoint
-	MaxQueryPerSecond  int
 	RetryAttempts      int
 	MaxTimeout         time.Duration
 }
@@ -68,7 +67,6 @@ type ProxyMiddlewareData struct {
 // MakeProxyMiddlewareData creates an opinonated instance of ProxyMiddlewareInput which is common to many simple endpoints
 func MakeProxyMiddlewareData(ctx context.Context, commandName string, proxyEndpoints []ProxyEndpoint) ProxyMiddlewareData {
 	var (
-		qps         = 100                    // beyond which we will return an error
 		maxAttempts = 3                      // per request, before giving up
 		maxTime     = 250 * time.Millisecond // wallclock time, before giving up
 	)
@@ -91,6 +89,5 @@ func MakeProxyMiddlewareData(ctx context.Context, commandName string, proxyEndpo
 		ProxyEndpoints:     proxyEndpoints,
 		MaxTimeout:         maxTime,
 		RetryAttempts:      maxAttempts,
-		MaxQueryPerSecond:  qps,
 	}
 }

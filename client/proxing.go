@@ -6,27 +6,24 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/shared"
-	"golang.org/x/time/rate"
 )
 
-func makeProxyMiddleware(breaker endpoint.Middleware, in core.ProxyMiddlewareData) UserServiceMiddleware {
+func makeProxyMiddleware(breaker endpoint.Middleware, limitter endpoint.Middleware, in core.ProxyMiddlewareData) UserServiceMiddleware {
 	var endpointer sd.FixedEndpointer
 
 	for _, proxyEndpoint := range in.ProxyEndpoints {
 		var e endpoint.Endpoint
 		e = httptransport.NewClient(proxyEndpoint.Method, proxyEndpoint.Tgt, proxyEndpoint.Enc, proxyEndpoint.Dec).Endpoint()
 		e = breaker(e)
-		e = ratelimit.NewErroringLimiter(rate.NewLimiter(rate.Every(time.Second), in.MaxQueryPerSecond))(e)
+		e = limitter(e)
 		endpointer = append(endpointer, e)
 	}
 
