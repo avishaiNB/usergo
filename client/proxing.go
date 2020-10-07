@@ -16,11 +16,12 @@ import (
 	"github.com/go-kit/kit/sd/lb"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"golang.org/x/time/rate"
 )
 
-func makeProxyMiddleware(in shared.ProxyMiddlewareData) UserServiceClientMiddleware {
+func makeProxyMiddleware(in core.ProxyMiddlewareData) UserServiceMiddleware {
 	hystrix.ConfigureCommand(in.HystrixCommandName, in.HystrixConfig)
 	breaker := circuitbreaker.Hystrix(in.HystrixCommandName)
 	var endpointer sd.FixedEndpointer
@@ -36,8 +37,8 @@ func makeProxyMiddleware(in shared.ProxyMiddlewareData) UserServiceClientMiddlew
 	balancer := lb.NewRoundRobin(endpointer)
 	retry := lb.Retry(in.RetryAttempts, in.MaxTimeout, balancer)
 
-	return func(next UserServiceClient) UserServiceClient {
-		out := shared.ProxyMiddleware{
+	return func(next UserService) UserService {
+		out := core.ProxyMiddleware{
 			Context: in.Context,
 			Next:    next,
 			This:    retry,
@@ -49,15 +50,15 @@ func makeProxyMiddleware(in shared.ProxyMiddlewareData) UserServiceClientMiddlew
 	}
 }
 
-func makeEndpoints(id int) []shared.ProxyEndpoint {
-	var endpoints []shared.ProxyEndpoint
+func makeEndpoints(id int) []core.ProxyEndpoint {
+	var endpoints []core.ProxyEndpoint
 	router := mux.NewRouter()
 	tgt, _ := router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 
-	endpoint1 := shared.ProxyEndpoint{
+	endpoint1 := core.ProxyEndpoint{
 		Method: "GET",
 		Tgt:    tgt,
-		Enc:    shared.EncodeRequestToJSON,
+		Enc:    core.EncodeRequestToJSON,
 		Dec:    decodeGetUserByIDResponse,
 	}
 
@@ -75,11 +76,11 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 }
 
 type userByIDProxyMiddleware struct {
-	mw shared.ProxyMiddleware
+	mw core.ProxyMiddleware
 }
 
 // GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
-func (proxymw userByIDProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
+func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 	var res interface{}
 	var err error
 	circuitOpen := false
@@ -91,7 +92,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 		statusCode = 500
 	}
 
-	return shared.HTTPResponse{
+	return core.HTTPResponse{
 		Result:        res,
 		Error:         err,
 		CircuitOpened: circuitOpen,
@@ -101,7 +102,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) shared.HTTPResponse {
 
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
-func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) shared.HTTPResponse {
-	svc := proxymw.mw.Next.(UserServiceClient)
+func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) core.HTTPResponse {
+	svc := proxymw.mw.Next.(UserService)
 	return svc.GetUserByEmail(email)
 }

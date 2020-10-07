@@ -4,21 +4,21 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/core"
 )
 
-func makeLoggingMiddleware(logger log.Logger) UserServiceClientMiddleware {
-	return func(next UserServiceClient) UserServiceClient {
+func makeLoggingMiddleware(logger log.Logger) UserServiceMiddleware {
+	return func(next UserService) UserService {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
 	logger log.Logger
-	UserServiceClient
+	UserService
 }
 
-func (mw loggingMiddleware) GetUserByID(id int) (response shared.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByID(id int) (response core.HTTPResponse) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByID",
@@ -29,10 +29,10 @@ func (mw loggingMiddleware) GetUserByID(id int) (response shared.HTTPResponse) {
 		)
 	}(time.Now())
 
-	return mw.UserServiceClient.GetUserByID(id)
+	return mw.UserService.GetUserByID(id)
 }
 
-func (mw loggingMiddleware) GetUserByEmail(email string) (response shared.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByEmail(email string) (response core.HTTPResponse) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByEmail",
@@ -43,5 +43,5 @@ func (mw loggingMiddleware) GetUserByEmail(email string) (response shared.HTTPRe
 		)
 	}(time.Now())
 
-	return mw.UserServiceClient.GetUserByEmail(email)
+	return mw.UserService.GetUserByEmail(email)
 }

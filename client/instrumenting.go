@@ -4,64 +4,42 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-kit/kit/metrics"
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	"github.com/thelotter-enterprise/usergo/shared"
+	metrics "github.com/go-kit/kit/metrics"
+	"github.com/thelotter-enterprise/usergo/core"
 )
 
-func makeInstrumentingMiddleware(service string, api string) UserServiceClientMiddleware {
+func makeInstrumentingMiddleware(serviceName string, api string) UserServiceMiddleware {
+	inst := core.NewInstrumentor(serviceName)
+	counter := inst.AddPromCounter(serviceName, "getuserbyid", core.RequestCount, []string{"method", "error"})
+	requestLatency := inst.AddPromSummary(serviceName, "getuserbyid", core.LatencyInMili, []string{"method", "error"})
 
-	fieldKeys := []string{"method", "error"}
-	requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-		Namespace: service,
-		Subsystem: api,
-		Name:      "request_count",
-		Help:      "Number of requests received.",
-	}, fieldKeys)
-	requestLatency := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-		Namespace: service,
-		Subsystem: api,
-		Name:      "request_latency_microseconds",
-		Help:      "Total duration of requests in microseconds.",
-	}, fieldKeys)
-	countResult := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-		Namespace: service,
-		Subsystem: api,
-		Name:      "count_result",
-		Help:      "The result of each count method.",
-	}, []string{})
-
-	return func(next UserServiceClient) UserServiceClient {
-		return instrumentingMiddleware{requestCount, requestLatency, countResult, next}
+	return func(next UserService) UserService {
+		mw := instrumentingMiddleware{
+			next:           next,
+			requestCount:   counter,
+			requestLatency: requestLatency,
+		}
+		return mw
 	}
 }
 
 type instrumentingMiddleware struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
-	countResult    metrics.Histogram
-	UserServiceClient
+	next           UserService
 }
 
-func (mw instrumentingMiddleware) GetUserByID(id int) (response shared.HTTPResponse) {
+func (mw instrumentingMiddleware) GetUserByID(id int) (response core.HTTPResponse) {
 	defer func(begin time.Time) {
 		lvs := []string{"method", "GetUserByID", "error", fmt.Sprint(response.Error != nil)}
 		mw.requestCount.With(lvs...).Add(1)
 		mw.requestLatency.With(lvs...).Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	response = mw.UserServiceClient.GetUserByID(id)
+	response = mw.next.GetUserByID(id)
 	return response
 }
 
-func (mw instrumentingMiddleware) GetUserByEmail(email string) (response shared.HTTPResponse) {
-	defer func(begin time.Time) {
-		lvs := []string{"method", "GetUserByEmail", "error", fmt.Sprint(response.Error != nil)}
-		mw.requestCount.With(lvs...).Add(1)
-		mw.requestLatency.With(lvs...).Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	response = mw.UserServiceClient.GetUserByEmail(email)
-	return response
+func (mw instrumentingMiddleware) GetUserByEmail(email string) (response core.HTTPResponse) {
+	return mw.next.GetUserByEmail(email)
 }

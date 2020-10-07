@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/gorilla/mux"
+	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -16,7 +17,7 @@ type Endpoints struct {
 	Tracer  Tracer
 	Service Service
 
-	ServerEndpoints []shared.ServerEndpoint
+	ServerEndpoints []core.ServerEndpoint
 }
 
 // NewEndpoints ...
@@ -34,11 +35,11 @@ func NewEndpoints(logger Logger, tracer Tracer, service Service) Endpoints {
 
 // AddEndpoints ...
 func (endpoints *Endpoints) AddEndpoints() {
-	var serverEndpoints []shared.ServerEndpoint
+	var serverEndpoints []core.ServerEndpoint
 
-	userbyid := shared.ServerEndpoint{
+	userbyid := core.ServerEndpoint{
 		Endpoint: makeUserByIDEndpoint(endpoints.Service),
-		Enc:      shared.EncodeReponseToJSON,
+		Enc:      core.EncodeReponseToJSON,
 		Dec:      decodeUserByIDRequest,
 		Method:   "GET",
 	}
