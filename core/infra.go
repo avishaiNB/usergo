@@ -21,6 +21,15 @@ type HTTPResponse struct {
 	// timeout
 }
 
+// HTTPRequest is a base response
+// TODO: use it as the request wrapper
+type HTTPRequest struct {
+	Request interface{}
+	Context context.Context
+	// CorrelactionID
+	// timeout
+}
+
 // ProxyEndpoint holds the information needed to build a go-kit Client
 // A Client than can be constructed for a single remote method.
 type ProxyEndpoint struct {
