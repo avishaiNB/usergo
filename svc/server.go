@@ -18,12 +18,12 @@ type HTTPServer struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Logger  *Logger
-	Tracer  *Tracer
+	Logger  Logger
+	Tracer  Tracer
 }
 
 // NewHTTPServer ...
-func NewHTTPServer(logger *Logger, tracer *Tracer, serviceName string, hostAddress string) HTTPServer {
+func NewHTTPServer(logger Logger, tracer Tracer, serviceName string, hostAddress string) HTTPServer {
 
 	return HTTPServer{
 		Name:    serviceName,

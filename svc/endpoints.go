@@ -12,15 +12,15 @@ import (
 
 // Endpoints ...
 type Endpoints struct {
-	Logger  *Logger
-	Tracer  *Tracer
-	Service *Service
+	Logger  Logger
+	Tracer  Tracer
+	Service Service
 
 	ServerEndpoints []shared.ServerEndpoint
 }
 
 // NewEndpoints ...
-func NewEndpoints(logger *Logger, tracer *Tracer, service *Service) Endpoints {
+func NewEndpoints(logger Logger, tracer Tracer, service Service) Endpoints {
 	endpoints := Endpoints{
 		Logger:  logger,
 		Tracer:  tracer,
@@ -46,10 +46,10 @@ func (endpoints *Endpoints) AddEndpoints() {
 	endpoints.ServerEndpoints = append(serverEndpoints, userbyid)
 }
 
-func makeUserByIDEndpoint(service *Service) endpoint.Endpoint {
+func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(shared.ByIDRequest)
-		user, err := (*service).GetUserByID(ctx, req.ID)
+		user, err := service.GetUserByID(ctx, req.ID)
 		return shared.NewUserResponse(user), err
 	}
 }
