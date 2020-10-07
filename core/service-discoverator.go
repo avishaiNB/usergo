@@ -16,20 +16,15 @@ type ServiceDiscoverator struct {
 }
 
 // NewServiceDiscovery ...
-func NewServiceDiscovery(logger log.Logger, consulAddress string) (ServiceDiscoverator, error) {
-	var err error
+func NewServiceDiscovery(logger log.Logger) ServiceDiscoverator {
 	sd := ServiceDiscoverator{
 		Logger: logger,
 	}
-
-	err = sd.makeConsulClient(consulAddress)
-	if err != nil {
-		sd.Logger.Log("method", "NewServiceDiscovery", "input", consulAddress, "err", err)
-	}
-	return sd, err
+	return sd
 }
 
-func (sd *ServiceDiscoverator) makeConsulClient(consulAddress string) error {
+// WithConsul builds consul client and add it to out service discovery
+func (sd *ServiceDiscoverator) WithConsul(consulAddress string) error {
 	var err error
 	config := &consulapi.Config{
 		Address: consulAddress,
@@ -40,6 +35,8 @@ func (sd *ServiceDiscoverator) makeConsulClient(consulAddress string) error {
 	if err == nil {
 		client := consul.NewClient(sd.ConsulAPI)
 		sd.ConsulClient = &client
+	} else {
+		sd.Logger.Log("method", "NewServiceDiscovery", "input", consulAddress, "err", err)
 	}
 
 	return err
@@ -47,7 +44,13 @@ func (sd *ServiceDiscoverator) makeConsulClient(consulAddress string) error {
 
 // ConsulInstance creates kit consul instancer which is used to find specific service
 // For each service a new instance is required
-func (sd *ServiceDiscoverator) ConsulInstance(serviceName string, tags []string, passingOnly bool) *consul.Instancer {
-	instancer := consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, passingOnly)
-	return instancer
+func (sd *ServiceDiscoverator) ConsulInstance(serviceName string, tags []string, passingOnly bool) (*consul.Instancer, error) {
+	var instancer *consul.Instancer
+	if *sd.ConsulClient == nil {
+		err := NewApplicationError("call WithConsul first", nil)
+		return instancer, err
+	}
+
+	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, passingOnly)
+	return instancer, nil
 }
