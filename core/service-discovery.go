@@ -8,23 +8,23 @@ import (
 
 // this should be infra
 
-// ServiceDiscoverator ...
-type ServiceDiscoverator struct {
+// ServiceDiscovery ...
+type ServiceDiscovery struct {
 	ConsulAPI    *consulapi.Client
 	ConsulClient *consul.Client
 	Logger       log.Logger
 }
 
 // NewServiceDiscovery ...
-func NewServiceDiscovery(logger log.Logger) ServiceDiscoverator {
-	sd := ServiceDiscoverator{
+func NewServiceDiscovery(logger log.Logger) ServiceDiscovery {
+	sd := ServiceDiscovery{
 		Logger: logger,
 	}
 	return sd
 }
 
 // WithConsul builds consul client and add it to out service discovery
-func (sd *ServiceDiscoverator) WithConsul(consulAddress string) error {
+func (sd *ServiceDiscovery) WithConsul(consulAddress string) error {
 	var err error
 	config := &consulapi.Config{
 		Address: consulAddress,
@@ -44,7 +44,7 @@ func (sd *ServiceDiscoverator) WithConsul(consulAddress string) error {
 
 // ConsulInstance creates kit consul instancer which is used to find specific service
 // For each service a new instance is required
-func (sd *ServiceDiscoverator) ConsulInstance(serviceName string, tags []string, passingOnly bool) (*consul.Instancer, error) {
+func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, passingOnly bool) (*consul.Instancer, error) {
 	var instancer *consul.Instancer
 	if *sd.ConsulClient == nil {
 		err := NewApplicationError("call WithConsul first", nil)

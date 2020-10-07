@@ -6,23 +6,23 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-// CircuitBreakerator ...
-type CircuitBreakerator struct {
+// CircuitBreaker ...
+type CircuitBreaker struct {
 }
 
 // NewCircuitBreakerator ....
-func NewCircuitBreakerator() CircuitBreakerator {
-	return CircuitBreakerator{}
+func NewCircuitBreakerator() CircuitBreaker {
+	return CircuitBreaker{}
 }
 
 // NewDefaultHystrixCommandMiddleware ...
-func (cb CircuitBreakerator) NewDefaultHystrixCommandMiddleware(commandName string) endpoint.Middleware {
+func (cb CircuitBreaker) NewDefaultHystrixCommandMiddleware(commandName string) endpoint.Middleware {
 	config := NewHystrixCommandConfig()
 	return cb.NewHystrixCommandMiddleware(commandName, config)
 }
 
 // NewHystrixCommandMiddleware ...
-func (cb CircuitBreakerator) NewHystrixCommandMiddleware(commandName string, config HystrixCommandConfig) endpoint.Middleware {
+func (cb CircuitBreaker) NewHystrixCommandMiddleware(commandName string, config HystrixCommandConfig) endpoint.Middleware {
 	hystrixConfig := hystrix.CommandConfig{
 		ErrorPercentThreshold:  config.ErrorPercentThreshold,
 		MaxConcurrentRequests:  config.MaxConcurrentRequests,

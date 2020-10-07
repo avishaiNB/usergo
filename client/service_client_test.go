@@ -37,18 +37,18 @@ func makeLogger() log.Logger {
 	return logger
 }
 
-func makeServiceDiscovery(logger log.Logger) *core.ServiceDiscoverator {
+func makeServiceDiscovery(logger log.Logger) *core.ServiceDiscovery {
 	consulAddress := "localhost:8080"
 	sd := core.NewServiceDiscovery(logger)
 	sd.WithConsul(consulAddress)
 	return &sd
 }
 
-func makeCircuitBreakerator() core.CircuitBreakerator {
+func makeCircuitBreakerator() core.CircuitBreaker {
 	return core.NewCircuitBreakerator()
 }
 
-func makeRateLimitator() core.RateLimitator {
+func makeRateLimitator() core.RateLimiter {
 	return core.NewRateLimitator()
 }
 

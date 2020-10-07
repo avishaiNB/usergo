@@ -10,15 +10,15 @@ import (
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
 	Logger      log.Logger
-	SD          *core.ServiceDiscoverator
+	SD          *core.ServiceDiscovery
 	ServiceName string
-	CB          core.CircuitBreakerator
-	Limiter     core.RateLimitator
+	CB          core.CircuitBreaker
+	Limiter     core.RateLimiter
 	Inst        core.Instrumentor
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *core.ServiceDiscoverator, cb core.CircuitBreakerator, limiter core.RateLimitator, inst core.Instrumentor, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
