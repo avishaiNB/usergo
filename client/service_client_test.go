@@ -13,14 +13,11 @@ import (
 func TestClientIntegration(t *testing.T) {
 	serviceName := "test"
 	logger := makeLogger()
-	serviceDiscoverator := makeServiceDiscovery(logger)
-	breakerator := makeCircuitBreakerator()
-	limitator := makeRateLimitator()
-	inst := makeInstrumentator(serviceName)
-	c := client.NewServiceClient(logger, serviceDiscoverator, breakerator, limitator, inst, serviceName)
-
 	ctx := context.Background()
 	id := 1
+
+	serviceDiscoverator := makeServiceDiscovery(logger)
+	c := client.NewServiceClientWithDefaults(logger, serviceDiscoverator, serviceName)
 
 	response := c.GetUserByID(ctx, id)
 
@@ -42,16 +39,4 @@ func makeServiceDiscovery(logger log.Logger) *core.ServiceDiscovery {
 	sd := core.NewServiceDiscovery(logger)
 	sd.WithConsul(consulAddress)
 	return &sd
-}
-
-func makeCircuitBreakerator() core.CircuitBreaker {
-	return core.NewCircuitBreakerator()
-}
-
-func makeRateLimitator() core.RateLimiter {
-	return core.NewRateLimitator()
-}
-
-func makeInstrumentator(serviceName string) core.Instrumentor {
-	return core.NewInstrumentor(serviceName)
 }

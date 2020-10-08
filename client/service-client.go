@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/log"
+	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
 )
 
@@ -15,10 +16,16 @@ type ServiceClient struct {
 	CB          core.CircuitBreaker
 	Limiter     core.RateLimiter
 	Inst        core.Instrumentor
+	Router      *mux.Router
+}
+
+// NewServiceClientWithDefaults with defaults
+func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, serviceName string) ServiceClient {
+	return NewServiceClient(logger, sd, core.NewCircuitBreakerator(), core.NewRateLimitator(), core.NewInstrumentor(serviceName), mux.NewRouter(), serviceName)
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
@@ -26,6 +33,7 @@ func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.Circ
 		CB:          cb,
 		Limiter:     limiter,
 		Inst:        inst,
+		Router:      router,
 	}
 	return client
 }
@@ -40,11 +48,9 @@ func (client *ServiceClient) GetUserByID(ctx context.Context, id int) core.HTTPR
 	limiterMiddleware := client.Limiter.NewDefaultErrorLimitterMiddleware()
 	instMiddleware := makeInstrumentingMiddleware(client.Inst, client.ServiceName, commandName)
 	logMiddleware := makeLoggingMiddleware(client.Logger)
+	proxyMiddleware := newProxyMiddleware(breakerMiddleware, limiterMiddleware, client.Router)
 
-	endpoints := makeEndpoints(id)
-	input := core.MakeProxyMiddlewareData(ctx, commandName, endpoints)
-
-	svc = makeProxyMiddleware(breakerMiddleware, limiterMiddleware, input)(svc)
+	svc = proxyMiddleware.userByIDMiddleware(ctx, id)(svc)
 	svc = logMiddleware(svc)
 	svc = instMiddleware(svc)
 	return svc.GetUserByID(id)
