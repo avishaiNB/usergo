@@ -17,12 +17,14 @@ const (
 // LoadBalancer ...
 type LoadBalancer struct {
 	FixedEndpointer sd.FixedEndpointer
+	Endpointer      *sd.DefaultEndpointer
 }
 
 // NewLoadBalancer ..
-func NewLoadBalancer(fixedEndpointer sd.FixedEndpointer) LoadBalancer {
+func NewLoadBalancer(fixedEndpointer sd.FixedEndpointer, endpointer *sd.DefaultEndpointer) LoadBalancer {
 	return LoadBalancer{
 		FixedEndpointer: fixedEndpointer,
+		Endpointer:      endpointer,
 	}
 }
 
@@ -35,7 +37,14 @@ func (b *LoadBalancer) DefaultRoundRobinWithRetryEndpoint(ctx context.Context) e
 
 // RoundRobinWithRetryEndpoint ..
 func (b *LoadBalancer) RoundRobinWithRetryEndpoint(maxAttempts int, maxTime time.Duration) endpoint.Endpoint {
-	balancer := lb.NewRoundRobin(b.FixedEndpointer)
+	var balancer lb.Balancer
+	var endpointer sd.Endpointer
+	if b.FixedEndpointer != nil {
+		endpointer = b.FixedEndpointer
+	} else {
+		endpointer = b.Endpointer
+	}
+	balancer = lb.NewRoundRobin(endpointer)
 	retry := lb.Retry(maxAttempts, maxTime, balancer)
 	return retry
 }

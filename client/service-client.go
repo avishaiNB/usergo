@@ -21,6 +21,7 @@ type ServiceClient struct {
 
 // NewServiceClientWithDefaults with defaults
 func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, serviceName string) ServiceClient {
+
 	return NewServiceClient(
 		logger,
 		sd,
@@ -48,17 +49,23 @@ func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.Circ
 
 // GetUserByID , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
-func (client *ServiceClient) GetUserByID(ctx context.Context, id int) core.HTTPResponse {
-	var svc UserService
-
-	proxy := NewProxy(client.CB, client.Limiter, client.Router)
+func (client ServiceClient) GetUserByID(ctx context.Context, id int) core.HTTPResponse {
+	var service UserService
+	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
 	instMiddleware := makeInstrumentingMiddleware(client.Inst)
 	logMiddleware := makeLoggingMiddleware(client.Logger)
+	proxyMiddleware := proxy.UserByIDMiddleware(ctx, id)
 
-	svc = proxy.UserByIDMiddleware(ctx, id)(svc)
-	svc = logMiddleware(svc)
-	svc = instMiddleware(svc)
-	res := svc.GetUserByID(id)
+	service = proxyMiddleware(service)
+	service = logMiddleware(service)
+	service = instMiddleware(service)
 
+	res := service.GetUserByID(id)
 	return res
+}
+
+// GetUserByEmail , if found will return shared.HTTPResponse containing the user requested information
+// If an error occurs it will hold error information that cab be used to decide how to proceed
+func (client ServiceClient) GetUserByEmail(ctx context.Context, email string) core.HTTPResponse {
+	return core.HTTPResponse{}
 }

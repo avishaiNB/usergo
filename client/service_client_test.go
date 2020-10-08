@@ -35,7 +35,7 @@ func makeLogger() log.Logger {
 }
 
 func makeServiceDiscovery(logger log.Logger) *core.ServiceDiscovery {
-	consulAddress := "localhost:8080"
+	consulAddress := "localhost:8500"
 	sd := core.NewServiceDiscovery(logger)
 	sd.WithConsul(consulAddress)
 	return &sd

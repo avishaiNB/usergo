@@ -1,6 +1,8 @@
 package client
 
-import "github.com/thelotter-enterprise/usergo/core"
+import (
+	"github.com/thelotter-enterprise/usergo/core"
+)
 
 // UserServiceMiddleware used to chain behaviors on the UserService using middleware pattern
 type UserServiceMiddleware func(UserService) UserService

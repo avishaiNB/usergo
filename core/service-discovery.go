@@ -44,13 +44,13 @@ func (sd *ServiceDiscovery) WithConsul(consulAddress string) error {
 
 // ConsulInstance creates kit consul instancer which is used to find specific service
 // For each service a new instance is required
-func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, passingOnly bool) (*consul.Instancer, error) {
+func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, onlyHealthy bool) (*consul.Instancer, error) {
 	var instancer *consul.Instancer
 	if *sd.ConsulClient == nil {
 		err := NewApplicationError("call WithConsul first", nil)
 		return instancer, err
 	}
 
-	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, passingOnly)
+	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, onlyHealthy)
 	return instancer, nil
 }

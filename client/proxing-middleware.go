@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
-	"strconv"
+	"net/url"
 
 	"github.com/go-kit/kit/endpoint"
+	log "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -21,6 +23,8 @@ type Proxy struct {
 	limmitermw endpoint.Middleware
 	router     *mux.Router
 	limiter    core.RateLimiter
+	sd         core.ServiceDiscovery
+	logger     log.Logger
 }
 
 type userByIDProxyMiddleware struct {
@@ -38,32 +42,45 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, router *mux.Router) Proxy {
+func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, sd *core.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
 	return Proxy{
 		cb:      cb,
 		limiter: limiter,
 		router:  router,
+		sd:      *sd,
+		logger:  logger,
 	}
 }
 
 // UserByIDMiddleware ..
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
-	commandName := "get_user_by_id"
-	var endpointer sd.FixedEndpointer
-	breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware(commandName)
-	limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
-	tgt, _ := proxy.router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
-	e := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint()
-	e = breakermw(e)
-	e = limitermw(e)
-	endpointer = append(endpointer, e)
+	// options := []httptransport.ClientOption{}
+	// breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
+	// limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
+	// tgt, _ := proxy.router.Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
+	// var e endpoint.Endpoint = httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, options...).Endpoint()
+	// e = breakermw(e)
+	// e = limitermw(e)
 
-	lb := core.NewLoadBalancer(endpointer)
+	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
+	endpointer := sd.NewEndpointer(consulInstancer, factoryFor, proxy.logger)
+	//TODO: refactor. dont like the nil. consider New().With()
+	lb := core.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next UserService) UserService {
 		return userByIDProxyMiddleware{Context: ctx, Next: next, This: retry}
 	}
+}
+
+// TODO: we need to make this generic and use the additional middlewares
+func factoryFor(instance string) (endpoint.Endpoint, io.Closer, error) {
+	tgt, _ := url.Parse(instance)
+	tgt.Path = "/v1/users/1"
+	options := []httptransport.ClientOption{}
+
+	endpoint := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, options...).Endpoint()
+	return endpoint, nil, nil
 }
 
 func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}, error) {

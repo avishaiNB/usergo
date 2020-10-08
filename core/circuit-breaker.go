@@ -41,8 +41,7 @@ func (cb CircuitBreaker) NewHystrixCommandMiddleware(commandName string, config 
 		MaxConcurrentRequests:  config.MaxConcurrentRequests,
 		RequestVolumeThreshold: config.RequestVolumeThreshold,
 		SleepWindow:            config.SleepWindow,
-
-		Timeout: config.Timeout,
+		Timeout:                config.Timeout,
 	}
 	hystrix.ConfigureCommand(commandName, hystrixConfig)
 	breaker := circuitbreaker.Hystrix(commandName)
