@@ -23,6 +23,20 @@ type Proxy struct {
 	limiter    core.RateLimiter
 }
 
+type userByIDProxyMiddleware struct {
+	// Context holds the context
+	Context context.Context
+
+	// Next is a the service instance
+	// We need to use Next, since it is used to satisfy the middleware pattern
+	// Each middleware is responbsible for a single API, yet, due to the service interface,
+	// it need to implement all the service interface APIs. To support it, we use Next to obstract the implementation
+	Next interface{}
+
+	// This is the current API which we plan to support in the service interface contract
+	This endpoint.Endpoint
+}
+
 // NewProxy ..
 func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, router *mux.Router) Proxy {
 	return Proxy{
@@ -48,11 +62,7 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMi
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next UserService) UserService {
-		out := core.ProxyMiddlewareData{Context: ctx, Next: next, This: retry}
-
-		return userByIDProxyMiddleware{
-			mw: out,
-		}
+		return userByIDProxyMiddleware{Context: ctx, Next: next, This: retry}
 	}
 }
 
@@ -65,10 +75,6 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 	return resp, err
 }
 
-type userByIDProxyMiddleware struct {
-	mw core.ProxyMiddlewareData
-}
-
 // GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
 func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 	var res interface{}
@@ -76,7 +82,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 	circuitOpen := false
 	statusCode := 200
 
-	if res, err = proxymw.mw.This(proxymw.mw.Context, id); err != nil {
+	if res, err = proxymw.This(proxymw.Context, id); err != nil {
 		// TODO: need a refactor to analyze the response
 		circuitOpen = true
 		statusCode = 500
@@ -93,6 +99,6 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
 func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) core.HTTPResponse {
-	svc := proxymw.mw.Next.(UserService)
+	svc := proxymw.Next.(UserService)
 	return svc.GetUserByEmail(email)
 }
