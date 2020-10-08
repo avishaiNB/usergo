@@ -21,7 +21,15 @@ type ServiceClient struct {
 
 // NewServiceClientWithDefaults with defaults
 func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, serviceName string) ServiceClient {
-	return NewServiceClient(logger, sd, core.NewCircuitBreakerator(), core.NewRateLimitator(), core.NewInstrumentor(serviceName), mux.NewRouter(), serviceName)
+	return NewServiceClient(
+		logger,
+		sd,
+		core.NewCircuitBreakerator(),
+		core.NewRateLimitator(),
+		core.NewInstrumentor(serviceName),
+		mux.NewRouter(),
+		serviceName,
+	)
 }
 
 // NewServiceClient will create a new instance of ServiceClient
@@ -42,16 +50,15 @@ func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.Circ
 // If an error occurs it will hold error information that cab be used to decide how to proceed
 func (client *ServiceClient) GetUserByID(ctx context.Context, id int) core.HTTPResponse {
 	var svc UserService
-	commandName := "get_user_by_id"
 
-	breakerMiddleware := client.CB.NewDefaultHystrixCommandMiddleware(commandName)
-	limiterMiddleware := client.Limiter.NewDefaultErrorLimitterMiddleware()
-	instMiddleware := makeInstrumentingMiddleware(client.Inst, client.ServiceName, commandName)
+	proxy := NewProxy(client.CB, client.Limiter, client.Router)
+	instMiddleware := makeInstrumentingMiddleware(client.Inst)
 	logMiddleware := makeLoggingMiddleware(client.Logger)
-	proxyMiddleware := newProxyMiddleware(breakerMiddleware, limiterMiddleware, client.Router)
 
-	svc = proxyMiddleware.userByIDMiddleware(ctx, id)(svc)
+	svc = proxy.UserByIDMiddleware(ctx, id)(svc)
 	svc = logMiddleware(svc)
 	svc = instMiddleware(svc)
-	return svc.GetUserByID(id)
+	res := svc.GetUserByID(id)
+
+	return res
 }

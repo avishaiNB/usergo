@@ -15,27 +15,33 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
-type proxymw struct {
-	breakermw  endpoint.Middleware
+// Proxy ...
+type Proxy struct {
+	cb         core.CircuitBreaker
 	limmitermw endpoint.Middleware
 	router     *mux.Router
+	limiter    core.RateLimiter
 }
 
-func newProxyMiddleware(breakermw endpoint.Middleware, limittermw endpoint.Middleware, router *mux.Router) proxymw {
-	return proxymw{
-		breakermw:  breakermw,
-		limmitermw: limittermw,
-		router:     router,
+// NewProxy ..
+func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, router *mux.Router) Proxy {
+	return Proxy{
+		cb:      cb,
+		limiter: limiter,
+		router:  router,
 	}
 }
 
-func (mw proxymw) userByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
+// UserByIDMiddleware ..
+func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
+	commandName := "get_user_by_id"
 	var endpointer sd.FixedEndpointer
-
-	tgt, _ := mw.router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
+	breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware(commandName)
+	limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
+	tgt, _ := proxy.router.Schemes("http").Host("localhost:8080").Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
 	e := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse).Endpoint()
-	e = mw.breakermw(e)
-	e = mw.limmitermw(e)
+	e = breakermw(e)
+	e = limitermw(e)
 	endpointer = append(endpointer, e)
 
 	lb := core.NewLoadBalancer(endpointer)
