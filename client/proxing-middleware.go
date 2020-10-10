@@ -78,6 +78,14 @@ func factoryFor(instance string) (endpoint.Endpoint, io.Closer, error) {
 	tgt, _ := url.Parse(instance)
 	tgt.Path = "/v1/users/1"
 	options := []httptransport.ClientOption{}
+	options = append(options, httptransport.ClientBefore(httptransport.SetRequestHeader("headerKey", "2")))
+	// passing the headers
+	// httptransport.ClientBefore(httptransport.SetRequestHeader(headerKey, headerVal)),
+	// httptransport.ClientAfter(afterFunc)
+	// afterFunc      = func(ctx context.Context, r *http.Response) context.Context {
+	// 	afterVal = r.Header.Get(afterHeaderKey)
+	// 	return ctx
+	// }
 
 	endpoint := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, options...).Endpoint()
 	return endpoint, nil, nil

@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	errs := make(chan error, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	logger := svc.NewLogger()
+	logger := core.NewLogWithDefaults()
 	tracer := svc.NewTracer(serviceName, hostAddress, zipkinURL)
 
 	repo := svc.NewRepository()

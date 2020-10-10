@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-kit/kit/transport"
 	httpkit "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -18,18 +20,18 @@ type HTTPServer struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Logger  Logger
+	Log     core.Log
 	Tracer  Tracer
 }
 
 // NewHTTPServer ...
-func NewHTTPServer(logger Logger, tracer Tracer, serviceName string, hostAddress string) HTTPServer {
+func NewHTTPServer(log core.Log, tracer Tracer, serviceName string, hostAddress string) HTTPServer {
 
 	return HTTPServer{
 		Name:    serviceName,
 		Address: hostAddress,
 		Router:  mux.NewRouter(),
-		Logger:  logger,
+		Log:     log,
 		Tracer:  tracer,
 	}
 }
@@ -42,8 +44,13 @@ func (server HTTPServer) Run(endpoints *Endpoints) error {
 		return errors.New("no endpoints")
 	}
 
+	options := []httpkit.ServerOption{
+		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),
+		core.ReadCtxBefore(),
+	}
+
 	for _, endpoint := range endpoints.ServerEndpoints {
-		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc)
+		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc, options...)
 		server.Router.Methods(endpoint.Method).Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
 	}
 

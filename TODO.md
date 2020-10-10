@@ -7,3 +7,4 @@ amqp transports
 context timeout and object (now I return max, need to change it)
 define base errors
 sd to support consul and coredns
+replace log.Logger with core.Log

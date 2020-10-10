@@ -13,7 +13,7 @@ import (
 
 // Endpoints ...
 type Endpoints struct {
-	Logger  Logger
+	Log     core.Log
 	Tracer  Tracer
 	Service Service
 
@@ -21,9 +21,9 @@ type Endpoints struct {
 }
 
 // NewEndpoints ...
-func NewEndpoints(logger Logger, tracer Tracer, service Service) Endpoints {
+func NewEndpoints(log core.Log, tracer Tracer, service Service) Endpoints {
 	endpoints := Endpoints{
-		Logger:  logger,
+		Log:     log,
 		Tracer:  tracer,
 		Service: service,
 	}
