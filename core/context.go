@@ -6,6 +6,7 @@ import (
 	"time"
 
 	httpkit "github.com/go-kit/kit/transport/http"
+	"github.com/google/uuid"
 )
 
 // CorrelationIDHeaderKey ..
@@ -25,25 +26,44 @@ const (
 	TimeoutKey TimeoutHeaderKey = "timeout"
 )
 
-// Ctx ...
-type Ctx struct {
-	Context context.Context
-}
-
 // NewCtx will create a new context
-func NewCtx(ctx context.Context) Ctx {
-	return Ctx{
-		Context: ctx,
-	}
+func NewCtx() context.Context {
+	return context.Background()
 }
 
-// CalcTimeout will return the timeout (deadline) for waiting an external response to come back
+// CalcTimeoutFromCtx will return the timeout (deadline) for waiting an external response to come back
 // TODO: now I return max, need to change it
-func (ctx Ctx) CalcTimeout() time.Duration {
+func CalcTimeoutFromCtx(ctx context.Context) time.Duration {
 	return MaxTimeout
 }
 
-//func AddToCtx
+// GetOrCreateTimeout ...
+func GetOrCreateTimeout(ctx context.Context) string {
+	val := ctx.Value(TimeoutKey)
+
+	var timeout string
+	if val == nil {
+		timeout = "15"
+	} else {
+		timeout = val.(string)
+	}
+
+	return timeout
+}
+
+// GetOrCreateCorrelationID ...
+func GetOrCreateCorrelationID(ctx context.Context) string {
+	val := ctx.Value(CorrelationIDKey)
+
+	var corrid string
+	if val == nil {
+		corrid = uuid.New().String()
+	} else {
+		corrid = val.(string)
+	}
+
+	return corrid
+}
 
 // ReadCtx ...
 func ReadCtx(ctx context.Context, r *http.Request) context.Context {
@@ -53,7 +73,25 @@ func ReadCtx(ctx context.Context, r *http.Request) context.Context {
 	ctx = context.WithValue(ctx, CorrelationIDKey, correlationid)
 	ctx = context.WithValue(ctx, TimeoutKey, timeout)
 
+	// need to set the deadline for the context
+
 	return ctx
+}
+
+// WriteCtx ...
+func WriteCtx(ctx context.Context, r *http.Request) context.Context {
+	corrid := GetOrCreateCorrelationID(ctx)
+	timeout := GetOrCreateTimeout(ctx)
+
+	r.Header.Add(string(CorrelationIDKey), corrid)
+	r.Header.Add(string(timeout), timeout)
+
+	return ctx
+}
+
+// WriteCtxBefore ...
+func WriteCtxBefore() httpkit.ClientOption {
+	return httpkit.ClientBefore(WriteCtx)
 }
 
 // ReadCtxBefore ...
