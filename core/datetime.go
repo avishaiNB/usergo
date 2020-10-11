@@ -1,6 +1,8 @@
 package core
 
-import "time"
+import (
+	"time"
+)
 
 // DateTime ...
 type DateTime struct {
@@ -20,4 +22,29 @@ func (dt DateTime) Now() time.Time {
 func (dt DateTime) AddDuration(duration time.Duration) time.Time {
 	date := dt.Now().Add(duration)
 	return date
+}
+
+// DurationToString ...
+// TODO: work with unix time???
+func (dt DateTime) DurationToString(duration time.Duration) string {
+	return ""
+}
+
+// StringToDuration ...
+// TODO: work with unix time???
+func (dt DateTime) StringToDuration(duration string) (time.Duration, error) {
+	return time.ParseDuration(duration)
+}
+
+// TimeToString ...
+// TODO: work with unix time???
+func (dt DateTime) TimeToString(t time.Time) string {
+
+	return ""
+}
+
+// StringToTime ...
+// TODO: work with unix time???
+func (dt DateTime) StringToTime(duration string) time.Time {
+	return dt.Now()
 }
