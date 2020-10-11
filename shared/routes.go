@@ -1,4 +1,7 @@
 package shared
 
-// UserByIDRoute ...
-const UserByIDRoute string = "/v1/users/{id}"
+// UserByIDServerRoute ...
+const UserByIDServerRoute string = "/v1/users/{id}"
+
+// UserByIDClientRoute ...
+const UserByIDClientRoute string = "/v1/users/%d"

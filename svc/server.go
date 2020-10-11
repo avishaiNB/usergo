@@ -53,7 +53,7 @@ func (server HTTPServer) Run(endpoints *Endpoints) error {
 
 	for _, endpoint := range endpoints.ServerEndpoints {
 		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc, options...)
-		server.Router.Methods(endpoint.Method).Path(shared.UserByIDRoute).Handler(getUserByIDHandler)
+		server.Router.Methods(endpoint.Method).Path(shared.UserByIDServerRoute).Handler(getUserByIDHandler)
 	}
 
 	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)

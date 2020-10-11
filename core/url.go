@@ -24,3 +24,9 @@ func EncodeRequestToJSON(_ context.Context, r *http.Request, request interface{}
 func EncodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	return json.NewEncoder(w).Encode(response)
 }
+
+// ParsePath ...
+// TODO: implement the parse: /v1/user/{id} --> /v1/user/123
+func ParsePath(path string, data ...interface{}) {
+
+}

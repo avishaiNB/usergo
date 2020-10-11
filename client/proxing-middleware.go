@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -54,22 +55,34 @@ func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, sd *core.Service
 
 // UserByIDMiddleware ..
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
-	// options := []httptransport.ClientOption{}
-	// breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
-	// limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
-	// tgt, _ := proxy.router.Path(shared.UserByIDRoute).URL("id", strconv.Itoa(id))
-	// var e endpoint.Endpoint = httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, options...).Endpoint()
-	// e = breakermw(e)
-	// e = limitermw(e)
-
 	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
-	endpointer := sd.NewEndpointer(consulInstancer, factoryFor, proxy.logger)
+	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger)
 	//TODO: refactor. dont like the nil. consider New().With()
 	lb := core.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next UserService) UserService {
 		return userByIDProxyMiddleware{Context: ctx, Next: next, This: retry}
+	}
+}
+
+func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory {
+	// TODO: refactor
+	path := fmt.Sprintf(shared.UserByIDClientRoute, id)
+
+	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
+		breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
+		limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
+
+		tgt, _ := url.Parse(instance)
+		tgt.Path = path
+		ctx := core.NewCtx()
+
+		endpoint := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, ctx.WriteBefore()).Endpoint()
+		endpoint = breakermw(endpoint)
+		endpoint = limitermw(endpoint)
+
+		return endpoint, nil, nil
 	}
 }
 
