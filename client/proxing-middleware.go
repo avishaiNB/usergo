@@ -77,9 +77,10 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMi
 func factoryFor(instance string) (endpoint.Endpoint, io.Closer, error) {
 	tgt, _ := url.Parse(instance)
 	tgt.Path = "/v1/users/1"
+	ctx := core.NewCtx()
 	options := []httptransport.ClientOption{}
 	//options = append(options, httptransport.ClientBefore(httptransport.SetRequestHeader("headerKey", "2")))
-	//options = append(options, core.WriteCtxBefore())
+	options = append(options, ctx.WriteBefore())
 
 	// passing the headers
 	// httptransport.ClientBefore(httptransport.SetRequestHeader(headerKey, headerVal)),
