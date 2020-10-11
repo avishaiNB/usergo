@@ -3,10 +3,10 @@ package core
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	httpkit "github.com/go-kit/kit/transport/http"
-	"github.com/google/uuid"
 )
 
 // CorrelationIDHeaderKey ..
@@ -26,24 +26,34 @@ const (
 	TimeoutKey TimeoutHeaderKey = "timeout"
 )
 
-// NewCtx will create a new context
-func NewCtx() context.Context {
+// Ctx ..
+type Ctx struct {
+}
+
+// NewCtx will create a new Ctx
+func NewCtx() Ctx {
+	return Ctx{}
+}
+
+// New ...
+func (c Ctx) New() context.Context {
 	return context.Background()
 }
 
-// CalcTimeoutFromCtx will return the timeout (deadline) for waiting an external response to come back
+// CalcTimeout will return the timeout (deadline) for waiting an external response to come back
 // TODO: now I return max, need to change it
-func CalcTimeoutFromCtx(ctx context.Context) time.Duration {
+func (c Ctx) CalcTimeout(ctx context.Context) time.Duration {
 	return MaxTimeout
 }
 
 // GetOrCreateTimeout ...
-func GetOrCreateTimeout(ctx context.Context) string {
+func (c Ctx) GetOrCreateTimeout(ctx context.Context) string {
 	val := ctx.Value(TimeoutKey)
 
 	var timeout string
 	if val == nil {
-		timeout = "15"
+		sec := c.CalcTimeout(ctx).Seconds()
+		timeout = strconv.FormatFloat(sec, 'f', 1, 64)
 	} else {
 		timeout = val.(string)
 	}
@@ -52,12 +62,12 @@ func GetOrCreateTimeout(ctx context.Context) string {
 }
 
 // GetOrCreateCorrelationID ...
-func GetOrCreateCorrelationID(ctx context.Context) string {
+func (c Ctx) GetOrCreateCorrelationID(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDKey)
 
 	var corrid string
 	if val == nil {
-		corrid = uuid.New().String()
+		corrid = NewUUID()
 	} else {
 		corrid = val.(string)
 	}
@@ -66,7 +76,7 @@ func GetOrCreateCorrelationID(ctx context.Context) string {
 }
 
 // ReadCtx ...
-func ReadCtx(ctx context.Context, r *http.Request) context.Context {
+func (c Ctx) ReadCtx(ctx context.Context, r *http.Request) context.Context {
 	correlationid := r.Header.Get(string(CorrelationIDKey))
 	timeout := r.Header.Get(string(TimeoutKey))
 
@@ -79,9 +89,9 @@ func ReadCtx(ctx context.Context, r *http.Request) context.Context {
 }
 
 // WriteCtx ...
-func WriteCtx(ctx context.Context, r *http.Request) context.Context {
-	corrid := GetOrCreateCorrelationID(ctx)
-	timeout := GetOrCreateTimeout(ctx)
+func (c Ctx) WriteCtx(ctx context.Context, r *http.Request) context.Context {
+	corrid := c.GetOrCreateCorrelationID(ctx)
+	timeout := c.GetOrCreateTimeout(ctx)
 
 	r.Header.Add(string(CorrelationIDKey), corrid)
 	r.Header.Add(string(timeout), timeout)
@@ -89,12 +99,12 @@ func WriteCtx(ctx context.Context, r *http.Request) context.Context {
 	return ctx
 }
 
-// WriteCtxBefore ...
-func WriteCtxBefore() httpkit.ClientOption {
-	return httpkit.ClientBefore(WriteCtx)
+// WriteBefore ...
+func (c Ctx) WriteBefore() httpkit.ClientOption {
+	return httpkit.ClientBefore(c.WriteCtx)
 }
 
-// ReadCtxBefore ...
-func ReadCtxBefore() httpkit.ServerOption {
-	return httpkit.ServerBefore(ReadCtx)
+// ReadBefore ...
+func (c Ctx) ReadBefore() httpkit.ServerOption {
+	return httpkit.ServerBefore(c.ReadCtx)
 }

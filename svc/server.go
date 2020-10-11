@@ -46,7 +46,7 @@ func (server HTTPServer) Run(endpoints *Endpoints) error {
 
 	options := []httpkit.ServerOption{
 		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),
-		core.ReadCtxBefore(),
+		core.NewCtx().ReadBefore(),
 	}
 
 	for _, endpoint := range endpoints.ServerEndpoints {

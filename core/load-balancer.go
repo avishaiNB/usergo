@@ -30,7 +30,7 @@ func NewLoadBalancer(fixedEndpointer sd.FixedEndpointer, endpointer *sd.DefaultE
 
 // DefaultRoundRobinWithRetryEndpoint ...
 func (b *LoadBalancer) DefaultRoundRobinWithRetryEndpoint(ctx context.Context) endpoint.Endpoint {
-	maxTime := CalcTimeoutFromCtx(ctx)
+	maxTime := NewCtx().CalcTimeout(ctx)
 	return b.RoundRobinWithRetryEndpoint(DefaultMaxAttempts, maxTime)
 }
 
