@@ -33,3 +33,28 @@ func TestStringToDuration(t *testing.T) {
 		t.Error(result)
 	}
 }
+
+func TestTimeToStringAndStringToTimeUTC(t *testing.T) {
+	date := time.Date(2020, 10, 16, 9, 30, 59, 0, time.UTC)
+	dt := core.NewDateTime()
+
+	dateAsString := dt.TimeToString(date)
+	dateAsTime, err := dt.StringToTime(dateAsString)
+
+	if dateAsTime != date {
+		t.Error(err)
+	}
+}
+
+func TestTimeToStringAndStringToTimeNotUTC(t *testing.T) {
+	date := time.Date(2020, 10, 16, 9, 30, 59, 0, time.Local)
+	dt := core.NewDateTime()
+
+	dateAsString := dt.TimeToString(date)
+	dateAsTimeInUTC, err := dt.StringToTime(dateAsString)
+	dateAsTimeLocal := dateAsTimeInUTC.Local()
+
+	if dateAsTimeLocal != date {
+		t.Error(err)
+	}
+}

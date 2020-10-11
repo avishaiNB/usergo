@@ -37,7 +37,8 @@ func (dt DateTime) StringToDuration(duration string) (time.Duration, error) {
 
 // TimeToString will convert the time into unix int64, then return it as a string
 func (dt DateTime) TimeToString(t time.Time) string {
-	return strconv.FormatInt(t.Unix(), 10)
+	time := t.UTC().Unix()
+	return strconv.FormatInt(time, 10)
 }
 
 // StringToTime will convert the string time to int64 which represents the unix time
@@ -46,7 +47,7 @@ func (dt DateTime) StringToTime(t string) (time.Time, error) {
 	timeInUnix, err := strconv.ParseInt(t, 10, 64)
 	var date time.Time
 	if err == nil {
-		date = time.Unix(timeInUnix, 0)
+		date = time.Unix(timeInUnix, 0).UTC()
 	}
 	return date, err
 }
