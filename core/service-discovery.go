@@ -1,21 +1,29 @@
 package core
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd/consul"
+	"github.com/go-kit/kit/sd/dnssrv"
 	consulapi "github.com/hashicorp/consul/api"
 )
 
-// this should be infra
+const (
+	// DefaultTTL is 30 seconds
+	DefaultTTL time.Duration = time.Second * 30
+)
 
-// ServiceDiscovery ...
+// ServiceDiscovery provide service discovery capabilities for consul and for DNS (k8s)
 type ServiceDiscovery struct {
-	ConsulAPI    *consulapi.Client
-	ConsulClient *consul.Client
-	Logger       log.Logger
+	ConsulAPI      *consulapi.Client
+	ConsulClient   *consul.Client
+	Logger         log.Logger
+	ConsulIntances map[string]*consul.Instancer
+	DNSIntances    map[string]*dnssrv.Instancer
 }
 
-// NewServiceDiscovery ...
+// NewServiceDiscovery creates a new instance of the service directory
 func NewServiceDiscovery(logger log.Logger) ServiceDiscovery {
 	sd := ServiceDiscovery{
 		Logger: logger,
@@ -44,13 +52,38 @@ func (sd *ServiceDiscovery) WithConsul(consulAddress string) error {
 
 // ConsulInstance creates kit consul instancer which is used to find specific service
 // For each service a new instance is required
+// It will cache the instances
 func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, onlyHealthy bool) (*consul.Instancer, error) {
-	var instancer *consul.Instancer
+	key := NewKeys().Build("consul", serviceName, tags...)
+
+	var instancer *consul.Instancer = sd.ConsulIntances[key]
+	if instancer != nil {
+		return instancer, nil
+	}
+
 	if *sd.ConsulClient == nil {
 		err := NewApplicationError("call WithConsul first", nil)
 		return instancer, err
 	}
 
 	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, onlyHealthy)
+	sd.ConsulIntances[key] = instancer
+
 	return instancer, nil
+}
+
+// DNSInstance will return DNS instancer which will be used to lookup a DNS service
+// It will cache the instances
+func (sd *ServiceDiscovery) DNSInstance(serviceName string) *dnssrv.Instancer {
+	key := NewKeys().Build("dns", serviceName)
+
+	var instancer *dnssrv.Instancer = sd.DNSIntances[key]
+	if instancer != nil {
+		return instancer
+	}
+
+	instancer = dnssrv.NewInstancer(serviceName, DefaultTTL, sd.Logger)
+	sd.DNSIntances[key] = instancer
+
+	return instancer
 }

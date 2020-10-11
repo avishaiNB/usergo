@@ -56,6 +56,7 @@ func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, sd *core.Service
 // UserByIDMiddleware ..
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
 	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
+	//consulInstancer := proxy.sd.DNSInstance("user")
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger)
 	//TODO: refactor. dont like the nil. consider New().With()
 	lb := core.NewLoadBalancer(nil, endpointer)
@@ -67,7 +68,7 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMi
 }
 
 func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory {
-	// TODO: refactor
+	// TODO: is this the way to handle path replacement?
 	path := fmt.Sprintf(shared.UserByIDClientRoute, id)
 
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
