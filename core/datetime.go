@@ -1,6 +1,7 @@
 package core
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -24,27 +25,29 @@ func (dt DateTime) AddDuration(duration time.Duration) time.Time {
 	return date
 }
 
-// DurationToString ...
-// TODO: work with unix time???
+// DurationToString will return the duration as string
 func (dt DateTime) DurationToString(duration time.Duration) string {
-	return ""
+	return string(duration)
 }
 
-// StringToDuration ...
-// TODO: work with unix time???
+// StringToDuration will return a time.Duration from the given duration string
 func (dt DateTime) StringToDuration(duration string) (time.Duration, error) {
 	return time.ParseDuration(duration)
 }
 
-// TimeToString ...
+// TimeToString will convert the time into unix int64, then return it as a string
 // TODO: work with unix time???
 func (dt DateTime) TimeToString(t time.Time) string {
-
-	return ""
+	return string(t.Unix())
 }
 
-// StringToTime ...
-// TODO: work with unix time???
-func (dt DateTime) StringToTime(duration string) time.Time {
-	return dt.Now()
+// StringToTime will convert the string time to int64 which represents the unix time
+// then it will create a new time and will return it
+func (dt DateTime) StringToTime(t string) (time.Time, error) {
+	timeInUnix, err := strconv.ParseInt(t, 10, 64)
+	var date time.Time
+	if err == nil {
+		date = time.Unix(timeInUnix, 0)
+	}
+	return date, err
 }

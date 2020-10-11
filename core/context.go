@@ -202,8 +202,8 @@ func (c *Ctx) ReadFromRequest(ctx context.Context, r *http.Request) context.Cont
 		duration, deadline = c.NewTimeout()
 	} else {
 		dt := NewDateTime()
-		duration = dt.StringToDuration(headerDuration)
-		deadline = dt.StringToTime(headerDeadline)
+		duration, _ = dt.StringToDuration(headerDuration)
+		deadline, _ = dt.StringToTime(headerDeadline)
 	}
 
 	contextFrom := c.NewFrom(ctx, correlationID, duration, deadline)
