@@ -26,7 +26,9 @@ type ServiceDiscovery struct {
 // NewServiceDiscovery creates a new instance of the service directory
 func NewServiceDiscovery(logger log.Logger) ServiceDiscovery {
 	sd := ServiceDiscovery{
-		Logger: logger,
+		Logger:         logger,
+		ConsulIntances: map[string]*consul.Instancer{},
+		DNSIntances:    map[string]*dnssrv.Instancer{},
 	}
 	return sd
 }

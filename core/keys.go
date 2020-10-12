@@ -24,7 +24,7 @@ func (k Keys) Build(prefix string, name string, params ...string) string {
 
 	key += name
 
-	if params != nil {
+	if params != nil && len(params) > 0 {
 		key += "-" + strings.Join(params, k.Sep)
 	}
 
