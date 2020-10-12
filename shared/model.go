@@ -1,5 +1,11 @@
 package shared
 
+import (
+	"context"
+
+	"github.com/thelotter-enterprise/usergo/core"
+)
+
 // User ...
 type User struct {
 	ID        int    `json:"id"`
@@ -8,24 +14,26 @@ type User struct {
 	LastName  string `json:"last_name"`
 }
 
-// ByIDRequest ...
-type ByIDRequest struct {
+// ByIDRequestData ...
+type ByIDRequestData struct {
 	ID int `json:"id"`
 }
 
-// ByIDResponse ...
-type ByIDResponse struct {
+// ByIDResponseData ...
+type ByIDResponseData struct {
 	User User
 }
 
-// NewByIDRequest ...
-func NewByIDRequest(id int) ByIDRequest {
-	return ByIDRequest{
+// NewByIDRequest will create a Request with ByIDRequestData
+func NewByIDRequest(ctx context.Context, id int) core.Request {
+	data := ByIDRequestData{
 		ID: id,
 	}
+	req := core.Request{}.Wrap(ctx, data)
+	return req
 }
 
 // NewUserResponse ...
-func NewUserResponse(user User) ByIDResponse {
-	return ByIDResponse{User: user}
+func NewUserResponse(user User) ByIDResponseData {
+	return ByIDResponseData{User: user}
 }

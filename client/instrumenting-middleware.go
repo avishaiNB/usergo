@@ -28,7 +28,7 @@ type instrumentingMiddleware struct {
 	next           UserService
 }
 
-func (mw instrumentingMiddleware) GetUserByID(id int) (response core.HTTPResponse) {
+func (mw instrumentingMiddleware) GetUserByID(id int) (response core.Response) {
 	defer func(begin time.Time) {
 		lvs := []string{"method", "GetUserByID", "error", fmt.Sprint(response.Error != nil)}
 		mw.requestCount.With(lvs...).Add(1)
@@ -39,6 +39,6 @@ func (mw instrumentingMiddleware) GetUserByID(id int) (response core.HTTPRespons
 	return response
 }
 
-func (mw instrumentingMiddleware) GetUserByEmail(email string) (response core.HTTPResponse) {
+func (mw instrumentingMiddleware) GetUserByEmail(email string) (response core.Response) {
 	return mw.next.GetUserByEmail(email)
 }

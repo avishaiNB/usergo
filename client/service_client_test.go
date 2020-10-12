@@ -21,7 +21,7 @@ func TestClientIntegration(t *testing.T) {
 
 	response := c.GetUserByID(ctx, id)
 
-	if response.Result == nil {
+	if response.Data == nil {
 		t.Fail()
 	}
 }

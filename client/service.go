@@ -10,8 +10,8 @@ type UserServiceMiddleware func(UserService) UserService
 // UserService defines all the APIs available for the service
 type UserService interface {
 	// Gets the user by an ID
-	GetUserByID(id int) core.HTTPResponse
+	GetUserByID(id int) core.Response
 
 	// Gets the user by email
-	GetUserByEmail(email string) core.HTTPResponse
+	GetUserByEmail(email string) core.Response
 }

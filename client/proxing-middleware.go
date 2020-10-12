@@ -112,13 +112,13 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 	if r.StatusCode != http.StatusOK {
 		return nil, errors.New(r.Status)
 	}
-	var resp shared.ByIDResponse
+	var resp shared.ByIDResponseData
 	err := json.NewDecoder(r.Body).Decode(&resp)
 	return resp, err
 }
 
 // GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
-func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
+func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.Response {
 	var res interface{}
 	var err error
 	circuitOpen := false
@@ -130,8 +130,8 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 		statusCode = 500
 	}
 
-	return core.HTTPResponse{
-		Result:        res,
+	return core.Response{
+		Data:          res,
 		Error:         err,
 		CircuitOpened: circuitOpen,
 		StatusCode:    statusCode,
@@ -140,7 +140,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.HTTPResponse {
 
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
-func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) core.HTTPResponse {
+func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) core.Response {
 	svc := proxymw.Next.(UserService)
 	return svc.GetUserByEmail(email)
 }

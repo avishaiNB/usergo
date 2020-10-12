@@ -18,7 +18,7 @@ type loggingMiddleware struct {
 	UserService
 }
 
-func (mw loggingMiddleware) GetUserByID(id int) (response core.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByID(id int) (response core.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByID",
@@ -32,7 +32,7 @@ func (mw loggingMiddleware) GetUserByID(id int) (response core.HTTPResponse) {
 	return mw.UserService.GetUserByID(id)
 }
 
-func (mw loggingMiddleware) GetUserByEmail(email string) (response core.HTTPResponse) {
+func (mw loggingMiddleware) GetUserByEmail(email string) (response core.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByEmail",

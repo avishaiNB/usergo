@@ -30,3 +30,10 @@ func EncodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response in
 func ParsePath(path string, data ...interface{}) {
 
 }
+
+// DecodeRequestFromJSON ....
+func DecodeRequestFromJSON(ctx context.Context, r *http.Request) (interface{}, error) {
+	var req Request
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
