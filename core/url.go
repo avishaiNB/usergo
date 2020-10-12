@@ -33,9 +33,12 @@ func ParsePath(path string, data ...interface{}) {
 
 // DecodeRequestFromJSON ....
 func DecodeRequestFromJSON(ctx context.Context, r *http.Request) (interface{}, error) {
-	var req Request
-	d, err := ioutil.ReadAll(r.Body)
-	err = json.Unmarshal(d, &req)
+	var req interface{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&req)
+
+	//d, err := ioutil.ReadAll(r.Body)
+	//err = json.Unmarshal(d, &req)
 	//err := json.NewDecoder(r.Body).Decode(&req)
 
 	return req, err

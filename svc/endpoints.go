@@ -45,7 +45,7 @@ func (endpoints *Endpoints) AddEndpoints() {
 	var serverEndpoints []EndpointEntry
 
 	userbyid := EndpointEntry{
-		Endpoint: makeUserByIDEndpoint(endpoints.Service),
+		Endpoint: endpoints.makeUserByIDEndpoint(),
 		Enc:      core.EncodeReponseToJSON,
 		Dec:      core.DecodeRequestFromJSON,
 		Method:   "GET",
@@ -54,11 +54,19 @@ func (endpoints *Endpoints) AddEndpoints() {
 	endpoints.ServerEndpoints = append(serverEndpoints, userbyid)
 }
 
-func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
+func (endpoints *Endpoints) makeUserByIDEndpoint() endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(core.Request)
-		data := req.Data.(shared.ByIDRequestData)
-		user, err := service.GetUserByID(ctx, data.ID)
+		var err error
+		var req core.Request
+		var data shared.ByIDRequestData
+
+		decoder := core.NewDecoder()
+
+		err = decoder.Decode(request, &req)
+		err = decoder.Decode(req.Data, &data)
+		req.Data = data
+
+		user, err := endpoints.Service.GetUserByID(ctx, data.ID)
 		return shared.NewUserResponse(user), err
 	}
 }

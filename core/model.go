@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"time"
 )
 
 // Response is a base response which will be returned from the transport
@@ -25,29 +24,30 @@ type Response struct {
 // TODO: use it as the request wrapper
 type Request struct {
 	// Specific request data
-	Data interface{}
+	Data interface{} `mapstructure:",squash"`
 
 	// the correlation ID
 	CorrelationID string
 
 	// The duration allowed for the callee to complete the execution
-	Duration time.Duration
+	DurationInMiliseconds int64
 
 	// The deadline for the callee to complete the execution
-	Deadline time.Time
+	DeadlineUnix int64
 }
 
 // Wrap will wrap the data in a Request while copying the transport correlation id, duration and timeout
 func (r Request) Wrap(ctx context.Context, data interface{}) Request {
 	c := NewCtx()
+	conv := NewConvertor()
 	corrid, _ := c.GetOrCreateCorrelationFromContext(ctx, false)
 	// TODO: we need to calculate the deadline and timeout for the callee, so there should be some substruction
 	duration, deadline, _ := c.GetOrCreateTimeoutFromContext(ctx, false)
 	req := Request{
-		Data:          data,
-		Deadline:      deadline,
-		Duration:      duration,
-		CorrelationID: corrid,
+		Data:                  data,
+		DeadlineUnix:          conv.FromTimeToUnix(deadline),
+		DurationInMiliseconds: conv.DurationToMiliseconds(duration),
+		CorrelationID:         corrid,
 	}
 	return req
 }

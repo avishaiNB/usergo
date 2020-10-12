@@ -79,7 +79,7 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 		tgt.Path = path
 		ctx := core.NewCtx()
 
-		endpoint := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, ctx.WriteBefore()).Endpoint()
+		endpoint := httptransport.NewClient("GET", tgt, encodeGetUserByIDRequest, decodeGetUserByIDResponse, ctx.WriteBefore()).Endpoint()
 		endpoint = breakermw(endpoint)
 		endpoint = limitermw(endpoint)
 
@@ -87,25 +87,10 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 	}
 }
 
-// TODO: we need to make this generic and use the additional middlewares
-func factoryFor(instance string) (endpoint.Endpoint, io.Closer, error) {
-	tgt, _ := url.Parse(instance)
-	tgt.Path = "/v1/users/1"
-	ctx := core.NewCtx()
-	options := []httptransport.ClientOption{}
-	//options = append(options, httptransport.ClientBefore(httptransport.SetRequestHeader("headerKey", "2")))
-	options = append(options, ctx.WriteBefore())
-
-	// passing the headers
-	// httptransport.ClientBefore(httptransport.SetRequestHeader(headerKey, headerVal)),
-	// httptransport.ClientAfter(afterFunc)
-	// afterFunc      = func(ctx context.Context, r *http.Response) context.Context {
-	// 	afterVal = r.Header.Get(afterHeaderKey)
-	// 	return ctx
-	// }
-
-	endpoint := httptransport.NewClient("GET", tgt, core.EncodeRequestToJSON, decodeGetUserByIDResponse, options...).Endpoint()
-	return endpoint, nil, nil
+func encodeGetUserByIDRequest(ctx context.Context, r *http.Request, request interface{}) error {
+	req := shared.NewByIDRequest(ctx, request.(int))
+	enc := core.EncodeRequestToJSON(ctx, r, req)
+	return enc
 }
 
 func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}, error) {

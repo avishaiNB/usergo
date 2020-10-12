@@ -203,9 +203,9 @@ func (c Ctx) ReadFromRequest(ctx context.Context, r *http.Request) context.Conte
 	if headerDuration == "" || headerDeadline == "" {
 		duration, deadline = c.NewTimeout()
 	} else {
-		dt := NewDateTime()
-		duration, _ = dt.StringToDuration(headerDuration)
-		deadline, _ = dt.StringToTime(headerDeadline)
+		conv := NewConvertor()
+		duration = conv.MilisecondsToDuration(conv.FromStringToInt64(headerDuration))
+		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
 	}
 
 	contextFrom := c.NewFrom(ctx, correlationID, duration, deadline)
@@ -217,9 +217,10 @@ func (c Ctx) WriteToRequest(ctx context.Context, r *http.Request) context.Contex
 	corrid, ctx := c.GetOrCreateCorrelationFromContext(ctx, false)
 	duration, deadline, ctx := c.GetOrCreateTimeoutFromContext(ctx, false)
 
-	dt := NewDateTime()
-	durationHeader := dt.DurationToString(duration)
-	deadlineHeader := dt.TimeToString(deadline)
+	conv := NewConvertor()
+
+	durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))
+	deadlineHeader := conv.FromInt64ToString(conv.FromTimeToUnix(deadline))
 	r.Header.Add(string(CorrelationIDKey), corrid)
 	r.Header.Add(string(DurationKey), durationHeader)
 	r.Header.Add(string(DeadlineKey), deadlineHeader)
