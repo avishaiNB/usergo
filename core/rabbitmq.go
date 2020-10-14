@@ -151,39 +151,45 @@ func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete b
 }
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
-func (a *RabbitMQ) OneWayPublisherEndpoint(
-	ctx context.Context,
-	exchangeName string,
-	encodeFunc amqptransport.EncodeRequestFunc,
-	decodeFunc amqptransport.DecodeResponseFunc,
-) endpoint.Endpoint {
+func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
 	c := NewCtx()
 	corrid := c.GetCorrelationFromContext(ctx)
 	duration, _ := c.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
-	a.Connection, _ = a.Connect()
+	_, _ = a.Connect()
 	channel, _ = a.channel()
-	// queue name is not important for one way. So as long as it is not nil, it should be fine.
 	queue = &amqp.Queue{Name: ""}
 
 	publisher := amqptransport.NewPublisher(
 		channel,
 		queue,
 		encodeFunc,
-		decodeFunc,
+		a.NoopResponseDecoder,
 		amqptransport.PublisherBefore(
 			amqptransport.SetCorrelationID(corrid),
-			// TODO: need to configure the below:
-			// TODO: we need to append headers: correlation ID, deadline and duration
-			// amqptransport.SetPublishDeliveryMode()
-			// amqptransport.SetContentEncoding()
-			// amqptransport.SetPublishKey()
-			// amqptransport.SetContentType(),
+			amqptransport.SetPublishDeliveryMode(2), // queue implementation use - non-persistent (1) or persistent (2)
 			amqptransport.SetPublishExchange(exchangeName)),
 		amqptransport.PublisherTimeout(duration),
 		amqptransport.PublisherDeliverer(amqptransport.SendAndForgetDeliverer),
 	)
 
 	return publisher.Endpoint()
+}
+
+// NoopResponseDecoder is a no operation needed
+// Used for One way messages
+func (a *RabbitMQ) NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interface{}, err error) {
+	return struct{}{}, nil
+}
+
+// DefaultRequestEncoder ...
+func (a *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
+	f := func(ctx context.Context, p *amqp.Publishing, request interface{}) error {
+		var err error
+		marshall := MessageMarshall{}
+		*p, err = marshall.Marshal(ctx, exchangeName, request)
+		return err
+	}
+	return f
 }
