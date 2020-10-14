@@ -59,6 +59,7 @@ func (a *RabbitMQ) Connect() (*amqp.Connection, error) {
 	if err != nil {
 		// TODO: better logging here
 		a.Log.Logger.Log(err)
+		conn = nil
 	} else {
 		a.Connection = conn
 	}
@@ -149,24 +150,22 @@ func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete b
 	return err
 }
 
-// PublisherEndpoint will create a 'send and forget' publisher endpoint
-func (a *RabbitMQ) PublisherEndpoint(
+// OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
+func (a *RabbitMQ) OneWayPublisherEndpoint(
 	ctx context.Context,
-	request interface{},
-	/* queueName string, */ // since we are publishing a topic, i dont think it is needed
 	exchangeName string,
-	encodeFunc amqptransport.EncodeRequestFunc, // func(context.Context, *amqp.Publishing, interface{}) error {return nil}
-	decodeFunc amqptransport.DecodeResponseFunc, // func(context.Context, *amqp.Delivery) (response interface{}, err error) {return struct{}{}, nil}
+	encodeFunc amqptransport.EncodeRequestFunc,
+	decodeFunc amqptransport.DecodeResponseFunc,
 ) endpoint.Endpoint {
 	c := NewCtx()
 	corrid := c.GetCorrelationFromContext(ctx)
 	duration, _ := c.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
+	a.Connection, _ = a.Connect()
 	channel, _ = a.channel()
-
-	// TODO: since we are publishing a topic, i dont think it is needed
-	// queue = &amqp.Queue{Name: queueName}
+	// queue name is not important for one way. So as long as it is not nil, it should be fine.
+	queue = &amqp.Queue{Name: ""}
 
 	publisher := amqptransport.NewPublisher(
 		channel,
@@ -187,25 +186,4 @@ func (a *RabbitMQ) PublisherEndpoint(
 	)
 
 	return publisher.Endpoint()
-	//var publishing amqp.Publishing
-	// var response interface{}
-	// var err error
-
-	// responseChan := make(chan interface{}, 1)
-	// errChan := make(chan error, 1)
-	// go func() {
-	// 	res, err := publisher.Endpoint()(ctx, request)
-	// 	if err != nil {
-	// 		errChan <- err
-	// 	} else {
-	// 		responseChan <- res
-	// 	}
-	// }()
-
-	// select {
-	// case <-responseChan:
-	// 	return response, nil
-	// case err = <-errChan:
-	// 	return response, err
-	// }
 }

@@ -62,8 +62,8 @@ func (endpoints *Endpoints) makeUserByIDEndpoint() endpoint.Endpoint {
 
 		decoder := core.NewDecoder()
 
-		err = decoder.Decode(request, &req)
-		err = decoder.Decode(req.Data, &data)
+		err = decoder.MapDecode(request, &req)
+		err = decoder.MapDecode(req.Data, &data)
 		req.Data = data
 
 		user, err := endpoints.Service.GetUserByID(ctx, data.ID)

@@ -35,7 +35,7 @@ func TestDecode(t *testing.T) {
 
 	var output outerStruct
 	decoder := core.NewDecoder()
-	err := decoder.Decode(input, &output)
+	err := decoder.MapDecode(input, &output)
 
 	if err != nil {
 		t.Error(err)
