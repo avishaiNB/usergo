@@ -6,3 +6,4 @@ define base errors
 replace log.Logger with core.Log
 use errors https://github.com/juju/errors
 // TODO: we need to calculate the deadline and timeout for the callee, so there should be some substruction
+functions in core.url should be moved to the encoding_decoding
