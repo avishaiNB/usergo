@@ -24,12 +24,12 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	logger := core.NewLogWithDefaults()
-	tracer := svc.NewTracer(serviceName, hostAddress, zipkinURL)
+	tracer := core.NewTracer(serviceName, hostAddress, zipkinURL)
 
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
-	endpoints := svc.NewEndpoints(logger, tracer, service)
-	httpServer := svc.NewHTTPServer(logger, tracer, serviceName, hostAddress)
+	endpoints := svc.NewUserEndpoints(logger, tracer, service)
+	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
 
 	go func() {
 		sig := <-sigs
@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	go func() {
-		err := httpServer.Run(&endpoints)
+		err := httpServer.Run(&endpoints.HTTPEndpoints)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

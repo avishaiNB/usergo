@@ -2,59 +2,54 @@ package svc
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/thelotter-enterprise/usergo/core"
 	"github.com/thelotter-enterprise/usergo/shared"
-
-	httpkit "github.com/go-kit/kit/transport/http"
 )
 
-// Endpoints ...
-type Endpoints struct {
-	Log     core.Log
-	Tracer  Tracer
-	Service Service
-
-	ServerEndpoints []EndpointEntry
+// UserEndpoints ...
+type UserEndpoints struct {
+	HTTPEndpoints core.HTTPEndpoints
+	Service       Service
+	Log           core.Log
+	Tracer        core.Tracer
 }
 
-// EndpointEntry holds the information needed to build a server endpoint which client can call upon
-type EndpointEntry struct {
-	Method   string
-	Endpoint func(ctx context.Context, request interface{}) (interface{}, error)
-	Dec      httpkit.DecodeRequestFunc
-	Enc      httpkit.EncodeResponseFunc
-}
-
-// NewEndpoints ...
-func NewEndpoints(log core.Log, tracer Tracer, service Service) Endpoints {
-	endpoints := Endpoints{
-		Log:     log,
-		Tracer:  tracer,
-		Service: service,
+// NewUserEndpoints ...
+func NewUserEndpoints(log core.Log, tracer core.Tracer, service Service) *UserEndpoints {
+	userEndpoints := UserEndpoints{
+		Log:           log,
+		Tracer:        tracer,
+		Service:       service,
+		HTTPEndpoints: core.HTTPEndpoints{},
 	}
 
-	endpoints.AddEndpoints()
+	userEndpoints.HTTPEndpoints = userEndpoints.makeEndpoints()
 
+	return &userEndpoints
+}
+
+func (ue UserEndpoints) makeEndpoints() core.HTTPEndpoints {
+	var endpoints core.HTTPEndpoints
+	var serverEndpoints []core.HTTPEndpoint
+
+	userbyid := core.HTTPEndpoint{
+		Endpoint: makeUserByIDEndpoint(ue.Service),
+		Enc:      ue.encodeUserByIDReponse,
+		Dec:      ue.decodeUserByIDRequest,
+		Method:   "GET",
+		Path:     shared.UserByIDServerRoute,
+	}
+
+	serverEndpoints = append(serverEndpoints, userbyid)
+	endpoints.ServerEndpoints = serverEndpoints
 	return endpoints
 }
 
-// AddEndpoints ...
-func (endpoints *Endpoints) AddEndpoints() {
-	var serverEndpoints []EndpointEntry
-
-	userbyid := EndpointEntry{
-		Endpoint: endpoints.makeUserByIDEndpoint(),
-		Enc:      core.EncodeReponseToJSON,
-		Dec:      core.DecodeRequestFromJSON,
-		Method:   "GET",
-	}
-
-	endpoints.ServerEndpoints = append(serverEndpoints, userbyid)
-}
-
-func (endpoints *Endpoints) makeUserByIDEndpoint() endpoint.Endpoint {
+func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		var err error
 		var req core.Request
@@ -66,7 +61,30 @@ func (endpoints *Endpoints) makeUserByIDEndpoint() endpoint.Endpoint {
 		err = decoder.MapDecode(req.Data, &data)
 		req.Data = data
 
-		user, err := endpoints.Service.GetUserByID(ctx, data.ID)
+		user, err := service.GetUserByID(ctx, data.ID)
 		return shared.NewUserResponse(user), err
 	}
+}
+
+func (ue UserEndpoints) encodeUserByIDReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		ue.Log.Logger.Log("method", "EncodeReponseToJSONFunc", "error", err)
+	}
+	return err
+}
+
+func (ue UserEndpoints) decodeUserByIDRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var req interface{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&req)
+	if err != nil {
+		ue.Log.Logger.Log(
+			"level", "error",
+			"method", "DecodeRequestFromJSONFunc",
+			"error", err,
+		)
+	}
+
+	return req, err
 }

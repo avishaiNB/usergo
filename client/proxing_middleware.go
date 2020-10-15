@@ -75,7 +75,7 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 		breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
 		limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
 
-		tgt, _ := url.Parse(instance)
+		tgt, _ := url.Parse(instance) // e.g. parse http://localhost:8080"
 		tgt.Path = path
 		ctx := core.NewCtx()
 

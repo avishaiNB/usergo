@@ -18,28 +18,3 @@ func EncodeRequestToJSON(_ context.Context, r *http.Request, request interface{}
 	r.Body = ioutil.NopCloser(&buf)
 	return nil
 }
-
-// EncodeReponseToJSON will encoding the response into json
-// e.g. GetUsetByIDResponse --> json
-func EncodeReponseToJSON(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	return json.NewEncoder(w).Encode(response)
-}
-
-// ParsePath ...
-// TODO: implement the parse: /v1/user/{id} --> /v1/user/123
-func ParsePath(path string, data ...interface{}) {
-
-}
-
-// DecodeRequestFromJSON ....
-func DecodeRequestFromJSON(ctx context.Context, r *http.Request) (interface{}, error) {
-	var req interface{}
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req)
-
-	//d, err := ioutil.ReadAll(r.Body)
-	//err = json.Unmarshal(d, &req)
-	//err := json.NewDecoder(r.Body).Decode(&req)
-
-	return req, err
-}

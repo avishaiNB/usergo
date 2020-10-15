@@ -193,3 +193,24 @@ func (a *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.Conte
 	}
 	return f
 }
+
+// NewSubscriber ...
+func (a *RabbitMQ) NewSubscriber(endpoint endpoint.Endpoint, exchangeName string, dec amqptransport.DecodeRequestFunc) *amqptransport.Subscriber {
+
+	// todo: cache it?
+
+	sub := amqptransport.NewSubscriber(
+		endpoint,
+		dec,
+		amqptransport.EncodeJSONResponse,
+		amqptransport.SubscriberResponsePublisher(amqptransport.NopResponsePublisher),
+		amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder),
+		amqptransport.SubscriberBefore(
+			amqptransport.SetPublishExchange(exchangeName),
+			//amqptransport.SetPublishKey(key),
+			amqptransport.SetPublishDeliveryMode(2),
+		),
+	)
+
+	return sub
+}
