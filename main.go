@@ -13,9 +13,14 @@ import (
 func main() {
 
 	var (
-		serviceName string = "user"
-		hostAddress string = "localhost:8080"
-		zipkinURL   string = "http://localhost:9411/api/v2/spans"
+		serviceName      string = "user"
+		hostAddress      string = "localhost:8080"
+		zipkinURL        string = "http://localhost:9411/api/v2/spans"
+		rabbitMQUsername string = "user"
+		rabbitMQPwd      string = "pwd"
+		rabbitMQHost     string = "localhost"
+		rabbitMQVhost    string = "thelotter"
+		rabbitMQPort     int    = 5672
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -25,11 +30,15 @@ func main() {
 
 	logger := core.NewLogWithDefaults()
 	tracer := core.NewTracer(serviceName, hostAddress, zipkinURL)
+	rabbitmq := core.NewRabbitMQ(logger, rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
-	endpoints := svc.NewUserEndpoints(logger, tracer, service)
+	httpEndpoints := svc.NewUserEndpoints(logger, tracer, service)
 	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
+
+	var amqpEndpoints = core.NewAMQPEndpoints()
+	amqpServer := core.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs
@@ -39,7 +48,16 @@ func main() {
 	}()
 
 	go func() {
-		err := httpServer.Run(&endpoints.HTTPEndpoints)
+		err := httpServer.Run(&httpEndpoints.HTTPEndpoints)
+		if err != nil {
+			errs <- err
+			fmt.Println(err)
+			done <- true
+		}
+	}()
+
+	go func() {
+		err := amqpServer.Run(&amqpEndpoints)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

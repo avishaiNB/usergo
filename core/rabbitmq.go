@@ -80,7 +80,8 @@ func (a *RabbitMQ) Close() error {
 	return err
 }
 
-func (a *RabbitMQ) channel() (*amqp.Channel, error) {
+// Channel ..
+func (a *RabbitMQ) Channel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
 	if a.Connection == nil {
@@ -103,7 +104,7 @@ func (a *RabbitMQ) NewQueue(name string, durable bool, autoDelete bool) (amqp.Qu
 	var err error
 	var channel *amqp.Channel
 	var queue amqp.Queue
-	channel, err = a.channel()
+	channel, err = a.Channel()
 
 	if err == nil {
 		queue, err = channel.QueueDeclare(
@@ -128,7 +129,7 @@ func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete b
 
 	var err error
 	var channel *amqp.Channel
-	channel, err = a.channel()
+	channel, err = a.Channel()
 
 	if err == nil {
 		err = channel.ExchangeDeclare(
@@ -158,7 +159,7 @@ func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName str
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
 	_, _ = a.Connect()
-	channel, _ = a.channel()
+	channel, _ = a.Channel()
 	queue = &amqp.Queue{Name: ""}
 
 	publisher := amqptransport.NewPublisher(
@@ -207,10 +208,18 @@ func (a *RabbitMQ) NewSubscriber(endpoint endpoint.Endpoint, exchangeName string
 		amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder),
 		amqptransport.SubscriberBefore(
 			amqptransport.SetPublishExchange(exchangeName),
+			readMessageIntoContext(),
 			//amqptransport.SetPublishKey(key),
 			amqptransport.SetPublishDeliveryMode(2),
 		),
 	)
 
 	return sub
+}
+
+// TODO: need to read into the context the correaltion ID and etc.
+func readMessageIntoContext() amqptransport.RequestFunc {
+	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
+		return ctx
+	}
 }
