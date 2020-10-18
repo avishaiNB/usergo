@@ -1,4 +1,4 @@
-package amqp
+package rabbitmq
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// RabbitMQConsumer ...RabbitMQConsumer
-type RabbitMQConsumer struct {
+// Consumer ...Consumer
+type Consumer struct {
 	Sub                *amqpkit.Subscriber
 	Channel            *amqp.Channel
 	QueueName          string
@@ -28,15 +28,15 @@ type RabbitMQConsumer struct {
 }
 
 // NewConsumer will create a new rabbitMQ consumer
-func (a *RabbitMQ) NewConsumer(
+func NewConsumer(
 	name string,
 	exchangeName string,
 	queueName string,
 	endpoint endpoint.Endpoint,
-	dec amqptransport.DecodeRequestFunc) RabbitMQConsumer {
+	dec amqptransport.DecodeRequestFunc) Consumer {
 
 	sub := newSubscriber(endpoint, exchangeName, dec)
-	consumer := RabbitMQConsumer{
+	consumer := Consumer{
 		Sub:                sub,
 		QueueName:          queueName,
 		ExchangeName:       exchangeName,
@@ -53,64 +53,6 @@ func (a *RabbitMQ) NewConsumer(
 	}
 
 	return consumer
-}
-
-// SetConsumerChannel ...
-func (a *RabbitMQ) SetConsumerChannel(consumer *RabbitMQConsumer) {
-	var err error
-	var ch *amqp.Channel
-	ch, err = a.NewChannel()
-
-	if err == nil {
-		consumer.Channel = ch
-	}
-}
-
-// NewQueue will create a new queue
-func (c *RabbitMQConsumer) NewQueue(name string, durable bool, autoDelete bool) (amqp.Queue, error) {
-	var err error
-	var queue amqp.Queue
-
-	queue, err = c.Channel.QueueDeclare(
-		name,
-		durable,
-		autoDelete,
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-
-	return queue, err
-}
-
-// NewExchange will create a new exchange
-func (c *RabbitMQConsumer) NewExchange(name string, durable bool, autoDelete bool) error {
-
-	err := c.Channel.ExchangeDeclare(
-		name,       // name
-		"fanout",   // type
-		durable,    // durable
-		autoDelete, // auto-deleted
-		false,      // internal
-		false,      // no-wait
-		nil,        // arguments
-	)
-
-	return err
-}
-
-// Bind will bind the rabbitMQ queue and exchange together
-func (c *RabbitMQConsumer) Bind(queueName string, exchangeName string) error {
-
-	err := c.Channel.QueueBind(
-		queueName,
-		"", // bindingKey
-		exchangeName,
-		false, // noWait
-		nil,   // arguments
-	)
-
-	return err
 }
 
 // NewSubscriber ...

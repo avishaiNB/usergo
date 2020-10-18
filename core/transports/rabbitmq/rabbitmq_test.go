@@ -1,29 +1,12 @@
-package amqp_test
+package rabbitmq_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/go-kit/kit/log"
 	"github.com/thelotter-enterprise/usergo/core"
+	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 )
-
-func TestNewRabbitMQ(t *testing.T) {
-	username := "user"
-	pwd := "pwd"
-	host := "localhost"
-	vhost := "thelotter"
-	port := 5672
-	logger := log.NewNopLogger()
-	log := core.NewLog(logger, 2)
-	r := core.NewRabbitMQ(log, host, port, username, pwd, vhost)
-
-	want := "amqp://user:pwd@localhost:5672/thelotter"
-	is := r.URL
-	if is != want {
-		t.Fail()
-	}
-}
 
 type rabbitRequest struct {
 	ID   int
@@ -41,7 +24,8 @@ func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
 	log := core.NewLogWithDefaults()
-	r := core.NewRabbitMQ(log, host, port, username, pwd, vhost)
+	conn := rabbitmq.NewConnectionMeta(host, port, username, pwd, vhost)
+	r := rabbitmq.NewRabbitMQ(log, conn)
 	ep := r.OneWayPublisherEndpoint(ctx, exchangeName, r.DefaultRequestEncoder(exchangeName))
 	_, err := ep(ctx, req)
 

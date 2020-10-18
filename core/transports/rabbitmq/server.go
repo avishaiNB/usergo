@@ -1,4 +1,4 @@
-package amqp
+package rabbitmq
 
 import (
 	"errors"
@@ -27,11 +27,12 @@ func NewServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceN
 }
 
 // Run will ...
-func (server *Server) Run(endpoints *[]RabbitMQConsumer) error {
+func (server *Server) Run(endpoints *[]Consumer) error {
 	if endpoints == nil {
 		return errors.New("no endpoints")
 	}
 
+	server.RabbitMQ.OpenConnection()
 	//consumers := make(map[string]chan, 1)
 
 	for _, endpoint := range *endpoints {

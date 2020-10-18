@@ -34,7 +34,7 @@ func main() {
 	logger := core.NewLogWithDefaults()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 
-	conn := tlerabbitmq.NewConnection(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	rabbitmq := tlerabbitmq.NewRabbitMQ(logger, conn)
 
 	repo := svc.NewRepository()
