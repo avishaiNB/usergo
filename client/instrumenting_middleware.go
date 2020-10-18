@@ -5,13 +5,13 @@ import (
 	"time"
 
 	metrics "github.com/go-kit/kit/metrics"
-	"github.com/thelotter-enterprise/usergo/core"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
-func makeInstrumentingMiddleware(inst core.Instrumentor) UserServiceMiddleware {
-	counter := inst.AddPromCounter("user", "getuserbyid", core.RequestCount, []string{"method", "error"})
-	requestLatency := inst.AddPromSummary("user", "getuserbyid", core.LatencyInMili, []string{"method", "error"})
+func makeInstrumentingMiddleware(inst tleinst.Instrumentor) UserServiceMiddleware {
+	counter := inst.AddPromCounter("user", "getuserbyid", tleinst.RequestCount, []string{"method", "error"})
+	requestLatency := inst.AddPromSummary("user", "getuserbyid", tleinst.LatencyInMili, []string{"method", "error"})
 
 	return func(next UserService) UserService {
 		mw := instrumentingMiddleware{

@@ -5,7 +5,7 @@ import (
 
 	"github.com/streadway/amqp"
 	"github.com/thelotter-enterprise/usergo/core"
-	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
+	tlamqp "github.com/thelotter-enterprise/usergo/core/transports/amqp"
 
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )

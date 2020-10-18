@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/thelotter-enterprise/usergo/core"
-	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
+	tlamqp "github.com/thelotter-enterprise/usergo/core/transports/amqp"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 

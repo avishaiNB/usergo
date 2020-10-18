@@ -7,7 +7,7 @@ import (
 	"github.com/go-kit/kit/sd/consul"
 	"github.com/go-kit/kit/sd/dnssrv"
 	consulapi "github.com/hashicorp/consul/api"
-	"github.com/thelotter-enterprise/usergo/core"
+	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
@@ -66,7 +66,7 @@ func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, on
 	}
 
 	if *sd.ConsulClient == nil {
-		err := core.NewApplicationError("call WithConsul first", nil)
+		err := tleerrors.NewApplicationError("call WithConsul first", nil)
 		return instancer, err
 	}
 

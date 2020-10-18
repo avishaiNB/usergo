@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/thelotter-enterprise/usergo/core"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 

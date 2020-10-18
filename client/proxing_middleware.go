@@ -17,8 +17,9 @@ import (
 	"github.com/thelotter-enterprise/usergo/core"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
 	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -92,7 +93,7 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 
 func encodeGetUserByIDRequest(ctx context.Context, r *http.Request, request interface{}) error {
 	req := shared.NewByIDRequest(ctx, request.(int))
-	enc := core.EncodeRequestToJSON(ctx, r, req)
+	enc := utils.EncodeRequestToJSON(ctx, r, req)
 	return enc
 }
 

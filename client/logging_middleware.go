@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
 func makeLoggingMiddleware(logger log.Logger) UserServiceMiddleware {

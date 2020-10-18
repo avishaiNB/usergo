@@ -7,8 +7,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
 // ServiceClient is a facade for all APIs exposed by the service
@@ -18,7 +19,7 @@ type ServiceClient struct {
 	ServiceName string
 	CB          tlecb.CircuitBreaker
 	Limiter     core.RateLimiter
-	Inst        core.Instrumentor
+	Inst        tleinst.Instrumentor
 	Router      *mux.Router
 }
 
@@ -30,14 +31,14 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 		sd,
 		tlecb.NewCircuitBreakerator(),
 		core.NewRateLimitator(),
-		core.NewInstrumentor(serviceName),
+		tleinst.NewInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
 	)
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter core.RateLimiter, inst tleinst.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
