@@ -13,7 +13,7 @@ func TestNewRabbitMQ(t *testing.T) {
 	host := "localhost"
 	vhost := "thelotter"
 	port := 5672
-	log := core.NewLog(nil)
+	log := core.NewLog(nil, 2)
 	r := core.NewRabbitMQ(log, host, port, username, pwd, vhost)
 
 	want := "amqp://user:pwd@localhost:5672/thelotter"

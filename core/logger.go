@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"os"
 
 	"github.com/go-kit/kit/log"
@@ -15,7 +16,25 @@ import (
 // TBD: funnel logger
 type Log struct {
 	Logger log.Logger
+	Level  int
 }
+
+const (
+	// LogLevelCritical ..
+	LogLevelCritical int = 5
+
+	// LogLevelError ..
+	LogLevelError int = 4
+
+	// LogLevelWarn ..
+	LogLevelWarn int = 3
+
+	// LogLevelInfo ..
+	LogLevelInfo int = 2
+
+	// LogLevelDebug ..
+	LogLevelDebug int = 1
+)
 
 // NewLogWithDefaults ..
 func NewLogWithDefaults() Log {
@@ -29,12 +48,38 @@ func NewLogWithDefaults() Log {
 	}
 
 	logger.Log()
-	return NewLog(logger)
+	return NewLog(logger, LogLevelError)
 }
 
 // NewLog ...
-func NewLog(logger log.Logger) Log {
+func NewLog(logger log.Logger, level int) Log {
 	return Log{
 		Logger: logger,
+		Level:  level,
 	}
+}
+
+// Error will log an error
+func (log Log) Error(ctx context.Context, message string, err error, logger log.Logger) bool {
+	wasLogged := false
+
+	if log.ShouldLog(LogLevelError) {
+		err := logger.Log(
+			"level", "error",
+			"message", message,
+			"error", err,
+			// additional important information
+		)
+
+		if err == nil {
+			wasLogged = true
+		}
+	}
+
+	return wasLogged
+}
+
+// ShouldLog will return a bool indicating if the log message should be logged based on the log level
+func (log Log) ShouldLog(level int) bool {
+	return level >= log.Level
 }
