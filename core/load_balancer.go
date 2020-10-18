@@ -7,6 +7,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 const (
@@ -30,7 +31,7 @@ func NewLoadBalancer(fixedEndpointer sd.FixedEndpointer, endpointer *sd.DefaultE
 
 // DefaultRoundRobinWithRetryEndpoint ...
 func (b *LoadBalancer) DefaultRoundRobinWithRetryEndpoint(ctx context.Context) endpoint.Endpoint {
-	c := NewCtx()
+	c := tlectx.NewCtx()
 	maxTime, _ := c.CalcTimeoutFromContext(ctx)
 	return b.RoundRobinWithRetryEndpoint(DefaultMaxAttempts, maxTime)
 }

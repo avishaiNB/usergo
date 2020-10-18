@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/streadway/amqp"
-	"github.com/thelotter-enterprise/usergo/core"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 // Message is the basic unit used to send and received data thought rabbitmq
@@ -37,7 +37,7 @@ type MessageMarshall struct{}
 func (m *MessageMarshall) Marshal(ctx context.Context, exchangeName string, data interface{}) (amqp.Publishing, error) {
 	urn := fmt.Sprintf("urn:message:%v", exchangeName)
 	msg := Message{Data: data, URN: urn}
-	c := core.NewCtx()
+	c := tlectx.NewCtx()
 	msg.CorrelationID = c.GetOrCreateCorrelationID(ctx)
 	wrapper := MessageWrapper{MessageType: []string{urn}, Message: &msg}
 	body, err := json.Marshal(wrapper)

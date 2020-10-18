@@ -9,6 +9,7 @@ import (
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 // RabbitMQ contains data required to make a connection to the rabbitMQ instance
@@ -226,7 +227,7 @@ func (c *RabbitMQConsumer) Bind(queueName string, exchangeName string) error {
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
 func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
-	c := core.NewCtx()
+	c := tlectx.NewCtx()
 	corrid := c.GetCorrelationFromContext(ctx)
 	duration, _ := c.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel

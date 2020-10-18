@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
@@ -58,7 +59,7 @@ func (server *Server) Run(endpoints *Endpoints) error {
 		return errors.New("no endpoints")
 	}
 
-	c := core.NewCtx()
+	c := tlectx.NewCtx()
 
 	options := []httpkit.ServerOption{
 		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),

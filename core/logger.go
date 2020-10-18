@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/go-kit/kit/log"
+
+	"github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 // Log will create a new instance of the Log with ready to use loggers
@@ -16,7 +18,7 @@ import (
 // TBD: funnel logger
 type Log struct {
 	Logger log.Logger
-	Ctx    Ctx
+	Ctx    ctx.Ctx
 	Level  int
 }
 
@@ -57,7 +59,7 @@ func NewLog(logger log.Logger, level int) Log {
 	return Log{
 		Logger: logger,
 		Level:  level,
-		Ctx:    NewCtx(),
+		Ctx:    ctx.NewCtx(),
 	}
 }
 
