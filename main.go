@@ -8,8 +8,8 @@ import (
 
 	"github.com/thelotter-enterprise/usergo/core"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
-	tlamqp "github.com/thelotter-enterprise/usergo/core/transports/amqp"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 
@@ -33,7 +33,9 @@ func main() {
 
 	logger := core.NewLogWithDefaults()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
-	rabbitmq := tlamqp.NewRabbitMQ(logger, rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+
+	conn := tlerabbitmq.NewConnection(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	rabbitmq := tlerabbitmq.NewRabbitMQ(logger, conn)
 
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
@@ -41,7 +43,7 @@ func main() {
 	httpServer := tlehttp.NewServer(logger, tracer, serviceName, hostAddress)
 
 	amqpEndpoints := svc.NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
-	amqpServer := tlamqp.NewServer(logger, tracer, &rabbitmq, serviceName)
+	amqpServer := tlerabbitmq.NewServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs
