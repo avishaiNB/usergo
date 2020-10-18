@@ -16,11 +16,11 @@ func main() {
 		serviceName      string = "user"
 		hostAddress      string = "localhost:8080"
 		zipkinURL        string = "http://localhost:9411/api/v2/spans"
-		rabbitMQUsername string = "user"
-		rabbitMQPwd      string = "pwd"
-		rabbitMQHost     string = "localhost"
+		rabbitMQUsername string = "thelotter"
+		rabbitMQPwd      string = "Dhvbuo1"
+		rabbitMQHost     string = "int-k8s1"
 		rabbitMQVhost    string = "thelotter"
-		rabbitMQPort     int    = 5672
+		rabbitMQPort     int    = 32672
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -34,10 +34,10 @@ func main() {
 
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
-	httpEndpoints := svc.NewUserEndpoints(logger, tracer, service)
+	httpEndpoints := svc.NewUserHTTPEndpoints(logger, tracer, service)
 	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
 
-	var amqpEndpoints = core.NewAMQPEndpoints()
+	amqpEndpoints := svc.NewUserAMQPEndpoints(logger, tracer, service)
 	amqpServer := core.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
@@ -48,7 +48,7 @@ func main() {
 	}()
 
 	go func() {
-		err := httpServer.Run(&httpEndpoints.HTTPEndpoints)
+		err := httpServer.Run(httpEndpoints.HTTPEndpoints)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)
@@ -57,7 +57,7 @@ func main() {
 	}()
 
 	go func() {
-		err := amqpServer.Run(&amqpEndpoints)
+		err := amqpServer.Run(amqpEndpoints.AMQPEndpoints)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

@@ -2,8 +2,10 @@ package core_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
+	"github.com/go-kit/kit/log"
 	"github.com/thelotter-enterprise/usergo/core"
 )
 
@@ -13,7 +15,8 @@ func TestNewRabbitMQ(t *testing.T) {
 	host := "localhost"
 	vhost := "thelotter"
 	port := 5672
-	log := core.NewLog(nil, 2)
+	logger := log.NewLogfmtLogger(os.Stdout)
+	log := core.NewLog(logger, 2)
 	r := core.NewRabbitMQ(log, host, port, username, pwd, vhost)
 
 	want := "amqp://user:pwd@localhost:5672/thelotter"
