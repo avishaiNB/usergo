@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
+	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 )
@@ -35,6 +36,18 @@ type RabbitMQ struct {
 	Log Log
 }
 
+// RabbitMQConsumer ...RabbitMQConsumer
+type RabbitMQConsumer struct {
+	Sub       *amqpkit.Subscriber
+	Queue     string
+	Consumer  string
+	AutoAck   bool
+	Exclusive bool
+	NoLocal   bool
+	NoWail    bool
+	Args      amqp.Table
+}
+
 // NewRabbitMQ will create a new instance of empty RabbitMQ
 func NewRabbitMQ(log Log, host string, port int, username string, password string, vhost string) RabbitMQ {
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost)
@@ -47,6 +60,53 @@ func NewRabbitMQ(log Log, host string, port int, username string, password strin
 		Username:    username,
 		Port:        port,
 	}
+}
+
+// Consume ...
+func (a *RabbitMQ) Consume(consumer *RabbitMQConsumer) (<-chan amqp.Delivery, error) {
+	_, err := a.Connect()
+	if err != nil {
+		panic(err)
+	}
+
+	channel, err := a.Channel()
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := channel.Consume(
+		consumer.Queue,
+		consumer.Consumer,
+		consumer.AutoAck,
+		consumer.Exclusive,
+		consumer.NoLocal,
+		consumer.NoWail,
+		consumer.Args)
+
+	return c, err
+}
+
+// NewConsumer will create a new rabbitMQ consumer
+func (a *RabbitMQ) NewConsumer(
+	name string,
+	exchangeName string,
+	queue string,
+	endpoint endpoint.Endpoint,
+	dec amqptransport.DecodeRequestFunc) RabbitMQConsumer {
+
+	sub := a.NewSubscriber(endpoint, exchangeName, dec)
+	consumer := RabbitMQConsumer{
+		Sub:       sub,
+		Queue:     queue,
+		Consumer:  name,
+		Args:      nil,
+		Exclusive: true,
+		AutoAck:   true,
+		NoLocal:   false,
+		NoWail:    false,
+	}
+
+	return consumer
 }
 
 // Connect will create a new connection to RabbitMQ based on the input entered when created the RabbitMQ instance

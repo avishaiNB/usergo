@@ -2,7 +2,6 @@ package core_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/go-kit/kit/log"
@@ -15,7 +14,7 @@ func TestNewRabbitMQ(t *testing.T) {
 	host := "localhost"
 	vhost := "thelotter"
 	port := 5672
-	logger := log.NewLogfmtLogger(os.Stdout)
+	logger := log.NewNopLogger()
 	log := core.NewLog(logger, 2)
 	r := core.NewRabbitMQ(log, host, port, username, pwd, vhost)
 

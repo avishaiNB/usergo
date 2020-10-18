@@ -37,7 +37,7 @@ func main() {
 	httpEndpoints := svc.NewUserHTTPEndpoints(logger, tracer, service)
 	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
 
-	amqpEndpoints := svc.NewUserAMQPEndpoints(logger, tracer, service)
+	amqpEndpoints := svc.NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
 	amqpServer := core.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
@@ -57,7 +57,7 @@ func main() {
 	}()
 
 	go func() {
-		err := amqpServer.Run(amqpEndpoints.AMQPEndpoints)
+		err := amqpServer.Run(amqpEndpoints.Consumers)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)
