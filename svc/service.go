@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/thelotter-enterprise/usergo/core"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -15,13 +16,13 @@ type Service interface {
 
 type service struct {
 	repo   Repository
-	tracer core.Tracer
+	tracer tletracer.Tracer
 	log    core.Log
 }
 
 // NewService creates a new instance of service
 // service is where we define all the business logic.
-func NewService(log core.Log, tracer core.Tracer, repo Repository) Service {
+func NewService(log core.Log, tracer tletracer.Tracer, repo Repository) Service {
 	return &service{
 		repo:   repo,
 		tracer: tracer,

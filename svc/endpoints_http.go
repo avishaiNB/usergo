@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/thelotter-enterprise/usergo/core"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -16,11 +17,11 @@ type UserHTTPEndpoints struct {
 	HTTPEndpoints *tlehttp.HTTPEndpoints
 	Service       Service
 	Log           core.Log
-	Tracer        core.Tracer
+	Tracer        tletracer.Tracer
 }
 
 // NewUserHTTPEndpoints ...
-func NewUserHTTPEndpoints(log core.Log, tracer core.Tracer, service Service) *UserHTTPEndpoints {
+func NewUserHTTPEndpoints(log core.Log, tracer tletracer.Tracer, service Service) *UserHTTPEndpoints {
 	userEndpoints := UserHTTPEndpoints{
 		Log:           log,
 		Tracer:        tracer,

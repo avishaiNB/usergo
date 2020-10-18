@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
 // HTTPServer ...
@@ -21,7 +22,7 @@ type HTTPServer struct {
 	Router  *mux.Router
 	Handler http.Handler
 	Log     core.Log
-	Tracer  core.Tracer
+	Tracer  tletracer.Tracer
 }
 
 // HTTPEndpoints ...
@@ -39,7 +40,7 @@ type HTTPEndpoint struct {
 }
 
 // NewHTTPServer ...
-func NewHTTPServer(log core.Log, tracer core.Tracer, serviceName string, hostAddress string) HTTPServer {
+func NewHTTPServer(log core.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) HTTPServer {
 	return HTTPServer{
 		Name:    serviceName,
 		Address: hostAddress,

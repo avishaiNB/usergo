@@ -6,19 +6,21 @@ import (
 	"github.com/streadway/amqp"
 	"github.com/thelotter-enterprise/usergo/core"
 	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
+
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
 // UserAMQPConsumerEndpoints ...
 type UserAMQPConsumerEndpoints struct {
 	Service   Service
 	Log       core.Log
-	Tracer    core.Tracer
+	Tracer    tletracer.Tracer
 	Consumers *[]tlamqp.RabbitMQConsumer
 	RabbitMQ  *tlamqp.RabbitMQ
 }
 
 // NewUserAMQPConsumerEndpoints will create all the AMQP endpopints
-func NewUserAMQPConsumerEndpoints(log core.Log, tracer core.Tracer, service Service, rabbitMQ *tlamqp.RabbitMQ) *UserAMQPConsumerEndpoints {
+func NewUserAMQPConsumerEndpoints(log core.Log, tracer tletracer.Tracer, service Service, rabbitMQ *tlamqp.RabbitMQ) *UserAMQPConsumerEndpoints {
 	userEndpoints := UserAMQPConsumerEndpoints{
 		Log:      log,
 		Tracer:   tracer,

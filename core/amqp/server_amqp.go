@@ -6,6 +6,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/thelotter-enterprise/usergo/core"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
 // AMQPServer ...
@@ -13,12 +14,12 @@ type AMQPServer struct {
 	Name     string
 	Address  string
 	Log      core.Log
-	Tracer   core.Tracer
+	Tracer   tletracer.Tracer
 	RabbitMQ *RabbitMQ
 }
 
 // NewAMQPServer ...
-func NewAMQPServer(log core.Log, tracer core.Tracer, rabbit *RabbitMQ, serviceName string) AMQPServer {
+func NewAMQPServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) AMQPServer {
 	return AMQPServer{
 		Name:     serviceName,
 		RabbitMQ: rabbit,

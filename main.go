@@ -9,6 +9,7 @@ import (
 	"github.com/thelotter-enterprise/usergo/core"
 	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 
@@ -31,7 +32,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	logger := core.NewLogWithDefaults()
-	tracer := core.NewTracer(serviceName, hostAddress, zipkinURL)
+	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 	rabbitmq := tlamqp.NewRabbitMQ(logger, rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 
 	repo := svc.NewRepository()
