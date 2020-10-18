@@ -5,17 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 func TestNewFrom(t *testing.T) {
 	ctx := context.Background()
-	c := core.NewCtx()
 	corrid := "12345"
 	duration := time.Second * 10
 	deadline := time.Now().UTC().Add(duration)
 
-	c = c.NewFrom(ctx, corrid, duration, deadline)
+	c := tlectx.NewFrom(ctx, corrid, duration, deadline)
 
 	if c.Cancel == nil {
 		t.Fail()
@@ -41,20 +40,19 @@ func TestNewFrom(t *testing.T) {
 
 func TestSetContext(t *testing.T) {
 	ctx := context.Background()
-	c := core.NewCtx()
 	corrid := "12345"
 	duration := time.Second * 10
 	deadline := time.Now().UTC().Add(duration)
 
-	ctx = c.SetCorrealtionToContext(ctx, corrid)
-	corridResult := c.GetCorrelationFromContext(ctx)
+	ctx = tlectx.SetCorrealtionToContext(ctx, corrid)
+	corridResult := tlectx.GetCorrelationFromContext(ctx)
 
 	if corrid != corridResult {
 		t.Error("correlation does not match")
 	}
 
-	ctx = c.SetTimeoutToContext(ctx, duration, deadline)
-	durationResult, deadlineResult := c.GetTimeoutFromContext(ctx)
+	ctx = tlectx.SetTimeoutToContext(ctx, duration, deadline)
+	durationResult, deadlineResult := tlectx.GetTimeoutFromContext(ctx)
 
 	if durationResult != duration {
 		t.Error("duration does not match")
@@ -67,10 +65,9 @@ func TestSetContext(t *testing.T) {
 
 func TestGetOrCreateCorrelationID_Create(t *testing.T) {
 	ctx := context.Background()
-	c := core.NewCtx()
 	var corrid string
-	corrid, ctx = c.GetOrCreateCorrelationFromContext(ctx, true)
-	actualCorrelationID := c.GetCorrelationFromContext(ctx)
+	corrid, ctx = tlectx.GetOrCreateCorrelationFromContext(ctx, true)
+	actualCorrelationID := tlectx.GetCorrelationFromContext(ctx)
 
 	if actualCorrelationID == "" {
 		t.Error("correlation was not set to context")
@@ -83,10 +80,9 @@ func TestGetOrCreateCorrelationID_Create(t *testing.T) {
 
 func TestGetOrCreateTimeout_Create(t *testing.T) {
 	ctx := context.Background()
-	c := core.NewCtx()
 
-	duration, deadline, ctx := c.GetOrCreateTimeoutFromContext(ctx, true)
-	actualDuration, actualDeadlne := c.GetTimeoutFromContext(ctx)
+	duration, deadline, ctx := tlectx.GetOrCreateTimeoutFromContext(ctx, true)
+	actualDuration, actualDeadlne := tlectx.GetTimeoutFromContext(ctx)
 
 	if actualDuration != duration {
 		t.Error("duration does not match")

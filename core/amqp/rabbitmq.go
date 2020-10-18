@@ -227,9 +227,8 @@ func (c *RabbitMQConsumer) Bind(queueName string, exchangeName string) error {
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
 func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
-	c := tlectx.NewCtx()
-	corrid := c.GetCorrelationFromContext(ctx)
-	duration, _ := c.GetTimeoutFromContext(ctx)
+	corrid := tlectx.GetCorrelationFromContext(ctx)
+	duration, _ := tlectx.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
 	_, _ = a.Connect()

@@ -41,27 +41,22 @@ type Ctx struct {
 	Deadline      time.Time
 }
 
-// NewCtx will create a new Ctx
-func NewCtx() Ctx {
-	return Ctx{}
-}
-
 // New will create a new context with new corraltion ID, duration and deadline
-func (c Ctx) New() Ctx {
+func New() Ctx {
 	ctx := context.Background()
-	corrid := c.NewCorrelation()
-	duration, deadline := c.CalcTimeoutFromContext(ctx)
+	corrid := NewCorrelation()
+	duration, deadline := CalcTimeoutFromContext(ctx)
 
-	return c.NewFrom(ctx, corrid, duration, deadline)
+	return NewFrom(ctx, corrid, duration, deadline)
 }
 
 // NewFrom will create a new Ctx
 // It will create a new context.Context, add values to the context and set context deadline
-func (c Ctx) NewFrom(ctx context.Context, correlationID string, duration time.Duration, deadline time.Time) Ctx {
-	c.SetCorrealtionToContext(ctx, correlationID)
-	c.SetTimeoutToContext(ctx, duration, deadline)
-
+func NewFrom(ctx context.Context, correlationID string, duration time.Duration, deadline time.Time) Ctx {
 	var cancel context.CancelFunc
+	c := Ctx{}
+	ctx = SetCorrealtionToContext(ctx, correlationID)
+	ctx = SetTimeoutToContext(ctx, duration, deadline)
 	ctx, cancel = context.WithDeadline(ctx, deadline)
 
 	c.Cancel = cancel
@@ -74,13 +69,13 @@ func (c Ctx) NewFrom(ctx context.Context, correlationID string, duration time.Du
 }
 
 // SetCorrealtionToContext will set into the given context a corraltion ID value
-func (c Ctx) SetCorrealtionToContext(ctx context.Context, correlationID string) context.Context {
+func SetCorrealtionToContext(ctx context.Context, correlationID string) context.Context {
 	ctx = context.WithValue(ctx, CorrelationIDKey, correlationID)
 	return ctx
 }
 
 // SetTimeoutToContext will set in to the given context the duration and the deadline
-func (c Ctx) SetTimeoutToContext(ctx context.Context, duration time.Duration, deadline time.Time) context.Context {
+func SetTimeoutToContext(ctx context.Context, duration time.Duration, deadline time.Time) context.Context {
 	ctx = context.WithValue(ctx, DurationKey, duration)
 	ctx = context.WithValue(ctx, DeadlineKey, deadline)
 	return ctx
@@ -88,7 +83,7 @@ func (c Ctx) SetTimeoutToContext(ctx context.Context, duration time.Duration, de
 
 // GetTimeoutFromContext will return the duration and the deadline from the given context
 // If it cannot find it, it will respectively return nil
-func (c Ctx) GetTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
+func GetTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
 	durationAsInterface := ctx.Value(DurationKey)
 	deadlineAsInterface := ctx.Value(DeadlineKey)
 
@@ -107,7 +102,7 @@ func (c Ctx) GetTimeoutFromContext(ctx context.Context) (time.Duration, time.Tim
 
 // GetCorrelationFromContext will return the correlation ID from the context
 // If it cannot find it, it will return nil
-func (c Ctx) GetCorrelationFromContext(ctx context.Context) string {
+func GetCorrelationFromContext(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDKey)
 
 	var corrid string
@@ -121,13 +116,13 @@ func (c Ctx) GetCorrelationFromContext(ctx context.Context) string {
 // CalcTimeoutFromContext will return the timeout (deadline) for waiting an external response to come back
 // It will return the duration to wait and also the clock timeout
 // TODO: now I return max, need to change it
-func (c Ctx) CalcTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
-	d, t, ctx := c.GetOrCreateTimeoutFromContext(ctx, false)
+func CalcTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
+	d, t, ctx := GetOrCreateTimeoutFromContext(ctx, false)
 	return d, t
 }
 
 // NewTimeout will return new timeout including the timeout duration as time.Duration and deadline as time.Time
-func (c Ctx) NewTimeout() (time.Duration, time.Time) {
+func NewTimeout() (time.Duration, time.Time) {
 	duration := MaxTimeout
 	deadline := utils.NewDateTime().AddDuration(duration)
 
@@ -135,19 +130,19 @@ func (c Ctx) NewTimeout() (time.Duration, time.Time) {
 }
 
 // NewCorrelation will return a new correlation ID as string
-func (c Ctx) NewCorrelation() string {
+func NewCorrelation() string {
 	return utils.NewUUID()
 }
 
 // GetOrCreateTimeoutFromContext ...
-func (c Ctx) GetOrCreateTimeoutFromContext(ctx context.Context, appendToContext bool) (time.Duration, time.Time, context.Context) {
-	duration, deadline := c.GetTimeoutFromContext(ctx)
+func GetOrCreateTimeoutFromContext(ctx context.Context, appendToContext bool) (time.Duration, time.Time, context.Context) {
+	duration, deadline := GetTimeoutFromContext(ctx)
 
 	if deadline.IsZero() {
-		duration, deadline = c.NewTimeout()
+		duration, deadline = NewTimeout()
 
 		if appendToContext {
-			ctx = c.SetTimeoutToContext(ctx, duration, deadline)
+			ctx = SetTimeoutToContext(ctx, duration, deadline)
 		}
 	}
 
@@ -157,13 +152,13 @@ func (c Ctx) GetOrCreateTimeoutFromContext(ctx context.Context, appendToContext 
 // GetOrCreateCorrelationFromContext will get duration and deadline from the context
 // if it does not exist it will create new duration and deadline
 // If appendToContext, it will update the input context with the duration and deadline
-func (c Ctx) GetOrCreateCorrelationFromContext(ctx context.Context, appendToContext bool) (string, context.Context) {
-	corrid := c.GetCorrelationFromContext(ctx)
+func GetOrCreateCorrelationFromContext(ctx context.Context, appendToContext bool) (string, context.Context) {
+	corrid := GetCorrelationFromContext(ctx)
 
 	if corrid == "" {
-		corrid = c.NewCorrelation()
+		corrid = NewCorrelation()
 		if appendToContext {
-			ctx = c.SetCorrealtionToContext(ctx, corrid)
+			ctx = SetCorrealtionToContext(ctx, corrid)
 		}
 	}
 
@@ -173,7 +168,7 @@ func (c Ctx) GetOrCreateCorrelationFromContext(ctx context.Context, appendToCont
 // GetOrCreateCorrelationID will get the correlation ID from the context
 // If it does not exist, it will create a new correlation ID
 // If appendToContext, it will update the input context with the correlation ID
-func (c Ctx) GetOrCreateCorrelationID(ctx context.Context) string {
+func GetOrCreateCorrelationID(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDKey)
 
 	var corrid string
@@ -189,34 +184,34 @@ func (c Ctx) GetOrCreateCorrelationID(ctx context.Context) string {
 // ReadFromRequest will read from the http request the correlation ID, duration and deadline
 // Then it will create a context that reflects the extracted information
 // Adding the values and setting the context deadline
-func (c Ctx) ReadFromRequest(ctx context.Context, r *http.Request) context.Context {
+func ReadFromRequest(ctx context.Context, r *http.Request) context.Context {
 	headerCorrelationID := r.Header.Get(string(CorrelationIDKey))
 	headerDuration := r.Header.Get(string(DurationKey))
 	headerDeadline := r.Header.Get(string(DeadlineKey))
 
 	correlationID := headerCorrelationID
 	if headerCorrelationID == "" {
-		correlationID = c.NewCorrelation()
+		correlationID = NewCorrelation()
 	}
 
 	var duration time.Duration
 	var deadline time.Time
 	if headerDuration == "" || headerDeadline == "" {
-		duration, deadline = c.NewTimeout()
+		duration, deadline = NewTimeout()
 	} else {
 		conv := utils.NewConvertor()
 		duration = conv.MilisecondsToDuration(conv.FromStringToInt64(headerDuration))
 		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
 	}
 
-	contextFrom := c.NewFrom(ctx, correlationID, duration, deadline)
+	contextFrom := NewFrom(ctx, correlationID, duration, deadline)
 	return contextFrom.Context
 }
 
 // WriteToRequest will extract the context values and will append the request as headers
-func (c Ctx) WriteToRequest(ctx context.Context, r *http.Request) context.Context {
-	corrid, ctx := c.GetOrCreateCorrelationFromContext(ctx, false)
-	duration, deadline, ctx := c.GetOrCreateTimeoutFromContext(ctx, false)
+func WriteToRequest(ctx context.Context, r *http.Request) context.Context {
+	corrid, ctx := GetOrCreateCorrelationFromContext(ctx, false)
+	duration, deadline, ctx := GetOrCreateTimeoutFromContext(ctx, false)
 
 	conv := utils.NewConvertor()
 
@@ -230,11 +225,11 @@ func (c Ctx) WriteToRequest(ctx context.Context, r *http.Request) context.Contex
 }
 
 // WriteBefore ...
-func (c Ctx) WriteBefore() httpkit.ClientOption {
-	return httpkit.ClientBefore(c.WriteToRequest)
+func WriteBefore() httpkit.ClientOption {
+	return httpkit.ClientBefore(WriteToRequest)
 }
 
 // ReadBefore ...
-func (c Ctx) ReadBefore() httpkit.ServerOption {
-	return httpkit.ServerBefore(c.ReadFromRequest)
+func ReadBefore() httpkit.ServerOption {
+	return httpkit.ServerBefore(ReadFromRequest)
 }

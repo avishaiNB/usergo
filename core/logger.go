@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 
-	"github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
 )
 
 // Log will create a new instance of the Log with ready to use loggers
@@ -18,7 +18,7 @@ import (
 // TBD: funnel logger
 type Log struct {
 	Logger log.Logger
-	Ctx    ctx.Ctx
+	Ctx    tlectx.Ctx
 	Level  int
 }
 
@@ -59,7 +59,7 @@ func NewLog(logger log.Logger, level int) Log {
 	return Log{
 		Logger: logger,
 		Level:  level,
-		Ctx:    ctx.NewCtx(),
+		Ctx:    tlectx.New(),
 	}
 }
 
@@ -68,8 +68,8 @@ func (log Log) Error(ctx context.Context, message string, err error, logger log.
 	wasLogged := false
 
 	if log.ShouldLog(LogLevelError) {
-		corrid := log.Ctx.GetCorrelationFromContext(ctx)
-		duration, deadline := log.Ctx.GetTimeoutFromContext(ctx)
+		corrid := tlectx.GetCorrelationFromContext(ctx)
+		duration, deadline := tlectx.GetTimeoutFromContext(ctx)
 
 		err := logger.Log(
 			"level", "error",

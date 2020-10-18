@@ -59,11 +59,9 @@ func (server *Server) Run(endpoints *Endpoints) error {
 		return errors.New("no endpoints")
 	}
 
-	c := tlectx.NewCtx()
-
 	options := []httpkit.ServerOption{
 		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),
-		c.ReadBefore(),
+		tlectx.ReadBefore(),
 	}
 
 	for _, endpoint := range endpoints.ServerEndpoints {

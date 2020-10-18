@@ -37,8 +37,7 @@ type MessageMarshall struct{}
 func (m *MessageMarshall) Marshal(ctx context.Context, exchangeName string, data interface{}) (amqp.Publishing, error) {
 	urn := fmt.Sprintf("urn:message:%v", exchangeName)
 	msg := Message{Data: data, URN: urn}
-	c := tlectx.NewCtx()
-	msg.CorrelationID = c.GetOrCreateCorrelationID(ctx)
+	msg.CorrelationID = tlectx.GetOrCreateCorrelationID(ctx)
 	wrapper := MessageWrapper{MessageType: []string{urn}, Message: &msg}
 	body, err := json.Marshal(wrapper)
 
