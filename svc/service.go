@@ -10,6 +10,7 @@ import (
 // Service API
 type Service interface {
 	GetUserByID(ctx context.Context, userID int) (shared.User, error)
+	ConsumeLoginCommand(ctx context.Context, userID int) error
 }
 
 type service struct {
@@ -31,4 +32,9 @@ func NewService(log core.Log, tracer core.Tracer, repo Repository) Service {
 func (s *service) GetUserByID(ctx context.Context, userID int) (shared.User, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	return user, err
+}
+
+func (s *service) ConsumeLoginCommand(ctx context.Context, userID int) error {
+	s.log.Logger.Log("message", "login command consumed")
+	return nil
 }

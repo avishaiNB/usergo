@@ -32,16 +32,17 @@ func NewUserAMQPConsumerEndpoints(log core.Log, tracer core.Tracer, service Serv
 
 func (a UserAMQPConsumerEndpoints) makeConsumerEndpoints() *[]core.RabbitMQConsumer {
 	consumers := []core.RabbitMQConsumer{}
-	ep := newLoginEndpoint()
+	ep := newLoginEndpoint(a.Service)
 	consumer := a.RabbitMQ.NewConsumer(ep.Name, ep.Exchange, ep.Queue, ep.EP, ep.Dec)
 	consumers = append(consumers, consumer)
 	return &consumers
 }
 
-func newLoginEndpoint() core.AMQPEndpoint {
+func newLoginEndpoint(service Service) core.AMQPEndpoint {
 	return core.AMQPEndpoint{
-		EP: func(_ context.Context, request interface{}) (interface{}, error) {
-			return true, nil
+		EP: func(ctx context.Context, request interface{}) (interface{}, error) {
+			err := service.ConsumeLoginCommand(ctx, 1)
+			return true, err
 		},
 		Queue: "queue1",
 		Dec: func(_ context.Context, d *amqp.Delivery) (interface{}, error) {
