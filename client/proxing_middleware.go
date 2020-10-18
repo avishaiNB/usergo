@@ -15,16 +15,20 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
+	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // Proxy ...
 type Proxy struct {
-	cb         core.CircuitBreaker
+	cb         tlecb.CircuitBreaker
 	limmitermw endpoint.Middleware
 	router     *mux.Router
 	limiter    core.RateLimiter
-	sd         core.ServiceDiscovery
+	sd         tlesd.ServiceDiscovery
 	logger     log.Logger
 }
 
@@ -43,7 +47,7 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb core.CircuitBreaker, limiter core.RateLimiter, sd *core.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
+func NewProxy(cb tlecb.CircuitBreaker, limiter core.RateLimiter, sd *tlesd.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
 	return Proxy{
 		cb:      cb,
 		limiter: limiter,
@@ -77,9 +81,8 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 
 		tgt, _ := url.Parse(instance) // e.g. parse http://localhost:8080"
 		tgt.Path = path
-		ctx := core.NewCtx()
 
-		endpoint := httptransport.NewClient("GET", tgt, encodeGetUserByIDRequest, decodeGetUserByIDResponse, ctx.WriteBefore()).Endpoint()
+		endpoint := httptransport.NewClient("GET", tgt, encodeGetUserByIDRequest, decodeGetUserByIDResponse, tlectx.WriteBefore()).Endpoint()
 		endpoint = breakermw(endpoint)
 		endpoint = limitermw(endpoint)
 
@@ -103,7 +106,7 @@ func decodeGetUserByIDResponse(_ context.Context, r *http.Response) (interface{}
 }
 
 // GetUserByID will execute the endpoint using the middleware and will constract an shared.HTTPResponse
-func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.Response {
+func (proxymw userByIDProxyMiddleware) GetUserByID(id int) tlehttp.Response {
 	var res interface{}
 	var err error
 	circuitOpen := false
@@ -115,7 +118,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.Response {
 		statusCode = 500
 	}
 
-	return core.Response{
+	return tlehttp.Response{
 		Data:          res,
 		Error:         err,
 		CircuitOpened: circuitOpen,
@@ -125,7 +128,7 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) core.Response {
 
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
-func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) core.Response {
+func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) tlehttp.Response {
 	svc := proxymw.Next.(UserService)
 	return svc.GetUserByEmail(email)
 }

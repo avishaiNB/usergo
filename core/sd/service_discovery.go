@@ -7,6 +7,8 @@ import (
 	"github.com/go-kit/kit/sd/consul"
 	"github.com/go-kit/kit/sd/dnssrv"
 	consulapi "github.com/hashicorp/consul/api"
+	"github.com/thelotter-enterprise/usergo/core"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 const (
@@ -56,7 +58,7 @@ func (sd *ServiceDiscovery) WithConsul(consulAddress string) error {
 // For each service a new instance is required
 // It will cache the instances
 func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, onlyHealthy bool) (*consul.Instancer, error) {
-	key := NewKeys().Build("consul", serviceName, tags...)
+	key := utils.NewKeys().Build("consul", serviceName, tags...)
 
 	var instancer *consul.Instancer = sd.ConsulIntances[key]
 	if instancer != nil {
@@ -64,7 +66,7 @@ func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, on
 	}
 
 	if *sd.ConsulClient == nil {
-		err := NewApplicationError("call WithConsul first", nil)
+		err := core.NewApplicationError("call WithConsul first", nil)
 		return instancer, err
 	}
 
@@ -77,7 +79,7 @@ func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, on
 // DNSInstance will return DNS instancer which will be used to lookup a DNS service
 // It will cache the instances
 func (sd *ServiceDiscovery) DNSInstance(serviceName string) *dnssrv.Instancer {
-	key := NewKeys().Build("dns", serviceName)
+	key := utils.NewKeys().Build("dns", serviceName)
 
 	var instancer *dnssrv.Instancer = sd.DNSIntances[key]
 	if instancer != nil {

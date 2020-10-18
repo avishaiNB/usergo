@@ -6,6 +6,7 @@ import (
 
 	metrics "github.com/go-kit/kit/metrics"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 )
 
 func makeInstrumentingMiddleware(inst core.Instrumentor) UserServiceMiddleware {
@@ -28,7 +29,7 @@ type instrumentingMiddleware struct {
 	next           UserService
 }
 
-func (mw instrumentingMiddleware) GetUserByID(id int) (response core.Response) {
+func (mw instrumentingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		lvs := []string{"method", "GetUserByID", "error", fmt.Sprint(response.Error != nil)}
 		mw.requestCount.With(lvs...).Add(1)
@@ -39,6 +40,6 @@ func (mw instrumentingMiddleware) GetUserByID(id int) (response core.Response) {
 	return response
 }
 
-func (mw instrumentingMiddleware) GetUserByEmail(email string) (response core.Response) {
+func (mw instrumentingMiddleware) GetUserByEmail(email string) (response tlehttp.Response) {
 	return mw.next.GetUserByEmail(email)
 }

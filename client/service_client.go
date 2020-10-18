@@ -6,26 +6,29 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
+	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
 )
 
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
 	Logger      log.Logger
-	SD          *core.ServiceDiscovery
+	SD          *tlesd.ServiceDiscovery
 	ServiceName string
-	CB          core.CircuitBreaker
+	CB          tlecb.CircuitBreaker
 	Limiter     core.RateLimiter
 	Inst        core.Instrumentor
 	Router      *mux.Router
 }
 
 // NewServiceClientWithDefaults with defaults
-func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, serviceName string) ServiceClient {
+func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery, serviceName string) ServiceClient {
 
 	return NewServiceClient(
 		logger,
 		sd,
-		core.NewCircuitBreakerator(),
+		tlecb.NewCircuitBreakerator(),
 		core.NewRateLimitator(),
 		core.NewInstrumentor(serviceName),
 		mux.NewRouter(),
@@ -34,7 +37,7 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, 
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
@@ -49,7 +52,7 @@ func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.Circ
 
 // GetUserByID , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
-func (client ServiceClient) GetUserByID(ctx context.Context, id int) core.Response {
+func (client ServiceClient) GetUserByID(ctx context.Context, id int) tlehttp.Response {
 	var service UserService
 	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
 	instMiddleware := makeInstrumentingMiddleware(client.Inst)
@@ -66,6 +69,6 @@ func (client ServiceClient) GetUserByID(ctx context.Context, id int) core.Respon
 
 // GetUserByEmail , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
-func (client ServiceClient) GetUserByEmail(ctx context.Context, email string) core.Response {
-	return core.Response{}
+func (client ServiceClient) GetUserByEmail(ctx context.Context, email string) tlehttp.Response {
+	return tlehttp.Response{}
 }

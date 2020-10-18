@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/thelotter-enterprise/usergo/core"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 )
 
 func makeLoggingMiddleware(logger log.Logger) UserServiceMiddleware {
@@ -18,7 +18,7 @@ type loggingMiddleware struct {
 	UserService
 }
 
-func (mw loggingMiddleware) GetUserByID(id int) (response core.Response) {
+func (mw loggingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByID",
@@ -32,7 +32,7 @@ func (mw loggingMiddleware) GetUserByID(id int) (response core.Response) {
 	return mw.UserService.GetUserByID(id)
 }
 
-func (mw loggingMiddleware) GetUserByEmail(email string) (response core.Response) {
+func (mw loggingMiddleware) GetUserByEmail(email string) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByEmail",
