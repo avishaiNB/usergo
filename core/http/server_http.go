@@ -1,4 +1,4 @@
-package core
+package http
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	httpkit "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/thelotter-enterprise/usergo/core"
 )
 
 // HTTPServer ...
@@ -19,8 +20,8 @@ type HTTPServer struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Log     Log
-	Tracer  Tracer
+	Log     core.Log
+	Tracer  core.Tracer
 }
 
 // HTTPEndpoints ...
@@ -38,7 +39,7 @@ type HTTPEndpoint struct {
 }
 
 // NewHTTPServer ...
-func NewHTTPServer(log Log, tracer Tracer, serviceName string, hostAddress string) HTTPServer {
+func NewHTTPServer(log core.Log, tracer core.Tracer, serviceName string, hostAddress string) HTTPServer {
 	return HTTPServer{
 		Name:    serviceName,
 		Address: hostAddress,
@@ -56,7 +57,7 @@ func (server *HTTPServer) Run(endpoints *HTTPEndpoints) error {
 		return errors.New("no endpoints")
 	}
 
-	c := NewCtx()
+	c := core.NewCtx()
 
 	options := []httpkit.ServerOption{
 		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),

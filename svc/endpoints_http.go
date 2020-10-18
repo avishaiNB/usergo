@@ -7,12 +7,13 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // UserHTTPEndpoints ...
 type UserHTTPEndpoints struct {
-	HTTPEndpoints *core.HTTPEndpoints
+	HTTPEndpoints *tlehttp.HTTPEndpoints
 	Service       Service
 	Log           core.Log
 	Tracer        core.Tracer
@@ -24,7 +25,7 @@ func NewUserHTTPEndpoints(log core.Log, tracer core.Tracer, service Service) *Us
 		Log:           log,
 		Tracer:        tracer,
 		Service:       service,
-		HTTPEndpoints: &core.HTTPEndpoints{},
+		HTTPEndpoints: &tlehttp.HTTPEndpoints{},
 	}
 
 	userEndpoints.HTTPEndpoints = userEndpoints.makeEndpoints()
@@ -32,11 +33,11 @@ func NewUserHTTPEndpoints(log core.Log, tracer core.Tracer, service Service) *Us
 	return &userEndpoints
 }
 
-func (ue UserHTTPEndpoints) makeEndpoints() *core.HTTPEndpoints {
-	var endpoints core.HTTPEndpoints
-	var serverEndpoints []core.HTTPEndpoint
+func (ue UserHTTPEndpoints) makeEndpoints() *tlehttp.HTTPEndpoints {
+	var endpoints tlehttp.HTTPEndpoints
+	var serverEndpoints []tlehttp.HTTPEndpoint
 
-	userbyid := core.HTTPEndpoint{
+	userbyid := tlehttp.HTTPEndpoint{
 		Endpoint: makeUserByIDEndpoint(ue.Service),
 		Enc:      ue.encodeUserByIDReponse,
 		Dec:      ue.decodeUserByIDRequest,
@@ -52,7 +53,7 @@ func (ue UserHTTPEndpoints) makeEndpoints() *core.HTTPEndpoints {
 func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		var err error
-		var req core.Request
+		var req tlehttp.Request
 		var data shared.ByIDRequestData
 
 		decoder := core.NewDecoder()

@@ -8,6 +8,7 @@ import (
 
 	"github.com/thelotter-enterprise/usergo/core"
 	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/http"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 
@@ -36,7 +37,7 @@ func main() {
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
 	httpEndpoints := svc.NewUserHTTPEndpoints(logger, tracer, service)
-	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
+	httpServer := tlehttp.NewHTTPServer(logger, tracer, serviceName, hostAddress)
 
 	amqpEndpoints := svc.NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
 	amqpServer := tlamqp.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
