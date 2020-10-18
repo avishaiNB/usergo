@@ -64,10 +64,18 @@ func (log Log) Error(ctx context.Context, message string, err error, logger log.
 	wasLogged := false
 
 	if log.ShouldLog(LogLevelError) {
+
+		c := NewCtx()
+		corrid := c.GetCorrelationFromContext(ctx)
+		duration, deadline := c.GetTimeoutFromContext(ctx)
+
 		err := logger.Log(
 			"level", "error",
 			"message", message,
 			"error", err,
+			"correlationId", corrid,
+			"duration", duration,
+			"deadline", deadline,
 			// additional important information
 		)
 
