@@ -9,11 +9,12 @@ import (
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
-func makeInstrumentingMiddleware(inst tleinst.Instrumentor) UserServiceMiddleware {
+// NewInstrumentingMiddleware ...
+func NewInstrumentingMiddleware(inst tleinst.Instrumentor) ServiceMiddleware {
 	counter := inst.AddPromCounter("user", "getuserbyid", tleinst.RequestCount, []string{"method", "error"})
 	requestLatency := inst.AddPromSummary("user", "getuserbyid", tleinst.LatencyInMili, []string{"method", "error"})
 
-	return func(next UserService) UserService {
+	return func(next Service) Service {
 		mw := instrumentingMiddleware{
 			next:           next,
 			requestCount:   counter,
@@ -26,7 +27,7 @@ func makeInstrumentingMiddleware(inst tleinst.Instrumentor) UserServiceMiddlewar
 type instrumentingMiddleware struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
-	next           UserService
+	next           Service
 }
 
 func (mw instrumentingMiddleware) GetUserByID(id int) (response tlehttp.Response) {

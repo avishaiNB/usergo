@@ -7,15 +7,16 @@ import (
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
-func makeLoggingMiddleware(logger log.Logger) UserServiceMiddleware {
-	return func(next UserService) UserService {
+// NewLoggingMiddleware ...
+func NewLoggingMiddleware(logger log.Logger) ServiceMiddleware {
+	return func(next Service) Service {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
 	logger log.Logger
-	UserService
+	next   Service
 }
 
 func (mw loggingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
@@ -29,7 +30,7 @@ func (mw loggingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
 		)
 	}(time.Now())
 
-	return mw.UserService.GetUserByID(id)
+	return mw.next.GetUserByID(id)
 }
 
 func (mw loggingMiddleware) GetUserByEmail(email string) (response tlehttp.Response) {
@@ -43,5 +44,5 @@ func (mw loggingMiddleware) GetUserByEmail(email string) (response tlehttp.Respo
 		)
 	}(time.Now())
 
-	return mw.UserService.GetUserByEmail(email)
+	return mw.next.GetUserByEmail(email)
 }

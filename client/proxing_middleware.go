@@ -59,7 +59,7 @@ func NewProxy(cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, sd *tlesd.S
 }
 
 // UserByIDMiddleware ..
-func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMiddleware {
+func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddleware {
 	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
 	//consulInstancer := proxy.sd.DNSInstance("user")
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger)
@@ -67,7 +67,7 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) UserServiceMi
 	lb := tletrans.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
-	return func(next UserService) UserService {
+	return func(next Service) Service {
 		return userByIDProxyMiddleware{Context: ctx, Next: next, This: retry}
 	}
 }
@@ -130,6 +130,6 @@ func (proxymw userByIDProxyMiddleware) GetUserByID(id int) tlehttp.Response {
 // GetUserByEmail will proxy the implementation to the responsible middleware
 // We do this to satisfy the service interface
 func (proxymw userByIDProxyMiddleware) GetUserByEmail(email string) tlehttp.Response {
-	svc := proxymw.Next.(UserService)
+	svc := proxymw.Next.(Service)
 	return svc.GetUserByEmail(email)
 }

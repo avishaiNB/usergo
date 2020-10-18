@@ -8,6 +8,9 @@ import (
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
+// UserServiceMiddleware used to chain behaviors on the UserService using middleware pattern
+type ServiceMiddleware func(Service) Service
+
 // Service API
 type Service interface {
 	GetUserByID(ctx context.Context, userID int) (shared.User, error)

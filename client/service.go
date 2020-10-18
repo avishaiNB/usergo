@@ -2,11 +2,11 @@ package client
 
 import tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 
-// UserServiceMiddleware used to chain behaviors on the UserService using middleware pattern
-type UserServiceMiddleware func(UserService) UserService
+// ServiceMiddleware used to chain behaviors on the UserService using middleware pattern
+type ServiceMiddleware func(Service) Service
 
-// UserService defines all the APIs available for the service
-type UserService interface {
+// Service defines all the APIs available for the service
+type Service interface {
 	// Gets the user by an ID
 	GetUserByID(id int) tlehttp.Response
 

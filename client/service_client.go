@@ -54,9 +54,9 @@ func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.Ci
 // GetUserByID , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
 func (client ServiceClient) GetUserByID(ctx context.Context, id int) tlehttp.Response {
-	var service UserService
+	var service Service
 	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
-	instMiddleware := makeInstrumentingMiddleware(client.Inst)
+	instMiddleware := NewInstrumentingMiddleware(client.Inst)
 	logMiddleware := makeLoggingMiddleware(client.Logger)
 	proxyMiddleware := proxy.UserByIDMiddleware(ctx, id)
 
