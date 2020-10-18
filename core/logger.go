@@ -16,6 +16,7 @@ import (
 // TBD: funnel logger
 type Log struct {
 	Logger log.Logger
+	Ctx    Ctx
 	Level  int
 }
 
@@ -56,6 +57,7 @@ func NewLog(logger log.Logger, level int) Log {
 	return Log{
 		Logger: logger,
 		Level:  level,
+		Ctx:    NewCtx(),
 	}
 }
 
@@ -64,10 +66,8 @@ func (log Log) Error(ctx context.Context, message string, err error, logger log.
 	wasLogged := false
 
 	if log.ShouldLog(LogLevelError) {
-
-		c := NewCtx()
-		corrid := c.GetCorrelationFromContext(ctx)
-		duration, deadline := c.GetTimeoutFromContext(ctx)
+		corrid := log.Ctx.GetCorrelationFromContext(ctx)
+		duration, deadline := log.Ctx.GetTimeoutFromContext(ctx)
 
 		err := logger.Log(
 			"level", "error",
