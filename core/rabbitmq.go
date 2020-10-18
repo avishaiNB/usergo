@@ -38,14 +38,19 @@ type RabbitMQ struct {
 
 // RabbitMQConsumer ...RabbitMQConsumer
 type RabbitMQConsumer struct {
-	Sub       *amqpkit.Subscriber
-	Queue     string
-	Consumer  string
-	AutoAck   bool
-	Exclusive bool
-	NoLocal   bool
-	NoWail    bool
-	Args      amqp.Table
+	Sub                *amqpkit.Subscriber
+	QueueName          string
+	QueueDurable       bool
+	QueueAutoDelete    bool
+	ExchangeDurable    bool
+	ExchangeAutoDelete bool
+	ExchangeName       string
+	Consumer           string
+	AutoAck            bool
+	Exclusive          bool
+	NoLocal            bool
+	NoWail             bool
+	Args               amqp.Table
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
@@ -74,8 +79,12 @@ func (a *RabbitMQ) Consume(consumer *RabbitMQConsumer) (<-chan amqp.Delivery, er
 		panic(err)
 	}
 
+	a.NewExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
+	a.NewQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
+	a.Bind(consumer.QueueName, consumer.ExchangeName)
+
 	c, err := channel.Consume(
-		consumer.Queue,
+		consumer.QueueName,
 		consumer.Consumer,
 		consumer.AutoAck,
 		consumer.Exclusive,
@@ -90,20 +99,25 @@ func (a *RabbitMQ) Consume(consumer *RabbitMQConsumer) (<-chan amqp.Delivery, er
 func (a *RabbitMQ) NewConsumer(
 	name string,
 	exchangeName string,
-	queue string,
+	queueName string,
 	endpoint endpoint.Endpoint,
 	dec amqptransport.DecodeRequestFunc) RabbitMQConsumer {
 
 	sub := a.NewSubscriber(endpoint, exchangeName, dec)
 	consumer := RabbitMQConsumer{
-		Sub:       sub,
-		Queue:     queue,
-		Consumer:  name,
-		Args:      nil,
-		Exclusive: true,
-		AutoAck:   true,
-		NoLocal:   false,
-		NoWail:    false,
+		Sub:                sub,
+		QueueName:          queueName,
+		ExchangeName:       exchangeName,
+		Consumer:           name,
+		Args:               nil,
+		Exclusive:          true,
+		AutoAck:            true,
+		NoLocal:            false,
+		NoWail:             false,
+		ExchangeAutoDelete: false,
+		ExchangeDurable:    true,
+		QueueAutoDelete:    false,
+		QueueDurable:       true,
 	}
 
 	return consumer
@@ -185,7 +199,7 @@ func (a *RabbitMQ) NewQueue(name string, durable bool, autoDelete bool) (amqp.Qu
 }
 
 // NewExchange will create a new exchange
-func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete bool) error {
+func (a *RabbitMQ) NewExchange(name string, durable bool, autoDelete bool) error {
 
 	var err error
 	var channel *amqp.Channel
@@ -194,7 +208,7 @@ func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete b
 	if err == nil {
 		err = channel.ExchangeDeclare(
 			name,       // name
-			t,          // type
+			"fanout",   // type
 			durable,    // durable
 			autoDelete, // auto-deleted
 			false,      // internal
@@ -207,6 +221,21 @@ func (a *RabbitMQ) NewExchange(name string, t string, durable bool, autoDelete b
 			a.Log.Logger.Log(err)
 		}
 	}
+
+	return err
+}
+
+// Bind ...
+func (a *RabbitMQ) Bind(queueName string, exchangeName string) error {
+	ch, err := a.Channel()
+
+	err = ch.QueueBind(
+		queueName,
+		"", // bindingKey
+		exchangeName,
+		false, // noWait
+		nil,   // arguments
+	)
 
 	return err
 }

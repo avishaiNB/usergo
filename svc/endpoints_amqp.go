@@ -44,11 +44,11 @@ func newLoginEndpoint(service Service) core.AMQPEndpoint {
 			err := service.ConsumeLoginCommand(ctx, 1)
 			return true, err
 		},
-		Queue: "queue1",
+		Queue: "queue2",
 		Dec: func(_ context.Context, d *amqp.Delivery) (interface{}, error) {
 			return nil, nil
 		},
-		Exchange: "exchange1",
+		Exchange: "exchange2",
 		Name:     "user_login_consumer",
 	}
 }
