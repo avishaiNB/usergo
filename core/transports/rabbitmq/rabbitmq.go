@@ -28,9 +28,31 @@ func NewRabbitMQ(log core.Log, connection ConnectionMeta) RabbitMQ {
 	}
 }
 
+// OpenConnection will create a new connection to RabbitMQ based on the input entered when created the RabbitMQ instance
+// Connection will be returned BUT also stored in the RabbitMQ instance
+func (rabbit *RabbitMQ) OpenConnection() (*amqp.Connection, error) {
+	if rabbit.AMQPConnection != nil {
+		return rabbit.AMQPConnection, nil
+	}
+	conn, err := amqp.Dial(rabbit.ConnectionMeta.URL)
+	if err == nil {
+		rabbit.AMQPConnection = conn
+	}
+	return conn, err
+}
+
+// CloseConnection will close the open connection attached to the RabbitMQ instance
+func (rabbit *RabbitMQ) CloseConnection() error {
+	var err error
+	if rabbit.AMQPConnection != nil {
+		err = rabbit.AMQPConnection.Close()
+	}
+	return err
+}
+
 // Consume ...
-func (a *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
-	a.setConsumerChannel(consumer)
+func (rabbit *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
+	rabbit.setConsumerChannel(consumer)
 	consumer.newExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
 	consumer.newQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
 	consumer.bind(consumer.QueueName, consumer.ExchangeName)
@@ -47,43 +69,27 @@ func (a *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
 	return c, err
 }
 
-// OpenConnection will create a new connection to RabbitMQ based on the input entered when created the RabbitMQ instance
-// Connection will be returned BUT also stored in the RabbitMQ instance
-func (a *RabbitMQ) OpenConnection() (*amqp.Connection, error) {
-	if a.AMQPConnection != nil {
-		return a.AMQPConnection, nil
-	}
-	conn, err := amqp.Dial(a.ConnectionMeta.URL)
-	if err == nil {
-		a.AMQPConnection = conn
-	}
-	return conn, err
-}
-
-// CloseConnection will close the open connection attached to the RabbitMQ instance
-func (a *RabbitMQ) CloseConnection() error {
-	var err error
-	if a.AMQPConnection != nil {
-		err = a.AMQPConnection.Close()
-	}
+// PublishOneWay will 'send and forget' a message to the given exchange
+func (rabbit *RabbitMQ) PublishOneWay(ctx context.Context, request interface{}, tgtExchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
+	e := rabbit.oneWayPublisherEndpoint(ctx, tgtExchangeName, encodeFunc)
+	_, err := e(ctx, request)
 	return err
 }
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
-func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
+func (rabbit *RabbitMQ) oneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
 	corrid := tlectx.GetCorrelationFromContext(ctx)
 	duration, _ := tlectx.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
-	_, _ = a.OpenConnection()
-	channel, _ = a.NewChannel()
+	channel, _ = rabbit.NewChannel()
 	queue = &amqp.Queue{Name: ""}
 
 	publisher := amqptransport.NewPublisher(
 		channel,
 		queue,
 		encodeFunc,
-		a.NoopResponseDecoder,
+		rabbit.NoopResponseDecoder,
 		amqptransport.PublisherBefore(
 			amqptransport.SetCorrelationID(corrid),
 			amqptransport.SetPublishDeliveryMode(2), // queue implementation use - non-persistent (1) or persistent (2)
@@ -97,12 +103,12 @@ func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName str
 
 // NoopResponseDecoder is a no operation needed
 // Used for One way messages
-func (a *RabbitMQ) NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interface{}, err error) {
+func (rabbit *RabbitMQ) NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interface{}, err error) {
 	return struct{}{}, nil
 }
 
 // DefaultRequestEncoder ...
-func (a *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
+func (rabbit *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
 	f := func(ctx context.Context, p *amqp.Publishing, request interface{}) error {
 		var err error
 		marshall := MessageMarshall{}
@@ -113,10 +119,10 @@ func (a *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.Conte
 }
 
 // setConsumerChannel ...
-func (a *RabbitMQ) setConsumerChannel(consumer *Consumer) {
+func (rabbit *RabbitMQ) setConsumerChannel(consumer *Consumer) {
 	var err error
 	var ch *amqp.Channel
-	ch, err = a.NewChannel()
+	ch, err = rabbit.NewChannel()
 
 	if err == nil {
 		consumer.Channel = ch
