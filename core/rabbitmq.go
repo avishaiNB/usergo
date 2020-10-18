@@ -39,6 +39,7 @@ type RabbitMQ struct {
 // RabbitMQConsumer ...RabbitMQConsumer
 type RabbitMQConsumer struct {
 	Sub                *amqpkit.Subscriber
+	Channel            *amqp.Channel
 	QueueName          string
 	QueueDurable       bool
 	QueueAutoDelete    bool
@@ -74,16 +75,18 @@ func (a *RabbitMQ) Consume(consumer *RabbitMQConsumer) (<-chan amqp.Delivery, er
 		panic(err)
 	}
 
-	channel, err := a.Channel()
+	ch, err := a.Channel()
 	if err != nil {
 		panic(err)
 	}
 
-	a.NewExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
-	a.NewQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
-	a.Bind(consumer.QueueName, consumer.ExchangeName)
+	consumer.Channel = ch
 
-	c, err := channel.Consume(
+	consumer.NewExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
+	consumer.NewQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
+	consumer.Bind(consumer.QueueName, consumer.ExchangeName)
+
+	c, err := consumer.Channel.Consume(
 		consumer.QueueName,
 		consumer.Consumer,
 		consumer.AutoAck,
@@ -154,7 +157,7 @@ func (a *RabbitMQ) Close() error {
 	return err
 }
 
-// Channel ..
+// Channel will create a new rabbitMQ channel
 func (a *RabbitMQ) Channel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
@@ -174,62 +177,42 @@ func (a *RabbitMQ) Channel() (*amqp.Channel, error) {
 }
 
 // NewQueue will create a new queue
-func (a *RabbitMQ) NewQueue(name string, durable bool, autoDelete bool) (amqp.Queue, error) {
+func (c *RabbitMQConsumer) NewQueue(name string, durable bool, autoDelete bool) (amqp.Queue, error) {
 	var err error
-	var channel *amqp.Channel
 	var queue amqp.Queue
-	channel, err = a.Channel()
 
-	if err == nil {
-		queue, err = channel.QueueDeclare(
-			name,
-			durable,
-			autoDelete,
-			false, // exclusive
-			false, // no-wait
-			nil,   // arguments
-		)
+	queue, err = c.Channel.QueueDeclare(
+		name,
+		durable,
+		autoDelete,
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
 
-		if err != nil {
-			// TODO: better logging here
-			a.Log.Logger.Log(err)
-		}
-	}
 	return queue, err
 }
 
 // NewExchange will create a new exchange
-func (a *RabbitMQ) NewExchange(name string, durable bool, autoDelete bool) error {
+func (c *RabbitMQConsumer) NewExchange(name string, durable bool, autoDelete bool) error {
 
-	var err error
-	var channel *amqp.Channel
-	channel, err = a.Channel()
-
-	if err == nil {
-		err = channel.ExchangeDeclare(
-			name,       // name
-			"fanout",   // type
-			durable,    // durable
-			autoDelete, // auto-deleted
-			false,      // internal
-			false,      // no-wait
-			nil,        // arguments
-		)
-
-		if err != nil {
-			// TODO: better logging here
-			a.Log.Logger.Log(err)
-		}
-	}
+	err := c.Channel.ExchangeDeclare(
+		name,       // name
+		"fanout",   // type
+		durable,    // durable
+		autoDelete, // auto-deleted
+		false,      // internal
+		false,      // no-wait
+		nil,        // arguments
+	)
 
 	return err
 }
 
-// Bind ...
-func (a *RabbitMQ) Bind(queueName string, exchangeName string) error {
-	ch, err := a.Channel()
+// Bind will bind the rabbitMQ queue and exchange together
+func (c *RabbitMQConsumer) Bind(queueName string, exchangeName string) error {
 
-	err = ch.QueueBind(
+	err := c.Channel.QueueBind(
 		queueName,
 		"", // bindingKey
 		exchangeName,
