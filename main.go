@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/thelotter-enterprise/usergo/core"
+	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
 
@@ -30,7 +31,7 @@ func main() {
 
 	logger := core.NewLogWithDefaults()
 	tracer := core.NewTracer(serviceName, hostAddress, zipkinURL)
-	rabbitmq := core.NewRabbitMQ(logger, rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	rabbitmq := tlamqp.NewRabbitMQ(logger, rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
@@ -38,7 +39,7 @@ func main() {
 	httpServer := core.NewHTTPServer(logger, tracer, serviceName, hostAddress)
 
 	amqpEndpoints := svc.NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
-	amqpServer := core.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
+	amqpServer := tlamqp.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs

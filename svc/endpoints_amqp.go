@@ -5,6 +5,7 @@ import (
 
 	"github.com/streadway/amqp"
 	"github.com/thelotter-enterprise/usergo/core"
+	tlamqp "github.com/thelotter-enterprise/usergo/core/amqp"
 )
 
 // UserAMQPConsumerEndpoints ...
@@ -12,12 +13,12 @@ type UserAMQPConsumerEndpoints struct {
 	Service   Service
 	Log       core.Log
 	Tracer    core.Tracer
-	Consumers *[]core.RabbitMQConsumer
-	RabbitMQ  *core.RabbitMQ
+	Consumers *[]tlamqp.RabbitMQConsumer
+	RabbitMQ  *tlamqp.RabbitMQ
 }
 
 // NewUserAMQPConsumerEndpoints will create all the AMQP endpopints
-func NewUserAMQPConsumerEndpoints(log core.Log, tracer core.Tracer, service Service, rabbitMQ *core.RabbitMQ) *UserAMQPConsumerEndpoints {
+func NewUserAMQPConsumerEndpoints(log core.Log, tracer core.Tracer, service Service, rabbitMQ *tlamqp.RabbitMQ) *UserAMQPConsumerEndpoints {
 	userEndpoints := UserAMQPConsumerEndpoints{
 		Log:      log,
 		Tracer:   tracer,
@@ -30,16 +31,16 @@ func NewUserAMQPConsumerEndpoints(log core.Log, tracer core.Tracer, service Serv
 	return &userEndpoints
 }
 
-func (a UserAMQPConsumerEndpoints) makeConsumerEndpoints() *[]core.RabbitMQConsumer {
-	consumers := []core.RabbitMQConsumer{}
+func (a UserAMQPConsumerEndpoints) makeConsumerEndpoints() *[]tlamqp.RabbitMQConsumer {
+	consumers := []tlamqp.RabbitMQConsumer{}
 	ep := newLoginEndpoint(a.Service)
 	consumer := a.RabbitMQ.NewConsumer(ep.Name, ep.Exchange, ep.Queue, ep.EP, ep.Dec)
 	consumers = append(consumers, consumer)
 	return &consumers
 }
 
-func newLoginEndpoint(service Service) core.AMQPEndpoint {
-	return core.AMQPEndpoint{
+func newLoginEndpoint(service Service) tlamqp.AMQPEndpoint {
+	return tlamqp.AMQPEndpoint{
 		EP: func(ctx context.Context, request interface{}) (interface{}, error) {
 			err := service.ConsumeLoginCommand(ctx, 1)
 			return true, err

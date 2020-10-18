@@ -1,4 +1,4 @@
-package core
+package amqp
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
+	"github.com/thelotter-enterprise/usergo/core"
 )
 
 // RabbitMQ contains data required to make a connection to the rabbitMQ instance
@@ -33,7 +34,7 @@ type RabbitMQ struct {
 	// Connection to rabbitMQ. Will be nil until Connect will be called
 	Connection *amqp.Connection
 
-	Log Log
+	Log core.Log
 }
 
 // RabbitMQConsumer ...RabbitMQConsumer
@@ -55,7 +56,7 @@ type RabbitMQConsumer struct {
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
-func NewRabbitMQ(log Log, host string, port int, username string, password string, vhost string) RabbitMQ {
+func NewRabbitMQ(log core.Log, host string, port int, username string, password string, vhost string) RabbitMQ {
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost)
 	return RabbitMQ{
 		URL:         url,
@@ -162,7 +163,7 @@ func (a *RabbitMQ) Channel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
 	if a.Connection == nil {
-		err = NewApplicationError("Connect to rabbit before tring to get a channel", nil)
+		err = core.NewApplicationError("Connect to rabbit before tring to get a channel", nil)
 		// TODO: better logging here
 		a.Log.Logger.Log(err)
 	} else {
@@ -225,7 +226,7 @@ func (c *RabbitMQConsumer) Bind(queueName string, exchangeName string) error {
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
 func (a *RabbitMQ) OneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
-	c := NewCtx()
+	c := core.NewCtx()
 	corrid := c.GetCorrelationFromContext(ctx)
 	duration, _ := c.GetTimeoutFromContext(ctx)
 	var channel amqptransport.Channel

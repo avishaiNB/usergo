@@ -1,4 +1,4 @@
-package core_test
+package amqp_test
 
 import (
 	"context"
