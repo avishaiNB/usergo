@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/utils"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 func TestBuildWithPrefix(t *testing.T) {

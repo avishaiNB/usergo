@@ -9,6 +9,7 @@ import (
 	"github.com/thelotter-enterprise/usergo/core"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
@@ -57,7 +58,7 @@ func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 		var req tlehttp.Request
 		var data shared.ByIDRequestData
 
-		decoder := core.NewDecoder()
+		decoder := utils.NewDecoder()
 
 		err = decoder.MapDecode(request, &req)
 		err = decoder.MapDecode(req.Data, &data)

@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 func TestFromInt64ToString(t *testing.T) {
 	var num int64 = 654321
 	want := "654321"
-	conv := core.NewConvertor()
+	conv := utils.NewConvertor()
 
 	is := conv.FromInt64ToString(num)
 
@@ -22,7 +22,7 @@ func TestFromInt64ToString(t *testing.T) {
 func TestFromStringToInt64(t *testing.T) {
 	var num string = "654321"
 	var want int64 = 654321
-	conv := core.NewConvertor()
+	conv := utils.NewConvertor()
 
 	is := conv.FromStringToInt64(num)
 
@@ -33,7 +33,7 @@ func TestFromStringToInt64(t *testing.T) {
 
 func TestTimeToAndFromUnix(t *testing.T) {
 	wantTime := time.Date(1977, 10, 16, 23, 0, 0, 0, time.UTC)
-	conv := core.NewConvertor()
+	conv := utils.NewConvertor()
 	unix := conv.FromTimeToUnix(wantTime)
 	isTime := conv.FromUnixToTime(unix)
 

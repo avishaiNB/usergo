@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
-	"github.com/thelotter-enterprise/usergo/core"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
 	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tletrans "github.com/thelotter-enterprise/usergo/core/transports"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
@@ -18,7 +18,7 @@ type ServiceClient struct {
 	SD          *tlesd.ServiceDiscovery
 	ServiceName string
 	CB          tlecb.CircuitBreaker
-	Limiter     core.RateLimiter
+	Limiter     tletrans.RateLimiter
 	Inst        tleinst.Instrumentor
 	Router      *mux.Router
 }
@@ -30,7 +30,7 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 		logger,
 		sd,
 		tlecb.NewCircuitBreakerator(),
-		core.NewRateLimitator(),
+		tletrans.NewRateLimitator(),
 		tleinst.NewInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
@@ -38,7 +38,7 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter core.RateLimiter, inst tleinst.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, inst tleinst.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
