@@ -41,8 +41,8 @@ func (a UserAMQPConsumerEndpoints) makeConsumerEndpoints() *[]tlamqp.RabbitMQCon
 	return &consumers
 }
 
-func newLoginEndpoint(service Service) tlamqp.AMQPEndpoint {
-	return tlamqp.AMQPEndpoint{
+func newLoginEndpoint(service Service) tlamqp.Endpoint {
+	return tlamqp.Endpoint{
 		EP: func(ctx context.Context, request interface{}) (interface{}, error) {
 			err := service.ConsumeLoginCommand(ctx, 1)
 			return true, err

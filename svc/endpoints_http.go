@@ -14,7 +14,7 @@ import (
 
 // UserHTTPEndpoints ...
 type UserHTTPEndpoints struct {
-	HTTPEndpoints *tlehttp.HTTPEndpoints
+	HTTPEndpoints *tlehttp.Endpoints
 	Service       Service
 	Log           core.Log
 	Tracer        tletracer.Tracer
@@ -26,7 +26,7 @@ func NewUserHTTPEndpoints(log core.Log, tracer tletracer.Tracer, service Service
 		Log:           log,
 		Tracer:        tracer,
 		Service:       service,
-		HTTPEndpoints: &tlehttp.HTTPEndpoints{},
+		HTTPEndpoints: &tlehttp.Endpoints{},
 	}
 
 	userEndpoints.HTTPEndpoints = userEndpoints.makeEndpoints()
@@ -34,11 +34,11 @@ func NewUserHTTPEndpoints(log core.Log, tracer tletracer.Tracer, service Service
 	return &userEndpoints
 }
 
-func (ue UserHTTPEndpoints) makeEndpoints() *tlehttp.HTTPEndpoints {
-	var endpoints tlehttp.HTTPEndpoints
-	var serverEndpoints []tlehttp.HTTPEndpoint
+func (ue UserHTTPEndpoints) makeEndpoints() *tlehttp.Endpoints {
+	var endpoints tlehttp.Endpoints
+	var serverEndpoints []tlehttp.Endpoint
 
-	userbyid := tlehttp.HTTPEndpoint{
+	userbyid := tlehttp.Endpoint{
 		Endpoint: makeUserByIDEndpoint(ue.Service),
 		Enc:      ue.encodeUserByIDReponse,
 		Dec:      ue.decodeUserByIDRequest,

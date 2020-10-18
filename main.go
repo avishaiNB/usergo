@@ -38,10 +38,10 @@ func main() {
 	repo := svc.NewRepository()
 	service := svc.NewService(logger, tracer, repo)
 	httpEndpoints := svc.NewUserHTTPEndpoints(logger, tracer, service)
-	httpServer := tlehttp.NewHTTPServer(logger, tracer, serviceName, hostAddress)
+	httpServer := tlehttp.NewServer(logger, tracer, serviceName, hostAddress)
 
 	amqpEndpoints := svc.NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
-	amqpServer := tlamqp.NewAMQPServer(logger, tracer, &rabbitmq, serviceName)
+	amqpServer := tlamqp.NewServer(logger, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs

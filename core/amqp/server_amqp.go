@@ -9,8 +9,8 @@ import (
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
-// AMQPServer ...
-type AMQPServer struct {
+// Server ...
+type Server struct {
 	Name     string
 	Address  string
 	Log      core.Log
@@ -18,9 +18,9 @@ type AMQPServer struct {
 	RabbitMQ *RabbitMQ
 }
 
-// NewAMQPServer ...
-func NewAMQPServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) AMQPServer {
-	return AMQPServer{
+// NewServer ...
+func NewServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
+	return Server{
 		Name:     serviceName,
 		RabbitMQ: rabbit,
 		Log:      log,
@@ -28,8 +28,8 @@ func NewAMQPServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serv
 	}
 }
 
-// AMQPEndpoint ...
-type AMQPEndpoint struct {
+// Endpoint ...
+type Endpoint struct {
 	EP       endpoint.Endpoint
 	Name     string
 	Exchange string
@@ -38,7 +38,7 @@ type AMQPEndpoint struct {
 }
 
 // Run will ...
-func (server *AMQPServer) Run(endpoints *[]RabbitMQConsumer) error {
+func (server *Server) Run(endpoints *[]RabbitMQConsumer) error {
 	if endpoints == nil {
 		return errors.New("no endpoints")
 	}

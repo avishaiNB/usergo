@@ -15,8 +15,8 @@ import (
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
-// HTTPServer ...
-type HTTPServer struct {
+// Server ...
+type Server struct {
 	Name    string
 	Address string
 	Router  *mux.Router
@@ -25,13 +25,13 @@ type HTTPServer struct {
 	Tracer  tletracer.Tracer
 }
 
-// HTTPEndpoints ...
-type HTTPEndpoints struct {
-	ServerEndpoints []HTTPEndpoint
+// Endpoints ...
+type Endpoints struct {
+	ServerEndpoints []Endpoint
 }
 
-// HTTPEndpoint holds the information needed to build a server endpoint which client can call upon
-type HTTPEndpoint struct {
+// Endpoint holds the information needed to build a server endpoint which client can call upon
+type Endpoint struct {
 	Method   string
 	Endpoint func(ctx context.Context, request interface{}) (interface{}, error)
 	Dec      httpkit.DecodeRequestFunc
@@ -39,9 +39,9 @@ type HTTPEndpoint struct {
 	Path     string
 }
 
-// NewHTTPServer ...
-func NewHTTPServer(log core.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) HTTPServer {
-	return HTTPServer{
+// NewServer ...
+func NewServer(log core.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
+	return Server{
 		Name:    serviceName,
 		Address: hostAddress,
 		Router:  mux.NewRouter(),
@@ -53,7 +53,7 @@ func NewHTTPServer(log core.Log, tracer tletracer.Tracer, serviceName string, ho
 // Run will create an instance handlers for incoming requests
 // it allow to define for each route: handler, decoding requests and encoding responses
 // decoding requests may be used for anti corruption layers
-func (server *HTTPServer) Run(endpoints *HTTPEndpoints) error {
+func (server *Server) Run(endpoints *Endpoints) error {
 	if endpoints == nil {
 		return errors.New("no endpoints")
 	}
