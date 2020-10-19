@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/log"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 // Log will create a new instance of the Log with ready to use loggers
@@ -16,7 +14,7 @@ import (
 // read performance related concerns for using file appenders
 // TBD: funnel logger
 
-// LoggerLevel ...
+// LoggerLevel represent logger level
 type LoggerLevel int8
 
 const (
@@ -32,58 +30,55 @@ const (
 	PanicLoggerLevel LoggerLevel = 5
 )
 
+// Log is main class og logger
+// Logger - represents log.Logger
+// LoggerManager - represents LoggerManager
 type Log struct {
-	Logger log.Logger
+	Logger        log.Logger
+	LoggerManager LoggerManager
 }
 
 type logger struct {
 	LoggerManager LoggerManager
 }
 
+// Logger represent convention of all possible loggers (file logger , stdout logger , humio logger etc.)
 type Logger interface {
-	Log(ctx context.Context, message string, params ...interface{})
+	Log(context.Context, LoggerLevel, string, ...interface{}) error
 }
 
-func NewLog(logger log.Logger) Log {
+//NewGoKitLogger create new logger which represents go-kit Logger
+func NewGoKitLogger(loggerManager LoggerManager) log.Logger {
+	return &logger{
+		LoggerManager: loggerManager,
+	}
+}
+
+// NewLogWithDefaults create Log object with
+func NewLogWithDefaults() Log {
 	return Log{
-		Logger: logger,
+		Logger:        logger{},
+		LoggerManager: loggerManager{},
 	}
 }
 
-// func (logger logger) Log(ctx Ctx, level zapcore.Level, message string, params ...interface{}) {
-// 	correlationID := ctx.GetCorrelationFromContext(ctx.Context)
-// 	duration, timeout := ctx.GetTimeoutFromContext(ctx.Context)
-// 	gokitLogger := gokitZap.NewZapSugarLogger(logger.zapLogger, level)
-// 	gokitLogger.Log(message,
-// 		"correlationID", correlationID,
-// 		"duration", duration,
-// 		"timeout", timeout,
-// 		"params", params)
-// }
-
-func getAtomicLevel(atomicLevel interface{}) zap.AtomicLevel {
-	atom := zap.NewAtomicLevel()
-	if atomicLevel == nil {
-		atom.SetLevel(zapcore.InfoLevel)
-	} else {
-		switch al := atomicLevel.(string); al {
-		case "Debug":
-			atom.SetLevel(zapcore.DebugLevel)
-		case "Info":
-			atom.SetLevel(zapcore.InfoLevel)
-		case "Warn":
-			atom.SetLevel(zapcore.WarnLevel)
-		case "Error":
-			atom.SetLevel(zapcore.ErrorLevel)
-		default:
-			atom.SetLevel(zapcore.InfoLevel)
-		}
+// NewLog create new Log object
+// logger - represent struct which "implement" log.Logger contract
+// loggerManager - represent struct which "implement" LoggerManager contract
+func NewLog(logger log.Logger, loggerManager LoggerManager) Log {
+	return Log{
+		Logger:        logger,
+		LoggerManager: loggerManager,
 	}
-	return atom
 }
 
-func (logger logger) Log(kvs ...interface{}) {
-	var args map[string]interface{}
+// Log func in part of go-kit logger contract
+// kvs argument reuire next fields:
+// "level" as LoggerLevel - level of log (info , warn etc.)
+// "context" as context.Context
+// "message" as string
+func (logger logger) Log(kvs ...interface{}) error {
+	args := make(map[string]interface{})
 	for i := 0; i < len(kvs); i += 2 {
 		key := kvs[i].(string)
 		args[key] = kvs[i+1]
@@ -112,16 +107,16 @@ func (logger logger) Log(kvs ...interface{}) {
 
 	switch logLevel {
 	case DebugLoggerLevel:
-		logger.LoggerManager.Debug(ctx, message, args)
+		return logger.LoggerManager.Debug(ctx, message, args)
 	case InfoLoggerLevel:
-		logger.LoggerManager.Info(ctx, message, args)
+		return logger.LoggerManager.Info(ctx, message, args)
 	case WarnLoggerLevel:
-		logger.LoggerManager.Warn(ctx, message, args)
+		return logger.LoggerManager.Warn(ctx, message, args)
 	case ErrorLoggerLevel:
-		logger.LoggerManager.Error(ctx, message, args)
+		return logger.LoggerManager.Error(ctx, message, args)
 	case PanicLoggerLevel:
-		logger.LoggerManager.Panic(ctx, message, args)
+		return logger.LoggerManager.Panic(ctx, message, args)
 	default:
-		logger.LoggerManager.Debug(ctx, message, args)
+		return logger.LoggerManager.Debug(ctx, message, args)
 	}
 }
