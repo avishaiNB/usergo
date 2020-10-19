@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Log will create a new instance of the Log with ready to use loggers
@@ -119,4 +121,25 @@ func (logger logger) Log(kvs ...interface{}) error {
 	default:
 		return logger.LoggerManager.Debug(ctx, message, args)
 	}
+}
+
+func getAtomicLevel(atomicLevel interface{}) zap.AtomicLevel {
+	atom := zap.NewAtomicLevel()
+	if atomicLevel == nil {
+		atom.SetLevel(zapcore.InfoLevel)
+	} else {
+		switch al := atomicLevel.(string); al {
+		case "Debug":
+			atom.SetLevel(zapcore.DebugLevel)
+		case "Info":
+			atom.SetLevel(zapcore.InfoLevel)
+		case "Warn":
+			atom.SetLevel(zapcore.WarnLevel)
+		case "Error":
+			atom.SetLevel(zapcore.ErrorLevel)
+		default:
+			atom.SetLevel(zapcore.InfoLevel)
+		}
+	}
+	return atom
 }
