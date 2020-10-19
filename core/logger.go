@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-kit/kit/log"
 	"go.uber.org/zap"
@@ -128,15 +129,17 @@ func getAtomicLevel(atomicLevel interface{}) zap.AtomicLevel {
 	if atomicLevel == nil {
 		atom.SetLevel(zapcore.InfoLevel)
 	} else {
-		switch al := atomicLevel.(string); al {
-		case "Debug":
+		switch al := atomicLevel.(string); strings.ToUpper(al) {
+		case "DEBUG":
 			atom.SetLevel(zapcore.DebugLevel)
-		case "Info":
+		case "INFO":
 			atom.SetLevel(zapcore.InfoLevel)
-		case "Warn":
+		case "WARN":
 			atom.SetLevel(zapcore.WarnLevel)
-		case "Error":
+		case "ERROR":
 			atom.SetLevel(zapcore.ErrorLevel)
+		case "PANIC":
+			atom.SetLevel(zapcore.PanicLevel)
 		default:
 			atom.SetLevel(zapcore.InfoLevel)
 		}

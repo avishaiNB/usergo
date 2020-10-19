@@ -80,24 +80,3 @@ func (stdoutLogger stdoutLogger) castLoggerLevel(loggerLevel LoggerLevel) zapcor
 		return zapcore.InfoLevel
 	}
 }
-
-func getAtomicLevel(atomicLevel interface{}) zap.AtomicLevel {
-	atom := zap.NewAtomicLevel()
-	if atomicLevel == nil {
-		atom.SetLevel(zapcore.InfoLevel)
-	} else {
-		switch al := atomicLevel.(string); al {
-		case "Debug":
-			atom.SetLevel(zapcore.DebugLevel)
-		case "Info":
-			atom.SetLevel(zapcore.InfoLevel)
-		case "Warn":
-			atom.SetLevel(zapcore.WarnLevel)
-		case "Error":
-			atom.SetLevel(zapcore.ErrorLevel)
-		default:
-			atom.SetLevel(zapcore.InfoLevel)
-		}
-	}
-	return atom
-}
