@@ -26,7 +26,7 @@ const (
 func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
-	log := core.NewLogWithDefaults()
+	log := core.NewLog()
 	conn := rabbitmq.NewConnectionMeta(host, port, username, pwd, vhost)
 	rabbit := rabbitmq.NewRabbitMQ(log, conn)
 

@@ -16,6 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
+	go.uber.org/zap v1.13.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200622214017-ed371f2e16b4 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
