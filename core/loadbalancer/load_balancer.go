@@ -7,7 +7,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/sd"
 	"github.com/go-kit/kit/sd/lb"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 const (

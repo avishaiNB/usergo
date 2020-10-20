@@ -11,7 +11,7 @@ import (
 	httpkit "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"

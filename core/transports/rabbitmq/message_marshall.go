@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/streadway/amqp"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 // MessageMarshall concrete instance of IMarshaller.

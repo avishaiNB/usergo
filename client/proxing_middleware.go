@@ -15,7 +15,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"

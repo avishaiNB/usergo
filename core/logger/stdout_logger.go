@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	gokitZap "github.com/go-kit/kit/log/zap"
-	coreCtx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlecontext "github.com/thelotter-enterprise/usergo/core/context"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -54,8 +54,8 @@ func NewStdOutLogger(loggerConfig Config) Logger {
 
 func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
-	correlationID := coreCtx.GetCorrelationFromContext(ctx)
-	duration, timeout := coreCtx.GetTimeoutFromContext(ctx)
+	correlationID := tlecontext.GetCorrelationFromContext(ctx)
+	duration, timeout := tlecontext.GetTimeoutFromContext(ctx)
 	gokitLogger := gokitZap.NewZapSugarLogger(stdoutLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)
 	params = addParamsToLog(Message, message, params)
