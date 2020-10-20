@@ -4,14 +4,14 @@ import (
 	"context"
 
 	metrics "github.com/go-kit/kit/metrics"
-	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 
 // NewInstrumentingMiddleware ..
-func NewInstrumentingMiddleware(inst tleinst.Instrumentor) ServiceMiddleware {
-	counter := inst.AddPromCounter("user", "getuserbyid", tleinst.RequestCount, []string{"method", "error"})
-	requestLatency := inst.AddPromSummary("user", "getuserbyid", tleinst.LatencyInMili, []string{"method", "error"})
+func NewInstrumentingMiddleware(inst tlemetrics.PrometheusInstrumentor) ServiceMiddleware {
+	counter := inst.AddPromCounter("user", "getuserbyid", tlemetrics.RequestCount, []string{"method", "error"})
+	requestLatency := inst.AddPromSummary("user", "getuserbyid", tlemetrics.LatencyInMili, []string{"method", "error"})
 
 	return func(next Service) Service {
 		mw := instrumentingMiddleware{

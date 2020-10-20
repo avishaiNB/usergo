@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/thelotter-enterprise/usergo/core"
-	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
@@ -34,7 +34,7 @@ func Run() {
 	// Setting up the infra services which will be used
 	logger := core.NewLogWithDefaults()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
-	inst := tleinst.NewInstrumentor(serviceName)
+	inst := tlemetrics.NewPrometheusInstrumentor(serviceName)
 
 	// In this part we are building the service and extending it using middleware pattern
 	repo := NewRepository()
