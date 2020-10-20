@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	gokitZap "github.com/go-kit/kit/log/zap"
+	coreCtx "github.com/thelotter-enterprise/usergo/core/ctx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -22,7 +23,6 @@ const (
 
 type stdoutLogger struct {
 	zapLogger *zap.Logger
-	Ctx       Ctx
 }
 
 // NewStdOutLogger create new stdoutLogger of type Logger
@@ -31,7 +31,6 @@ type stdoutLogger struct {
 // env - name of env
 // processName - name of the current process
 func NewStdOutLogger(loggerConfig LoggerConfig) Logger {
-	ctx := NewCtx()
 
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{"stdout"}
@@ -50,14 +49,13 @@ func NewStdOutLogger(loggerConfig LoggerConfig) Logger {
 	}
 	return &stdoutLogger{
 		zapLogger: logger,
-		Ctx:       ctx,
 	}
 }
 
 func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel LoggerLevel, message string, params ...interface{}) error {
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
-	correlationID := stdoutLogger.Ctx.GetCorrelationFromContext(ctx)
-	duration, timeout := stdoutLogger.Ctx.GetTimeoutFromContext(ctx)
+	correlationID := coreCtx.GetCorrelationFromContext(ctx)
+	duration, timeout := coreCtx.GetTimeoutFromContext(ctx)
 	gokitLogger := gokitZap.NewZapSugarLogger(stdoutLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)
 	params = addParamsToLog(Message, message, params)

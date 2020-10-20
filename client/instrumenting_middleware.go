@@ -5,14 +5,16 @@ import (
 	"time"
 
 	metrics "github.com/go-kit/kit/metrics"
-	"github.com/thelotter-enterprise/usergo/core"
+	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
-func makeInstrumentingMiddleware(inst core.Instrumentor) UserServiceMiddleware {
-	counter := inst.AddPromCounter("user", "getuserbyid", core.RequestCount, []string{"method", "error"})
-	requestLatency := inst.AddPromSummary("user", "getuserbyid", core.LatencyInMili, []string{"method", "error"})
+// NewInstrumentingMiddleware ...
+func NewInstrumentingMiddleware(inst tleinst.Instrumentor) ServiceMiddleware {
+	counter := inst.AddPromCounter("user", "getuserbyid", tleinst.RequestCount, []string{"method", "error"})
+	requestLatency := inst.AddPromSummary("user", "getuserbyid", tleinst.LatencyInMili, []string{"method", "error"})
 
-	return func(next UserService) UserService {
+	return func(next Service) Service {
 		mw := instrumentingMiddleware{
 			next:           next,
 			requestCount:   counter,
@@ -25,10 +27,10 @@ func makeInstrumentingMiddleware(inst core.Instrumentor) UserServiceMiddleware {
 type instrumentingMiddleware struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
-	next           UserService
+	next           Service
 }
 
-func (mw instrumentingMiddleware) GetUserByID(id int) (response core.Response) {
+func (mw instrumentingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		lvs := []string{"method", "GetUserByID", "error", fmt.Sprint(response.Error != nil)}
 		mw.requestCount.With(lvs...).Add(1)
@@ -39,6 +41,6 @@ func (mw instrumentingMiddleware) GetUserByID(id int) (response core.Response) {
 	return response
 }
 
-func (mw instrumentingMiddleware) GetUserByEmail(email string) (response core.Response) {
+func (mw instrumentingMiddleware) GetUserByEmail(email string) (response tlehttp.Response) {
 	return mw.next.GetUserByEmail(email)
 }

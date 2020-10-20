@@ -7,13 +7,12 @@ import (
 	"time"
 
 	gokitZap "github.com/go-kit/kit/log/zap"
+	coreCtx "github.com/thelotter-enterprise/usergo/core/ctx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 type fileLogger struct {
-	Ctx Ctx
-
 	zapLogger   *zap.Logger
 	config      zap.Config
 	dateCreated time.Time
@@ -26,7 +25,6 @@ type fileLogger struct {
 // processName - name of the current process
 func NewFileLogger(loggerConfig LoggerConfig) Logger {
 	os.Mkdir("logs", os.ModePerm)
-	ctx := NewCtx()
 	dateNow := time.Now().UTC()
 
 	config := zap.NewProductionConfig()
@@ -50,7 +48,6 @@ func NewFileLogger(loggerConfig LoggerConfig) Logger {
 	}
 	return &fileLogger{
 		zapLogger:   logger,
-		Ctx:         ctx,
 		config:      config,
 		dateCreated: dateNow,
 	}
@@ -62,8 +59,8 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel LoggerLevel, 
 	}
 
 	logLevel := fileLogger.castLoggerLevel(loggerLevel)
-	correlationID := fileLogger.Ctx.GetCorrelationFromContext(ctx)
-	duration, timeout := fileLogger.Ctx.GetTimeoutFromContext(ctx)
+	correlationID := coreCtx.GetCorrelationFromContext(ctx)
+	duration, timeout := coreCtx.GetTimeoutFromContext(ctx)
 
 	gokitLogger := gokitZap.NewZapSugarLogger(fileLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)

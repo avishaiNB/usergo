@@ -5,36 +5,40 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
-	"github.com/thelotter-enterprise/usergo/core"
+	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
+	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tletrans "github.com/thelotter-enterprise/usergo/core/transports"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
 	Logger      log.Logger
-	SD          *core.ServiceDiscovery
+	SD          *tlesd.ServiceDiscovery
 	ServiceName string
-	CB          core.CircuitBreaker
-	Limiter     core.RateLimiter
-	Inst        core.Instrumentor
+	CB          tlecb.CircuitBreaker
+	Limiter     tletrans.RateLimiter
+	Inst        tleinst.Instrumentor
 	Router      *mux.Router
 }
 
 // NewServiceClientWithDefaults with defaults
-func NewServiceClientWithDefaults(logger log.Logger, sd *core.ServiceDiscovery, serviceName string) ServiceClient {
+func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery, serviceName string) ServiceClient {
 
 	return NewServiceClient(
 		logger,
 		sd,
-		core.NewCircuitBreakerator(),
-		core.NewRateLimitator(),
-		core.NewInstrumentor(serviceName),
+		tlecb.NewCircuitBreakerator(),
+		tletrans.NewRateLimitator(),
+		tleinst.NewInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
 	)
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.CircuitBreaker, limiter core.RateLimiter, inst core.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, inst tleinst.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
@@ -49,10 +53,10 @@ func NewServiceClient(logger log.Logger, sd *core.ServiceDiscovery, cb core.Circ
 
 // GetUserByID , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
-func (client ServiceClient) GetUserByID(ctx context.Context, id int) core.Response {
-	var service UserService
+func (client ServiceClient) GetUserByID(ctx context.Context, id int) tlehttp.Response {
+	var service Service
 	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
-	instMiddleware := makeInstrumentingMiddleware(client.Inst)
+	instMiddleware := NewInstrumentingMiddleware(client.Inst)
 	logMiddleware := makeLoggingMiddleware(client.Logger)
 	proxyMiddleware := proxy.UserByIDMiddleware(ctx, id)
 
@@ -66,6 +70,6 @@ func (client ServiceClient) GetUserByID(ctx context.Context, id int) core.Respon
 
 // GetUserByEmail , if found will return shared.HTTPResponse containing the user requested information
 // If an error occurs it will hold error information that cab be used to decide how to proceed
-func (client ServiceClient) GetUserByEmail(ctx context.Context, email string) core.Response {
-	return core.Response{}
+func (client ServiceClient) GetUserByEmail(ctx context.Context, email string) tlehttp.Response {
+	return tlehttp.Response{}
 }

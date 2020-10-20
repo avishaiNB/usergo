@@ -3,7 +3,7 @@ package shared
 import (
 	"context"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
 // User ...
@@ -25,11 +25,11 @@ type ByIDResponseData struct {
 }
 
 // NewByIDRequest will create a Request with ByIDRequestData
-func NewByIDRequest(ctx context.Context, id int) core.Request {
+func NewByIDRequest(ctx context.Context, id int) tlehttp.Request {
 	data := ByIDRequestData{
 		ID: id,
 	}
-	req := core.Request{}.Wrap(ctx, data)
+	req := tlehttp.Request{}.Wrap(ctx, data)
 	return req
 }
 

@@ -1,64 +1,81 @@
 package svc
 
 import (
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/go-kit/kit/transport"
-	httpkit "github.com/go-kit/kit/transport/http"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/thelotter-enterprise/usergo/core"
-	"github.com/thelotter-enterprise/usergo/shared"
+	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 )
 
-// HTTPServer ...
-type HTTPServer struct {
-	Name    string
-	Address string
-	Router  *mux.Router
-	Handler http.Handler
-	Log     core.Log
-	Tracer  Tracer
-}
+// Run ...
+func Run() {
+	var (
+		serviceName      string = "user"
+		hostAddress      string = "localhost:8080"
+		zipkinURL        string = "http://localhost:9411/api/v2/spans"
+		rabbitMQUsername string = "thelotter"
+		rabbitMQPwd      string = "Dhvbuo1"
+		rabbitMQHost     string = "int-k8s1"
+		rabbitMQVhost    string = "thelotter"
+		rabbitMQPort     int    = 32672
+	)
 
-// NewHTTPServer ...
-func NewHTTPServer(log core.Log, tracer Tracer, serviceName string, hostAddress string) HTTPServer {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	errs := make(chan error, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	return HTTPServer{
-		Name:    serviceName,
-		Address: hostAddress,
-		Router:  mux.NewRouter(),
-		Log:     log,
-		Tracer:  tracer,
-	}
-}
+	// Setting up the infra services which will be used
+	logger := core.NewLogWithDefaults()
+	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
+	inst := tleinst.NewInstrumentor(serviceName)
 
-// Run will create an instance handlers for incoming requests
-// it allow to define for each route: handler, decoding requests and encoding responses
-// decoding requests may be used for anti corruption layers
-func (server HTTPServer) Run(endpoints *Endpoints) error {
-	if endpoints == nil {
-		return errors.New("no endpoints")
-	}
+	// In this part we are building the service and extending it using middleware pattern
+	repo := NewRepository()
+	service := NewService(logger, tracer, repo)
+	service = NewLoggingMiddleware(logger.Logger)(service) // Hook up the logging middleware
+	service = NewInstrumentingMiddleware(inst)(service)    // Hook up the inst middleware
 
-	c := core.NewCtx()
+	// setting up the http server
+	httpEndpoints := NewUserHTTPEndpoints(logger, tracer, service)
+	httpServer := tlehttp.NewServer(logger, tracer, serviceName, hostAddress)
 
-	options := []httpkit.ServerOption{
-		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),
-		c.ReadBefore(),
-	}
+	// setting up RabbitMQ server
+	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	rabbitmq := tlerabbitmq.NewRabbitMQ(logger, conn)
+	amqpEndpoints := NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
+	amqpServer := tlerabbitmq.NewServer(logger, tracer, &rabbitmq, serviceName)
 
-	for _, endpoint := range endpoints.ServerEndpoints {
-		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc, options...)
-		server.Router.Methods(endpoint.Method).Path(shared.UserByIDServerRoute).Handler(getUserByIDHandler)
-	}
+	go func() {
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
 
-	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)
-	fmt.Printf("Listernning on %s", server.Address)
-	http.ListenAndServe(server.Address, server.Handler)
+	go func() {
+		err := httpServer.Run(httpEndpoints.HTTPEndpoints)
+		if err != nil {
+			errs <- err
+			fmt.Println(err)
+			done <- true
+		}
+	}()
 
-	return nil
+	go func() {
+		err := amqpServer.Run(amqpEndpoints.Consumers)
+		if err != nil {
+			errs <- err
+			fmt.Println(err)
+			done <- true
+		}
+	}()
+
+	<-done
 }

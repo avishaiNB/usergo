@@ -4,21 +4,22 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/thelotter-enterprise/usergo/core"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
-func makeLoggingMiddleware(logger log.Logger) UserServiceMiddleware {
-	return func(next UserService) UserService {
+// NewLoggingMiddleware ...
+func NewLoggingMiddleware(logger log.Logger) ServiceMiddleware {
+	return func(next Service) Service {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
 	logger log.Logger
-	UserService
+	next   Service
 }
 
-func (mw loggingMiddleware) GetUserByID(id int) (response core.Response) {
+func (mw loggingMiddleware) GetUserByID(id int) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByID",
@@ -29,10 +30,10 @@ func (mw loggingMiddleware) GetUserByID(id int) (response core.Response) {
 		)
 	}(time.Now())
 
-	return mw.UserService.GetUserByID(id)
+	return mw.next.GetUserByID(id)
 }
 
-func (mw loggingMiddleware) GetUserByEmail(email string) (response core.Response) {
+func (mw loggingMiddleware) GetUserByEmail(email string) (response tlehttp.Response) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "GetUserByEmail",
@@ -43,5 +44,5 @@ func (mw loggingMiddleware) GetUserByEmail(email string) (response core.Response
 		)
 	}(time.Now())
 
-	return mw.UserService.GetUserByEmail(email)
+	return mw.next.GetUserByEmail(email)
 }
