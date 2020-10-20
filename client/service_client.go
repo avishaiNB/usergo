@@ -8,7 +8,7 @@ import (
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
-	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 

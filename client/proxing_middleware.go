@@ -18,7 +18,7 @@ import (
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
-	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
