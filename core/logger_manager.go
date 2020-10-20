@@ -6,12 +6,17 @@ import (
 	"fmt"
 )
 
-// LoggerManager represents contract
+// LoggerManager represents contract of logger with all log levels (Panic , Error , Warn , Info and Debug)
 type LoggerManager interface {
+	// Panic represents convention of palic log function
 	Panic(context.Context, string, ...interface{}) error
+	// Error represents convention of error log function
 	Error(context.Context, string, ...interface{}) error
+	// Warn represents convention of warn log function
 	Warn(context.Context, string, ...interface{}) error
+	// Info represents convention of info log function
 	Info(context.Context, string, ...interface{}) error
+	// Debug represents convention of debug log function
 	Debug(context.Context, string, ...interface{}) error
 }
 

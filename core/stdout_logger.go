@@ -9,12 +9,20 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	//Message - log message
+	Message = "message"
+	//CorrelationID - correlation id of current stack trace
+	CorrelationID = "correlationID"
+	//Duration - duration of current stack trace
+	Duration = "duration"
+	//Timeout - timeout of current stack trace
+	Timeout = "timeout"
+)
+
 type stdoutLogger struct {
-	zapLogger   *zap.Logger
-	Ctx         Ctx
-	LoggerName  string
-	EnvName     string
-	ProcessName string
+	zapLogger *zap.Logger
+	Ctx       Ctx
 }
 
 // NewStdOutLogger create new stdoutLogger of type Logger
@@ -22,25 +30,25 @@ type stdoutLogger struct {
 // fileAtomicLevel - minimal log level (Debug , Info , Warn , Error or Panic)
 // env - name of env
 // processName - name of the current process
-func NewStdOutLogger(params map[string]interface{}) Logger {
+func NewStdOutLogger(loggerConfig LoggerConfig) Logger {
 	ctx := NewCtx()
 
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{"stdout"}
-	config.Level = getAtomicLevel(params["stdOutAtomicLevel"])
+	config.Level = getAtomicLevel(loggerConfig.LevelName)
 	config.EncoderConfig.LevelKey = "level"
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.CallerKey = "caller"
 
 	config.InitialFields = make(map[string]interface{})
-	config.InitialFields["env"] = params["env"]
-	config.InitialFields["loggerName"] = "FileLogger"
-	config.InitialFields["processName"] = params["serviceName"]
+	config.InitialFields["env"] = loggerConfig.Env
+	config.InitialFields["loggerName"] = loggerConfig.LoggerName
+	config.InitialFields["processName"] = loggerConfig.ProcessName
 	logger, err := config.Build()
 	if err != nil {
 		fmt.Println("Cannot init stdout logger", err)
 	}
-	return &fileLogger{
+	return &stdoutLogger{
 		zapLogger: logger,
 		Ctx:       ctx,
 	}
@@ -51,10 +59,10 @@ func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel LoggerLeve
 	correlationID := stdoutLogger.Ctx.GetCorrelationFromContext(ctx)
 	duration, timeout := stdoutLogger.Ctx.GetTimeoutFromContext(ctx)
 	gokitLogger := gokitZap.NewZapSugarLogger(stdoutLogger.zapLogger, logLevel)
-	params = addParamsToLog("correlationID", correlationID, params)
-	params = addParamsToLog("Message", message, params)
-	params = addParamsToLog("duration", duration, params)
-	params = addParamsToLog("timeout", timeout, params)
+	params = addParamsToLog(CorrelationID, correlationID, params)
+	params = addParamsToLog(Message, message, params)
+	params = addParamsToLog(Duration, duration, params)
+	params = addParamsToLog(Timeout, timeout, params)
 	return gokitLogger.Log(params...)
 }
 

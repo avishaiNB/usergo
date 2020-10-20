@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"strings"
 
 	"github.com/go-kit/kit/log"
 	"go.uber.org/zap"
@@ -20,6 +19,9 @@ import (
 // LoggerLevel represent logger level
 type LoggerLevel int8
 
+// AtomicLevelName represent name of specific log level
+type AtomicLevelName string
+
 const (
 	// DebugLoggerLevel contains thelotter interpretation value of debug level
 	DebugLoggerLevel LoggerLevel = 1
@@ -31,6 +33,16 @@ const (
 	ErrorLoggerLevel LoggerLevel = 4
 	// PanicLoggerLevel contains thelotter interpretation value of panic level
 	PanicLoggerLevel LoggerLevel = 5
+	// Debug contains name of debug level
+	Debug AtomicLevelName = "DEBUG"
+	// Info contains name of info level
+	Info AtomicLevelName = "INFO"
+	// Warn contains name of warn level
+	Warn AtomicLevelName = "WARN"
+	// Error contains name of error level
+	Error AtomicLevelName = "ERROR"
+	// Panic contains name of panic level
+	Panic AtomicLevelName = "PANIC"
 )
 
 // Log is main class og logger
@@ -39,6 +51,26 @@ const (
 type Log struct {
 	Logger        log.Logger
 	LoggerManager LoggerManager
+}
+
+// LoggerConfig represents base configurations of logger
+// LevelName - minimal log level
+// Env- name of current environment
+// LoggerName - name of the logger
+// ProcessName - name of the current process
+type LoggerConfig struct {
+	LevelName   AtomicLevelName
+	Env         string
+	LoggerName  string
+	ProcessName string
+}
+
+// LogData represents log data created by BuildLogData function based on kv interface array
+type LogData struct {
+	Level   LoggerLevel
+	Message string
+	Context context.Context
+	Data    map[string]interface{}
 }
 
 type logger struct {
@@ -50,25 +82,33 @@ type Logger interface {
 	Log(context.Context, LoggerLevel, string, ...interface{}) error
 }
 
-//NewGoKitLogger create new logger which represents go-kit Logger
-func NewGoKitLogger(loggerManager LoggerManager) log.Logger {
+//NewLogger create new logger which represents go-kit Logger
+func NewLogger(loggerManager LoggerManager) log.Logger {
 	return &logger{
 		LoggerManager: loggerManager,
 	}
 }
 
-// NewLogWithDefaults create Log object with
-func NewLogWithDefaults() Log {
+// NewLog create Log object with dafault params and stdout logger
+func NewLog() Log {
+	loggerConfig := LoggerConfig{
+		LoggerName: "StdoutLogger",
+	}
+
+	stdOutLogger := NewStdOutLogger(loggerConfig)
+	loggers := []Logger{stdOutLogger}
+	logManager := NewLoggerManager(loggers)
+	log := NewLogger(logManager)
 	return Log{
-		Logger:        logger{},
-		LoggerManager: loggerManager{},
+		Logger:        log,
+		LoggerManager: logManager,
 	}
 }
 
-// NewLog create new Log object
+// SetLog create new Log object
 // logger - represent struct which "implement" log.Logger contract
 // loggerManager - represent struct which "implement" LoggerManager contract
-func NewLog(logger log.Logger, loggerManager LoggerManager) Log {
+func SetLog(logger log.Logger, loggerManager LoggerManager) Log {
 	return Log{
 		Logger:        logger,
 		LoggerManager: loggerManager,
@@ -81,6 +121,26 @@ func NewLog(logger log.Logger, loggerManager LoggerManager) Log {
 // "context" as context.Context
 // "message" as string
 func (logger logger) Log(kvs ...interface{}) error {
+	logData := BuildLogData(kvs...)
+
+	switch logData.Level {
+	case DebugLoggerLevel:
+		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data)
+	case InfoLoggerLevel:
+		return logger.LoggerManager.Info(logData.Context, logData.Message, logData.Data)
+	case WarnLoggerLevel:
+		return logger.LoggerManager.Warn(logData.Context, logData.Message, logData.Data)
+	case ErrorLoggerLevel:
+		return logger.LoggerManager.Error(logData.Context, logData.Message, logData.Data)
+	case PanicLoggerLevel:
+		return logger.LoggerManager.Panic(logData.Context, logData.Message, logData.Data)
+	default:
+		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data)
+	}
+}
+
+// BuildLogData build LogData based on kvs array , each odd value is key(string) and even value(any type)
+func BuildLogData(kvs ...interface{}) LogData {
 	args := make(map[string]interface{})
 	for i := 0; i < len(kvs); i += 2 {
 		key := kvs[i].(string)
@@ -107,38 +167,29 @@ func (logger logger) Log(kvs ...interface{}) error {
 	} else {
 		message = ""
 	}
-
-	switch logLevel {
-	case DebugLoggerLevel:
-		return logger.LoggerManager.Debug(ctx, message, args)
-	case InfoLoggerLevel:
-		return logger.LoggerManager.Info(ctx, message, args)
-	case WarnLoggerLevel:
-		return logger.LoggerManager.Warn(ctx, message, args)
-	case ErrorLoggerLevel:
-		return logger.LoggerManager.Error(ctx, message, args)
-	case PanicLoggerLevel:
-		return logger.LoggerManager.Panic(ctx, message, args)
-	default:
-		return logger.LoggerManager.Debug(ctx, message, args)
+	return LogData{
+		Message: message,
+		Context: ctx,
+		Level:   logLevel,
+		Data:    args,
 	}
 }
 
-func getAtomicLevel(atomicLevel interface{}) zap.AtomicLevel {
+func getAtomicLevel(atomicLevelName AtomicLevelName) zap.AtomicLevel {
 	atom := zap.NewAtomicLevel()
-	if atomicLevel == nil {
+	if atomicLevelName == "" {
 		atom.SetLevel(zapcore.InfoLevel)
 	} else {
-		switch al := atomicLevel.(string); strings.ToUpper(al) {
-		case "DEBUG":
+		switch atomicLevelName {
+		case Debug:
 			atom.SetLevel(zapcore.DebugLevel)
-		case "INFO":
+		case Info:
 			atom.SetLevel(zapcore.InfoLevel)
-		case "WARN":
+		case Warn:
 			atom.SetLevel(zapcore.WarnLevel)
-		case "ERROR":
+		case Error:
 			atom.SetLevel(zapcore.ErrorLevel)
-		case "PANIC":
+		case Panic:
 			atom.SetLevel(zapcore.PanicLevel)
 		default:
 			atom.SetLevel(zapcore.InfoLevel)

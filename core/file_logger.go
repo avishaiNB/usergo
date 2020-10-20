@@ -24,24 +24,24 @@ type fileLogger struct {
 // fileAtomicLevel - minimal log level (Debug , Info , Warn , Error or Panic)
 // env - name of env
 // processName - name of the current process
-func NewFileLogger(params map[string]interface{}) Logger {
+func NewFileLogger(loggerConfig LoggerConfig) Logger {
 	os.Mkdir("logs", os.ModePerm)
 	ctx := NewCtx()
-	dateNow := time.Now()
+	dateNow := time.Now().UTC()
 
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{
 		buildLogFilePath(dateNow),
 	}
-	config.Level = getAtomicLevel(params["fileAtomicLevel"])
+	config.Level = getAtomicLevel(loggerConfig.LevelName)
 	config.EncoderConfig.LevelKey = "level"
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.CallerKey = "caller"
 
 	config.InitialFields = make(map[string]interface{})
-	config.InitialFields["env"] = params["env"]
-	config.InitialFields["loggerName"] = "FileLogger"
-	config.InitialFields["processName"] = params["serviceName"]
+	config.InitialFields["env"] = loggerConfig.Env
+	config.InitialFields["loggerName"] = loggerConfig.LoggerName
+	config.InitialFields["processName"] = loggerConfig.ProcessName
 
 	logger, err := config.Build()
 	if err != nil {
@@ -66,10 +66,10 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel LoggerLevel, 
 	duration, timeout := fileLogger.Ctx.GetTimeoutFromContext(ctx)
 
 	gokitLogger := gokitZap.NewZapSugarLogger(fileLogger.zapLogger, logLevel)
-	params = addParamsToLog("correlationID", correlationID, params)
-	params = addParamsToLog("Message", message, params)
-	params = addParamsToLog("duration", duration, params)
-	params = addParamsToLog("timeout", timeout, params)
+	params = addParamsToLog(CorrelationID, correlationID, params)
+	params = addParamsToLog(Message, message, params)
+	params = addParamsToLog(Duration, duration, params)
+	params = addParamsToLog(Timeout, timeout, params)
 	return gokitLogger.Log(params...)
 }
 
@@ -91,7 +91,7 @@ func (fileLogger fileLogger) castLoggerLevel(loggerLevel LoggerLevel) zapcore.Le
 }
 
 func (fileLogger *fileLogger) reload() {
-	dateNow := time.Now()
+	dateNow := time.Now().UTC()
 	fileLogger.config.OutputPaths = []string{
 		buildLogFilePath(dateNow),
 	}
@@ -105,7 +105,7 @@ func (fileLogger *fileLogger) reload() {
 }
 
 func (fileLogger fileLogger) isLogFileExpired() bool {
-	return fileLogger.dateCreated.Day() != time.Now().Day()
+	return fileLogger.dateCreated.Day() != time.Now().UTC().Day()
 }
 
 func buildLogFilePath(date time.Time) string {

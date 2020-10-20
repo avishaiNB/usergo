@@ -8,27 +8,7 @@ import (
 	"github.com/thelotter-enterprise/usergo/core"
 )
 
-func TestInregrationLogger(t *testing.T) {
-	var isIntegrationTest bool
-	if isIntegrationTest {
-		params := make(map[string]interface{})
-		ctx := context.Background()
-		logUser := LogUser{
-			Name: "David",
-			Age:  3,
-		}
-		params["stdOutAtomicLevel"] = "Info"
-		var loggers []core.Logger
-		stdlogger := core.NewStdOutLogger(params)
-		fileLogger := core.NewFileLogger(params)
-		loggers = append(loggers, stdlogger)
-		loggers = append(loggers, fileLogger)
-		loggerManager := core.NewLoggerManager(loggers)
-		loggerManager.Info(ctx, "Text", "Log user", logUser)
-	}
-}
-
-func Test_LoggerManagerReturnNoError(t *testing.T) {
+func TestLoggerManagerReturnNoError(t *testing.T) {
 	ctx := context.Background()
 	logUser := LogUser{
 		Name: "David",
@@ -46,7 +26,7 @@ func Test_LoggerManagerReturnNoError(t *testing.T) {
 	}
 }
 
-func Test_LoggerManagerReturnError(t *testing.T) {
+func TestLoggerManagerReturnError(t *testing.T) {
 	ctx := context.Background()
 	logUser := LogUser{
 		Name: "David",
@@ -64,7 +44,7 @@ func Test_LoggerManagerReturnError(t *testing.T) {
 	}
 }
 
-func Test_LoggerReturnNoError(t *testing.T) {
+func TestLoggerReturnNoError(t *testing.T) {
 	ctx := context.Background()
 	var params []interface{}
 	logUser := LogUser{
@@ -83,15 +63,15 @@ func Test_LoggerReturnNoError(t *testing.T) {
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
 	loggerManager := core.NewLoggerManager(loggers)
-	goKitLogger := core.NewGoKitLogger(loggerManager)
-	log := core.NewLog(goKitLogger, loggerManager)
+	goKitLogger := core.NewLogger(loggerManager)
+	log := core.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)
 	if logErr != nil {
 		t.Error("log.Logger.Log return unexpected error", logErr)
 	}
 }
 
-func Test_LoggerReturnError(t *testing.T) {
+func TestLoggerReturnError(t *testing.T) {
 	ctx := context.Background()
 	var params []interface{}
 	logUser := LogUser{
@@ -110,11 +90,87 @@ func Test_LoggerReturnError(t *testing.T) {
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
 	loggerManager := core.NewLoggerManager(loggers)
-	goKitLogger := core.NewGoKitLogger(loggerManager)
-	log := core.NewLog(goKitLogger, loggerManager)
+	goKitLogger := core.NewLogger(loggerManager)
+	log := core.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)
 	if logErr == nil {
 		t.Error("Expected result from log.Logger.Log cannot ne nil")
+	}
+}
+
+func TestBuildLogDataWithAllData(t *testing.T) {
+	var kvs []interface{}
+	ctx := context.Background()
+	message := "text"
+	kvs = append(kvs, "level")
+	kvs = append(kvs, core.WarnLoggerLevel)
+	kvs = append(kvs, "context")
+	kvs = append(kvs, ctx)
+	kvs = append(kvs, "message")
+	kvs = append(kvs, message)
+	loggerBuild := core.BuildLogData(kvs...)
+	if loggerBuild.Level != core.WarnLoggerLevel {
+		t.Errorf("loggerBuild return wrong log level %v ; want %v", loggerBuild.Level, core.WarnLoggerLevel)
+	}
+
+	if loggerBuild.Message != message {
+		t.Errorf("loggerBuild return wrong message %s ; want %s", loggerBuild.Message, message)
+	}
+
+	if loggerBuild.Context != ctx {
+		t.Errorf("loggerBuild return wrong context %s ; want %s", loggerBuild.Context, ctx)
+	}
+}
+
+func TestBuildLogDataWithoutLevel(t *testing.T) {
+	var kvs []interface{}
+	ctx := context.Background()
+	message := "text"
+	kvs = append(kvs, "context")
+	kvs = append(kvs, ctx)
+	kvs = append(kvs, "message")
+	kvs = append(kvs, message)
+	loggerBuild := core.BuildLogData(kvs...)
+	if loggerBuild.Level != core.InfoLoggerLevel {
+		t.Errorf("loggerBuild return wrong log level %v ; want %v", loggerBuild.Level, core.InfoLoggerLevel)
+	}
+
+	if loggerBuild.Message != message {
+		t.Errorf("loggerBuild return wrong message %s ; want %s", loggerBuild.Message, message)
+	}
+
+	if loggerBuild.Context != ctx {
+		t.Errorf("loggerBuild return wrong context %s ; want %s", loggerBuild.Context, ctx)
+	}
+}
+
+func TestBuildLogDataWithExtraData(t *testing.T) {
+	var kvs []interface{}
+	ctx := context.Background()
+	message := "text"
+	customValue := "customValue"
+	kvs = append(kvs, "context")
+	kvs = append(kvs, ctx)
+	kvs = append(kvs, "message")
+	kvs = append(kvs, message)
+	kvs = append(kvs, customValue)
+	kvs = append(kvs, customValue)
+	loggerBuild := core.BuildLogData(kvs...)
+	if loggerBuild.Level != core.InfoLoggerLevel {
+		t.Errorf("loggerBuild return wrong log level %v ; want %v", loggerBuild.Level, core.InfoLoggerLevel)
+	}
+
+	if loggerBuild.Message != message {
+		t.Errorf("loggerBuild return wrong message %s ; want %s", loggerBuild.Message, message)
+	}
+
+	if loggerBuild.Context != ctx {
+		t.Errorf("loggerBuild return wrong context %s ; want %s", loggerBuild.Context, ctx)
+	}
+
+	loggerBuildCustomResult := loggerBuild.Data["customValue"].(string)
+	if loggerBuildCustomResult != customValue {
+		t.Errorf("loggerBuild return wrong Data %v ; want %v", loggerBuildCustomResult, customValue)
 	}
 }
 
