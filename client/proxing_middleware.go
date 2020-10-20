@@ -16,8 +16,9 @@ import (
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
 	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
+	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
-	tletrans "github.com/thelotter-enterprise/usergo/core/transports"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
@@ -28,7 +29,7 @@ type Proxy struct {
 	cb         tlecb.CircuitBreaker
 	limmitermw endpoint.Middleware
 	router     *mux.Router
-	limiter    tletrans.RateLimiter
+	limiter    tleratelimit.RateLimiter
 	sd         tlesd.ServiceDiscovery
 	logger     log.Logger
 }
@@ -48,7 +49,7 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, sd *tlesd.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
+func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
 	return Proxy{
 		cb:      cb,
 		limiter: limiter,
@@ -64,7 +65,7 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddle
 	//consulInstancer := proxy.sd.DNSInstance("user")
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger)
 	//TODO: refactor. dont like the nil. consider New().With()
-	lb := tletrans.NewLoadBalancer(nil, endpointer)
+	lb := tleloadbalancer.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next Service) Service {

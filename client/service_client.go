@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
+	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
-	tletrans "github.com/thelotter-enterprise/usergo/core/transports"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
@@ -18,7 +18,7 @@ type ServiceClient struct {
 	SD          *tlesd.ServiceDiscovery
 	ServiceName string
 	CB          tlecb.CircuitBreaker
-	Limiter     tletrans.RateLimiter
+	Limiter     tleratelimit.RateLimiter
 	Inst        tlemetrics.PrometheusInstrumentor
 	Router      *mux.Router
 }
@@ -30,7 +30,7 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 		logger,
 		sd,
 		tlecb.NewCircuitBreakerator(),
-		tletrans.NewRateLimitator(),
+		tleratelimit.NewRateLimitator(),
 		tlemetrics.NewPrometheusInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
@@ -38,7 +38,7 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
