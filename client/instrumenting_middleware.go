@@ -5,12 +5,12 @@ import (
 	"time"
 
 	metrics "github.com/go-kit/kit/metrics"
-	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tleinst "github.com/thelotter-enterprise/usergo/core/metrics"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 )
 
 // NewInstrumentingMiddleware ...
-func NewInstrumentingMiddleware(inst tleinst.Instrumentor) ServiceMiddleware {
+func NewInstrumentingMiddleware(inst tleinst.PrometheusInstrumentor) ServiceMiddleware {
 	counter := inst.AddPromCounter("user", "getuserbyid", tleinst.RequestCount, []string{"method", "error"})
 	requestLatency := inst.AddPromSummary("user", "getuserbyid", tleinst.LatencyInMili, []string{"method", "error"})
 

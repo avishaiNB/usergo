@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/cb"
-	tleinst "github.com/thelotter-enterprise/usergo/core/inst"
+	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
 	tletrans "github.com/thelotter-enterprise/usergo/core/transports"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
@@ -19,7 +19,7 @@ type ServiceClient struct {
 	ServiceName string
 	CB          tlecb.CircuitBreaker
 	Limiter     tletrans.RateLimiter
-	Inst        tleinst.Instrumentor
+	Inst        tlemetrics.PrometheusInstrumentor
 	Router      *mux.Router
 }
 
@@ -31,14 +31,14 @@ func NewServiceClientWithDefaults(logger log.Logger, sd *tlesd.ServiceDiscovery,
 		sd,
 		tlecb.NewCircuitBreakerator(),
 		tletrans.NewRateLimitator(),
-		tleinst.NewInstrumentor(serviceName),
+		tlemetrics.NewPrometheusInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
 	)
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, inst tleinst.Instrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger log.Logger, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tletrans.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,
@@ -57,7 +57,7 @@ func (client ServiceClient) GetUserByID(ctx context.Context, id int) tlehttp.Res
 	var service Service
 	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
 	instMiddleware := NewInstrumentingMiddleware(client.Inst)
-	logMiddleware := makeLoggingMiddleware(client.Logger)
+	logMiddleware := NewLoggingMiddleware(client.Logger)
 	proxyMiddleware := proxy.UserByIDMiddleware(ctx, id)
 
 	service = proxyMiddleware(service)
