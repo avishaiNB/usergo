@@ -66,7 +66,7 @@ func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, on
 	}
 
 	if *sd.ConsulClient == nil {
-		err := tleerrors.NewApplicationError("call WithConsul first", nil)
+		err := tleerrors.NewApplicationError("call WithConsul first")
 		return instancer, err
 	}
 
