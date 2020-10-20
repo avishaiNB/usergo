@@ -1,4 +1,4 @@
-package core
+package logger
 
 import (
 	"context"
@@ -23,7 +23,7 @@ type fileLogger struct {
 // fileAtomicLevel - minimal log level (Debug , Info , Warn , Error or Panic)
 // env - name of env
 // processName - name of the current process
-func NewFileLogger(loggerConfig LoggerConfig) Logger {
+func NewFileLogger(loggerConfig Config) Logger {
 	os.Mkdir("logs", os.ModePerm)
 	dateNow := time.Now().UTC()
 
@@ -53,7 +53,7 @@ func NewFileLogger(loggerConfig LoggerConfig) Logger {
 	}
 }
 
-func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel LoggerLevel, message string, params ...interface{}) error {
+func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
 	if fileLogger.isLogFileExpired() {
 		fileLogger.reload()
 	}
@@ -70,7 +70,7 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel LoggerLevel, 
 	return gokitLogger.Log(params...)
 }
 
-func (fileLogger fileLogger) castLoggerLevel(loggerLevel LoggerLevel) zapcore.Level {
+func (fileLogger fileLogger) castLoggerLevel(loggerLevel Level) zapcore.Level {
 	switch loggerLevel {
 	case DebugLoggerLevel:
 		return zapcore.DebugLevel

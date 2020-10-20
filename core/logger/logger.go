@@ -1,4 +1,4 @@
-package core
+package logger
 
 import (
 	"context"
@@ -16,23 +16,23 @@ import (
 // read performance related concerns for using file appenders
 // TBD: funnel logger
 
-// LoggerLevel represent logger level
-type LoggerLevel int8
+// Level represent logger level
+type Level int8
 
 // AtomicLevelName represent name of specific log level
 type AtomicLevelName string
 
 const (
 	// DebugLoggerLevel contains thelotter interpretation value of debug level
-	DebugLoggerLevel LoggerLevel = 1
+	DebugLoggerLevel Level = 1
 	// InfoLoggerLevel contains thelotter interpretation value of info level
-	InfoLoggerLevel LoggerLevel = 2
+	InfoLoggerLevel Level = 2
 	// WarnLoggerLevel contains thelotter interpretation value of warn level
-	WarnLoggerLevel LoggerLevel = 3
+	WarnLoggerLevel Level = 3
 	// ErrorLoggerLevel contains thelotter interpretation value of error level
-	ErrorLoggerLevel LoggerLevel = 4
+	ErrorLoggerLevel Level = 4
 	// PanicLoggerLevel contains thelotter interpretation value of panic level
-	PanicLoggerLevel LoggerLevel = 5
+	PanicLoggerLevel Level = 5
 	// Debug contains name of debug level
 	Debug AtomicLevelName = "DEBUG"
 	// Info contains name of info level
@@ -50,15 +50,15 @@ const (
 // LoggerManager - represents LoggerManager
 type Log struct {
 	Logger        log.Logger
-	LoggerManager LoggerManager
+	LoggerManager Manager
 }
 
-// LoggerConfig represents base configurations of logger
+// Config represents base configurations of logger
 // LevelName - minimal log level
 // Env- name of current environment
 // LoggerName - name of the logger
 // ProcessName - name of the current process
-type LoggerConfig struct {
+type Config struct {
 	LevelName   AtomicLevelName
 	Env         string
 	LoggerName  string
@@ -67,23 +67,23 @@ type LoggerConfig struct {
 
 // LogData represents log data created by BuildLogData function based on kv interface array
 type LogData struct {
-	Level   LoggerLevel
+	Level   Level
 	Message string
 	Context context.Context
 	Data    map[string]interface{}
 }
 
 type logger struct {
-	LoggerManager LoggerManager
+	LoggerManager Manager
 }
 
 // Logger represent convention of all possible loggers (file logger , stdout logger , humio logger etc.)
 type Logger interface {
-	Log(context.Context, LoggerLevel, string, ...interface{}) error
+	Log(context.Context, Level, string, ...interface{}) error
 }
 
 //NewLogger create new logger which represents go-kit Logger
-func NewLogger(loggerManager LoggerManager) log.Logger {
+func NewLogger(loggerManager Manager) log.Logger {
 	return &logger{
 		LoggerManager: loggerManager,
 	}
@@ -91,7 +91,7 @@ func NewLogger(loggerManager LoggerManager) log.Logger {
 
 // NewLog create Log object with dafault params and stdout logger
 func NewLog() Log {
-	loggerConfig := LoggerConfig{
+	loggerConfig := Config{
 		LoggerName: "StdoutLogger",
 	}
 
@@ -108,7 +108,7 @@ func NewLog() Log {
 // SetLog create new Log object
 // logger - represent struct which "implement" log.Logger contract
 // loggerManager - represent struct which "implement" LoggerManager contract
-func SetLog(logger log.Logger, loggerManager LoggerManager) Log {
+func SetLog(logger log.Logger, loggerManager Manager) Log {
 	return Log{
 		Logger:        logger,
 		LoggerManager: loggerManager,
@@ -147,7 +147,7 @@ func BuildLogData(kvs ...interface{}) LogData {
 		args[key] = kvs[i+1]
 	}
 
-	logLevel, levelOk := args["level"].(LoggerLevel)
+	logLevel, levelOk := args["level"].(Level)
 	if levelOk {
 		delete(args, "level")
 	} else {

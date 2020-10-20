@@ -1,4 +1,4 @@
-package core
+package logger
 
 import (
 	"context"
@@ -30,7 +30,7 @@ type stdoutLogger struct {
 // fileAtomicLevel - minimal log level (Debug , Info , Warn , Error or Panic)
 // env - name of env
 // processName - name of the current process
-func NewStdOutLogger(loggerConfig LoggerConfig) Logger {
+func NewStdOutLogger(loggerConfig Config) Logger {
 
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{"stdout"}
@@ -52,7 +52,7 @@ func NewStdOutLogger(loggerConfig LoggerConfig) Logger {
 	}
 }
 
-func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel LoggerLevel, message string, params ...interface{}) error {
+func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
 	correlationID := coreCtx.GetCorrelationFromContext(ctx)
 	duration, timeout := coreCtx.GetTimeoutFromContext(ctx)
@@ -70,7 +70,7 @@ func addParamsToLog(key string, value interface{}, params []interface{}) []inter
 	return params
 }
 
-func (stdoutLogger stdoutLogger) castLoggerLevel(loggerLevel LoggerLevel) zapcore.Level {
+func (stdoutLogger stdoutLogger) castLoggerLevel(loggerLevel Level) zapcore.Level {
 	switch loggerLevel {
 	case DebugLoggerLevel:
 		return zapcore.DebugLevel

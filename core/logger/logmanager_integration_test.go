@@ -1,19 +1,19 @@
-package core_test
+package logger_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	"github.com/thelotter-enterprise/usergo/core/logger"
 )
 
 func TestInregrationLogger(t *testing.T) {
 	var isIntegrationTest bool
 	isIntegrationTest = false
 	if isIntegrationTest {
-		loggerConfig := core.LoggerConfig{
+		loggerConfig := logger.Config{
 			Env:         "Dev",
-			LevelName:   core.Info,
+			LevelName:   logger.Info,
 			LoggerName:  "FileLogger",
 			ProcessName: "UserGo",
 		}
@@ -22,13 +22,13 @@ func TestInregrationLogger(t *testing.T) {
 			Name: "David",
 			Age:  3,
 		}
-		var loggers []core.Logger
-		fileLogger := core.NewFileLogger(loggerConfig)
+		var loggers []logger.Logger
+		fileLogger := logger.NewFileLogger(loggerConfig)
 		loggerConfig.LoggerName = "StdOutLogger"
-		stdlogger := core.NewStdOutLogger(loggerConfig)
+		stdlogger := logger.NewStdOutLogger(loggerConfig)
 		loggers = append(loggers, stdlogger)
 		loggers = append(loggers, fileLogger)
-		loggerManager := core.NewLoggerManager(loggers)
+		loggerManager := logger.NewLoggerManager(loggers)
 		loggerManager.Info(ctx, "Text", "Log user", logUser)
 		loggerManager.Info(ctx, "Text", "Log user1", logUser)
 	}

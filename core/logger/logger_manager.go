@@ -1,4 +1,4 @@
-package core
+package logger
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-// LoggerManager represents contract of logger with all log levels (Panic , Error , Warn , Info and Debug)
-type LoggerManager interface {
+// Manager represents contract of logger with all log levels (Panic , Error , Warn , Info and Debug)
+type Manager interface {
 	// Panic represents convention of palic log function
 	Panic(context.Context, string, ...interface{}) error
 	// Error represents convention of error log function
@@ -25,7 +25,7 @@ type loggerManager struct {
 }
 
 // NewLoggerManager create loggerManager and give you control on all loggers
-func NewLoggerManager(loggers []Logger) LoggerManager {
+func NewLoggerManager(loggers []Logger) Manager {
 	return &loggerManager{
 		Loggers: loggers,
 	}
