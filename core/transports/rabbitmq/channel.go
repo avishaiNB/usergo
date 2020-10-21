@@ -10,7 +10,7 @@ func (a *RabbitMQ) NewChannel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
 	if a.AMQPConnection == nil {
-		err = tleerrors.NewApplicationError("Connect to rabbit before tring to get a channel")
+		err = tleerrors.New("Connect to rabbit before tring to get a channel")
 		// TODO: better logging here
 		a.Log.Logger.Log(err)
 	} else {
