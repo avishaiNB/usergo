@@ -125,17 +125,17 @@ func (logger logger) Log(kvs ...interface{}) error {
 
 	switch logData.Level {
 	case DebugLoggerLevel:
-		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data)
 	case InfoLoggerLevel:
-		return logger.LoggerManager.Info(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Info(logData.Context, logData.Message, logData.Data)
 	case WarnLoggerLevel:
-		return logger.LoggerManager.Warn(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Warn(logData.Context, logData.Message, logData.Data)
 	case ErrorLoggerLevel:
-		return logger.LoggerManager.Error(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Error(logData.Context, logData.Message, logData.Data)
 	case PanicLoggerLevel:
-		return logger.LoggerManager.Panic(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Panic(logData.Context, logData.Message, logData.Data)
 	default:
-		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data).Err
+		return logger.LoggerManager.Debug(logData.Context, logData.Message, logData.Data)
 	}
 }
 

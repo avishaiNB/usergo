@@ -3,6 +3,7 @@ package logger_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/thelotter-enterprise/usergo/core/logger"
@@ -21,7 +22,7 @@ func TestLoggerManagerReturnNoError(t *testing.T) {
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers)
 	loggerErr := loggerManager.Info(ctx, "Text", "Log user", logUser)
-	if loggerErr.Err != nil {
+	if loggerErr != nil {
 		t.Error("loggerManager.Info return unexpected error", loggerErr)
 	}
 }
@@ -39,7 +40,7 @@ func TestLoggerManagerReturnError(t *testing.T) {
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers)
 	loggerErr := loggerManager.Error(ctx, "Text", "Log user", logUser)
-	if loggerErr.Err == nil {
+	if loggerErr == nil {
 		t.Error("loggerManager.Error should return error")
 	}
 }
@@ -93,6 +94,7 @@ func TestLoggerReturnError(t *testing.T) {
 	goKitLogger := logger.NewLogger(loggerManager)
 	log := logger.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)
+	fmt.Println(logErr)
 	if logErr == nil {
 		t.Error("Expected result from log.Logger.Log cannot ne nil")
 	}
