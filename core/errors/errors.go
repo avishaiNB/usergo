@@ -21,7 +21,7 @@ func Annotate(err error, msg string) error {
 // The location of the Annotate call is recorded with the annotations.
 // The file, line and function are also recorded.
 func Annotatef(err error, format string, args ...interface{}) error {
-	return jujuerr.Annotatef(err, format, args)
+	return jujuerr.Annotatef(err, format, args...)
 }
 
 // Cause returns the cause of the given error.
@@ -48,7 +48,7 @@ func ErrorStack(err error) string {
 // Errorf creates a new annotated error and records the location that the error is created.
 // This should be a drop in replacement for fmt.Errorf.
 func Errorf(format string, args ...interface{}) error {
-	return jujuerr.Errorf(format, args)
+	return jujuerr.Errorf(format, args...)
 }
 
 // Mask hides the underlying error type, and records the location of the masking.
@@ -60,7 +60,7 @@ func Mask(err error) error {
 // The error string still contains the full annotations.
 // If you want to hide the annotations, call Wrap.
 func Maskf(err error, format string, args ...interface{}) error {
-	return jujuerr.Maskf(err, format, args)
+	return jujuerr.Maskf(err, format, args...)
 }
 
 // Wrap changes the Cause of the error.
@@ -72,7 +72,7 @@ func Wrap(err error, newDescriptive error) error {
 // Wrapf changes the Cause of the error, and adds an annotation.
 // The location of the Wrap call is also stored in the error stack
 func Wrapf(other error, newDescriptive error, format string, args ...interface{}) error {
-	return jujuerr.Wrapf(other, newDescriptive, format, args)
+	return jujuerr.Wrapf(other, newDescriptive, format, args...)
 }
 
 // Trace adds the location of the Trace call to the stack.
