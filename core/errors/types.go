@@ -139,31 +139,31 @@ func IsNotImplemented(err error) bool {
 	return jujuerr.IsNotImplemented(err)
 }
 
-// ApplicationError ...
-// type ApplicationError struct {
-// 	Err           jujuerr.Err
-// 	Message       string
-// 	Context       context.Context
-// 	CorrelationID string
-// 	Deadline      time.Time
-// 	Duration      time.Duration
-// 	Args          []interface{}
-// }
+type applicationError struct {
+	jujuerr.Err
+}
 
-// // NewApplicationError return an application error
-// func NewApplicationError(ctx context.Context, msg string, args ...interface{}) error {
-// 	corrid := tlectx.GetCorrelationFromContext(ctx)
-// 	duration, deadline := tlectx.CalcTimeoutFromContext(ctx)
+// NewApplicationErrorf returns an error which satisfies IsNotSupported().
+func NewApplicationErrorf(format string, args ...interface{}) error {
+	return &applicationError{wrap(nil, format, " application error", args...)}
+}
 
-// 	err := &ApplicationError{
-// 		Err:           jujuerr.NewErr("%s application error", msg),
-// 		Message:       msg,
-// 		Context:       ctx,
-// 		Args:          args,
-// 		CorrelationID: corrid,
-// 		Duration:      duration,
-// 		Deadline:      deadline,
-// 	}
-// 	err.SetLocation(1)
-// 	return err
-//}
+// NewApplicationError returns an error which wraps err and satisfies IsApplicationError().
+func NewApplicationError(err error, msg string) error {
+	return &applicationError{wrap(err, msg, "")}
+}
+
+// IsApplicationError reports whether the error was created with
+// NotSupportedf() or NewNotSupported().
+func IsApplicationError(err error) bool {
+	err = Cause(err)
+	_, ok := err.(*applicationError)
+	return ok
+}
+
+// wrap is a helper to construct an *wrapper.
+func wrap(err error, format, suffix string, args ...interface{}) jujuerr.Err {
+	newErr := jujuerr.NewErrWithCause(err, format+suffix, args...)
+	newErr.SetLocation(2)
+	return newErr
+}
