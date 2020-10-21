@@ -2,10 +2,10 @@ package logger_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/thelotter-enterprise/usergo/core/errors"
 	"github.com/thelotter-enterprise/usergo/core/logger"
 )
 
