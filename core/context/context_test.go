@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 func TestNewFrom(t *testing.T) {
