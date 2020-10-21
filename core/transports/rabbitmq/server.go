@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"errors"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
@@ -11,13 +11,13 @@ import (
 type Server struct {
 	Name     string
 	Address  string
-	Log      core.Log
+	Log      tlelogger.Log
 	Tracer   tletracer.Tracer
 	RabbitMQ *RabbitMQ
 }
 
 // NewServer ...
-func NewServer(log core.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
+func NewServer(log tlelogger.Log, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
 	return Server{
 		Name:     serviceName,
 		RabbitMQ: rabbit,

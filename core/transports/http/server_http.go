@@ -11,9 +11,10 @@ import (
 	httpkit "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/thelotter-enterprise/usergo/core"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
+
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
 // Server ...
@@ -22,7 +23,7 @@ type Server struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Log     core.Log
+	Log     tlelogger.Log
 	Tracer  tletracer.Tracer
 }
 
@@ -41,7 +42,7 @@ type Endpoint struct {
 }
 
 // NewServer ...
-func NewServer(log core.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
+func NewServer(log tlelogger.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
 	return Server{
 		Name:    serviceName,
 		Address: hostAddress,

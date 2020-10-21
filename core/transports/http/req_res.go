@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlecontext "github.com/thelotter-enterprise/usergo/core/context"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
@@ -42,9 +42,9 @@ type Request struct {
 // Wrap will wrap the data in a Request while copying the transport correlation id, duration and timeout
 func (r Request) Wrap(ctx context.Context, data interface{}) Request {
 	conv := utils.NewConvertor()
-	corrid, _ := tlectx.GetOrCreateCorrelationFromContext(ctx, false)
+	corrid, _ := tlecontext.GetOrCreateCorrelationFromContext(ctx, false)
 	// TODO: we need to calculate the deadline and timeout for the callee, so there should be some substruction
-	duration, deadline, _ := tlectx.GetOrCreateTimeoutFromContext(ctx, false)
+	duration, deadline, _ := tlecontext.GetOrCreateTimeoutFromContext(ctx, false)
 	req := Request{
 		Data:                  data,
 		DeadlineUnix:          conv.FromTimeToUnix(deadline),

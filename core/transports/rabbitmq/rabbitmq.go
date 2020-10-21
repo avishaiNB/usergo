@@ -6,8 +6,8 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
-	"github.com/thelotter-enterprise/usergo/core"
-	tlectx "github.com/thelotter-enterprise/usergo/core/ctx"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
 // RabbitMQ contains data required to make a connection to the rabbitMQ instance
@@ -17,11 +17,11 @@ type RabbitMQ struct {
 	// AMQPConnection to rabbitMQ. Will be nil until Connect will be called
 	AMQPConnection *amqp.Connection
 
-	Log core.Log
+	Log tlelogger.Log
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
-func NewRabbitMQ(log core.Log, connection ConnectionMeta) RabbitMQ {
+func NewRabbitMQ(log tlelogger.Log, connection ConnectionMeta) RabbitMQ {
 	return RabbitMQ{
 		ConnectionMeta: connection,
 		Log:            log,

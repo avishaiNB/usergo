@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
@@ -32,7 +32,7 @@ func Run() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// Setting up the infra services which will be used
-	logger := core.NewLogWithDefaults()
+	logger := tlelogger.NewLog()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 	inst := tlemetrics.NewPrometheusInstrumentor(serviceName)
 
