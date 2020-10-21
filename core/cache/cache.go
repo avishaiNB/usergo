@@ -2,9 +2,10 @@
 package cache
 
 import (
-	"errors"
 	"sync"
 	"time"
+
+	"github.com/thelotter-enterprise/usergo/core/errors"
 )
 
 const (
