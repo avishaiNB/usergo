@@ -21,7 +21,7 @@ func TestLoggerManagerReturnNoError(t *testing.T) {
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers)
 	loggerErr := loggerManager.Info(ctx, "Text", "Log user", logUser)
-	if loggerErr != nil {
+	if loggerErr.Err != nil {
 		t.Error("loggerManager.Info return unexpected error", loggerErr)
 	}
 }
@@ -39,7 +39,7 @@ func TestLoggerManagerReturnError(t *testing.T) {
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers)
 	loggerErr := loggerManager.Error(ctx, "Text", "Log user", logUser)
-	if loggerErr == nil {
+	if loggerErr.Err == nil {
 		t.Error("loggerManager.Error should return error")
 	}
 }
