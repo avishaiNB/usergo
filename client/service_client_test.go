@@ -7,12 +7,13 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/thelotter-enterprise/usergo/client"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 )
 
 func TestClientIntegration(t *testing.T) {
 	serviceName := "test"
-	logger := makeLogger()
+	logger := tlelogger.NewNopManager()
 	ctx := context.Background()
 	id := 1
 
@@ -34,7 +35,7 @@ func makeLogger() log.Logger {
 	return logger
 }
 
-func makeServiceDiscovery(logger log.Logger) *tlesd.ServiceDiscovery {
+func makeServiceDiscovery(logger tlelogger.Manager) *tlesd.ServiceDiscovery {
 	consulAddress := "localhost:8500"
 	sd := tlesd.NewServiceDiscovery(logger)
 	sd.WithConsul(consulAddress)

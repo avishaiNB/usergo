@@ -110,3 +110,27 @@ func (loggerManager loggerManager) Panic(ctx context.Context, message string, pa
 	}
 	return nil
 }
+
+// Log func in part of go-kit logger contract
+// kvs argument reuire next fields:
+// "level" as LoggerLevel - level of log (info , warn etc.)
+// "context" as context.Context
+// "message" as string
+func (loggerManager loggerManager) Log(kvs ...interface{}) error {
+	logData := BuildLogData(kvs...)
+
+	switch logData.Level {
+	case DebugLoggerLevel:
+		return loggerManager.Debug(logData.Context, logData.Message, logData.Data)
+	case InfoLoggerLevel:
+		return loggerManager.Info(logData.Context, logData.Message, logData.Data)
+	case WarnLoggerLevel:
+		return loggerManager.Warn(logData.Context, logData.Message, logData.Data)
+	case ErrorLoggerLevel:
+		return loggerManager.Error(logData.Context, logData.Message, logData.Data)
+	case PanicLoggerLevel:
+		return loggerManager.Panic(logData.Context, logData.Message, logData.Data)
+	default:
+		return loggerManager.Debug(logData.Context, logData.Message, logData.Data)
+	}
+}
