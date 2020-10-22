@@ -20,14 +20,8 @@ const (
 )
 
 var (
-	// ErrKeyNotFound when key is not found in cache
-	ErrKeyNotFound = errors.New("key not found")
-
 	// ErrRegionKeyNotFound when key is not found in cache
 	ErrRegionKeyNotFound = errors.New("region not found")
-
-	// ErrTimeOutError when key is not found in cache
-	ErrTimeOutError = errors.New("timeout request")
 )
 
 // RefreshFunction function type that will renew the data
@@ -76,7 +70,8 @@ func (c *Cache) Get(region, key string) (interface{}, error) {
 	}
 	v, ok := reg.items.Get(key)
 	if !ok {
-		return nil, ErrKeyNotFound
+		err := errors.New("Get return error")
+		return nil, errors.NewNotFoundError(err, "Key "+key+" not found")
 	}
 	return v, nil
 }
@@ -117,7 +112,8 @@ func (c *Cache) GetOrCreate(
 	case err := <-errChan:
 		return nil, err
 	case <-time.After(c.Timeout):
-		return nil, ErrTimeOutError
+		err := errors.New("GetOrCreate error")
+		return nil, errors.NewTimeoutError(err, "Timedout request")
 	}
 }
 
