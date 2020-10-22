@@ -59,10 +59,9 @@ type Log struct {
 // LoggerName - name of the logger
 // ProcessName - name of the current process
 type Config struct {
-	LevelName   AtomicLevelName
-	Env         string
-	LoggerName  string
-	ProcessName string
+	LevelName  AtomicLevelName
+	Env        string
+	LoggerName string
 }
 
 // LogData represents log data created by BuildLogData function based on kv interface array
@@ -97,7 +96,7 @@ func NewLog() Log {
 
 	stdOutLogger := NewStdOutLogger(loggerConfig)
 	loggers := []Logger{stdOutLogger}
-	logManager := NewLoggerManager(loggers)
+	logManager := NewLoggerManager(loggers...)
 	log := NewLogger(logManager)
 	return Log{
 		Logger:        log,

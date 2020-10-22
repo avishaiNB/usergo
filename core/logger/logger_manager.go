@@ -25,7 +25,7 @@ type loggerManager struct {
 }
 
 // NewLoggerManager create loggerManager and give you control on all loggers
-func NewLoggerManager(loggers []Logger) Manager {
+func NewLoggerManager(loggers ...Logger) Manager {
 	return &loggerManager{
 		Loggers: loggers,
 	}

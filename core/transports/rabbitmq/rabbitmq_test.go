@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/core"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 )
 
@@ -26,9 +26,9 @@ const (
 func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
-	log := core.NewLog()
+	logManager := tlelogger.NewNopManager()
 	conn := rabbitmq.NewConnectionMeta(host, port, username, pwd, vhost)
-	rabbit := rabbitmq.NewRabbitMQ(log, conn)
+	rabbit := rabbitmq.NewRabbitMQ(&logManager, conn)
 
 	rabbit.OpenConnection()
 	err := rabbit.PublishOneWay(ctx, req, exchangeName, rabbit.DefaultRequestEncoder(exchangeName))

@@ -19,7 +19,7 @@ func TestLoggerManagerReturnNoError(t *testing.T) {
 	fileLogger := &fileLoggerMock{}
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
-	loggerManager := logger.NewLoggerManager(loggers)
+	loggerManager := logger.NewLoggerManager(loggers...)
 	loggerErr := loggerManager.Info(ctx, "Text", "Log user", logUser)
 	if loggerErr != nil {
 		t.Error("loggerManager.Info return unexpected error", loggerErr)
@@ -37,7 +37,7 @@ func TestLoggerManagerReturnError(t *testing.T) {
 	fileLogger := &fileLoggerMock{}
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
-	loggerManager := logger.NewLoggerManager(loggers)
+	loggerManager := logger.NewLoggerManager(loggers...)
 	loggerErr := loggerManager.Error(ctx, "Text", "Log user", logUser)
 	if loggerErr == nil {
 		t.Error("loggerManager.Error should return error")
@@ -62,7 +62,7 @@ func TestLoggerReturnNoError(t *testing.T) {
 	fileLogger := &fileLoggerMock{}
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
-	loggerManager := logger.NewLoggerManager(loggers)
+	loggerManager := logger.NewLoggerManager(loggers...)
 	goKitLogger := logger.NewLogger(loggerManager)
 	log := logger.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)
@@ -89,7 +89,7 @@ func TestLoggerReturnError(t *testing.T) {
 	fileLogger := &fileLoggerMock{}
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
-	loggerManager := logger.NewLoggerManager(loggers)
+	loggerManager := logger.NewLoggerManager(loggers...)
 	goKitLogger := logger.NewLogger(loggerManager)
 	log := logger.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/thelotter-enterprise/usergo/client"
-	tlesd "github.com/thelotter-enterprise/usergo/core/sd"
+	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 )
 
 func TestClientIntegration(t *testing.T) {
