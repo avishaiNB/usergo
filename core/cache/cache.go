@@ -19,11 +19,6 @@ const (
 	DefaultRegion = "default"
 )
 
-var (
-	// ErrRegionKeyNotFound when key is not found in cache
-	ErrRegionKeyNotFound = errors.New("region not found")
-)
-
 // RefreshFunction function type that will renew the data
 type RefreshFunction func() (interface{}, error)
 
@@ -66,7 +61,8 @@ func NewCache(config Config) *Cache {
 func (c *Cache) Get(region, key string) (interface{}, error) {
 	reg, ok := c.regions[region]
 	if !ok {
-		return nil, ErrRegionKeyNotFound
+		err := errors.New("Get return error")
+		return nil, errors.NewNotFoundError(err, "Cannot find region "+region)
 	}
 	v, ok := reg.items.Get(key)
 	if !ok {
@@ -170,7 +166,8 @@ func (c *Cache) getRegion(region string) (*region, error) {
 	r, ok := c.regions[region]
 	c.mu.RUnlock()
 	if !ok {
-		return nil, ErrRegionKeyNotFound
+		err := errors.New("Get return error")
+		return nil, errors.NewNotFoundError(err, "Cannot find region "+region)
 	}
 	return r, nil
 }
