@@ -42,6 +42,10 @@ func TestLoggerManagerReturnError(t *testing.T) {
 	if loggerErr == nil {
 		t.Error("loggerManager.Error should return error")
 	}
+	customErrorMsg := "Custom error: Custom error"
+	if loggerErr.Error() != customErrorMsg {
+		t.Errorf("loggerManager.Error return %s; wants %s", loggerErr.Error(), customErrorMsg)
+	}
 }
 
 func TestLoggerReturnNoError(t *testing.T) {
