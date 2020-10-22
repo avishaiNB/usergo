@@ -37,7 +37,7 @@ func (loggerManager loggerManager) Debug(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, DebugLoggerLevel, message, params...)
 		if logErr != nil {
-			err = loggerManager.addError(err, logErr.Error())
+			err = loggerManager.addError(err, logErr)
 		}
 	}
 	return err
@@ -49,7 +49,7 @@ func (loggerManager loggerManager) Info(ctx context.Context, message string, par
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, InfoLoggerLevel, message, params...)
 		if logErr != nil {
-			err = loggerManager.addError(err, logErr.Error())
+			err = loggerManager.addError(err, logErr)
 		}
 	}
 	return err
@@ -61,7 +61,7 @@ func (loggerManager loggerManager) Warn(ctx context.Context, message string, par
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, WarnLoggerLevel, message, params...)
 		if logErr != nil {
-			err = loggerManager.addError(err, logErr.Error())
+			err = loggerManager.addError(err, logErr)
 		}
 	}
 	return err
@@ -73,7 +73,7 @@ func (loggerManager loggerManager) Error(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, ErrorLoggerLevel, message, params...)
 		if logErr != nil {
-			err = loggerManager.addError(err, logErr.Error())
+			err = loggerManager.addError(err, logErr)
 		}
 	}
 	return err
@@ -85,15 +85,15 @@ func (loggerManager loggerManager) Panic(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, PanicLoggerLevel, message, params...)
 		if logErr != nil {
-			err = loggerManager.addError(err, logErr.Error())
+			err = loggerManager.addError(err, logErr)
 		}
 	}
 	return err
 }
 
-func (loggerManager loggerManager) addError(err error, message string) error {
+func (loggerManager loggerManager) addError(err, newErr error) error {
 	if err == nil {
-		return tleerrors.New(message)
+		return newErr
 	}
-	return tleerrors.Annotate(err, message)
+	return tleerrors.Wrap(err, newErr)
 }
