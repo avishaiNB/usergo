@@ -4,10 +4,9 @@ import (
 	jujuerr "github.com/juju/errors"
 )
 
-// New is a drop in replacement for the standard library errors module that records the location that the error is created.
-// for example return errors.New("validation failed")
+// New will create a new application error
 func New(msg string) error {
-	return jujuerr.New(msg)
+	return newApplicationError(msg, 2)
 }
 
 // Annotate is used to add extra context to an existing error.
@@ -80,4 +79,11 @@ func Wrapf(other error, newDescriptive error, format string, args ...interface{}
 // If the other error is nil, the result will be nil.
 func Trace(err error) error {
 	return jujuerr.Trace(err)
+}
+
+// wrap is a helper to construct an *wrapper.
+func wrap(err error, format, suffix string, args ...interface{}) jujuerr.Err {
+	newErr := jujuerr.NewErrWithCause(err, format+suffix, args...)
+	newErr.SetLocation(2)
+	return newErr
 }

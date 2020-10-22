@@ -1,6 +1,8 @@
 package errors_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
@@ -17,7 +19,7 @@ func TestApplicationError(t *testing.T) {
 	}
 
 	if wantErrString != isErrString {
-		t.Errorf("wanted %s, got %s", wantErrString, isErrString)
+		t.Errorf("wanted: '%s', got: '%s'", wantErrString, isErrString)
 	}
 }
 
@@ -27,27 +29,49 @@ func TestErrorWithAnnotation(t *testing.T) {
 	err = tleerrors.Annotate(err, "more information about the error")
 
 	isErrString := err.Error()
-	wantErrString := "more information about the error: original error from guy kolbis"
+	wantErrString := "more information about the error: original error from guy kolbis application error"
 
 	if wantErrString != isErrString {
-		t.Errorf("wanted %s, got %s", wantErrString, isErrString)
+		t.Errorf("wanted: '%s', got: '%s'", wantErrString, isErrString)
 	}
 }
 
 func TestErrorWithWrap(t *testing.T) {
 	msg := "original error from guy kolbis"
-	err := tleerrors.New(msg)
+	err := errors.New(msg)
 	errForbidden := tleerrors.NewForbiddenError(err, "forbidden!")
 	newerr := tleerrors.Wrap(err, errForbidden)
 
-	if tleerrors.IsForbidden(newerr) == false {
+	if tleerrors.IsForbiddenError(newerr) == false {
 		t.Fail()
 	}
 
 	isErrString := newerr.Error()
-	wantErrString := "forbidden!: original error from guy kolbis"
+	wantErrString := "forbidden! forbidden error: original error from guy kolbis"
 
 	if wantErrString != isErrString {
-		t.Errorf("wanted %s, got %s", wantErrString, isErrString)
+		t.Errorf("wanted: '%s', got: '%s'", wantErrString, isErrString)
+	}
+}
+
+func TestNotFoundOriginatedFromCallerFile(t *testing.T) {
+	msg := "this is an error!"
+	err := tleerrors.NewNotFoundErrorf(msg)
+	stack := tleerrors.ErrorStack(err)
+	want := "errors_test.go"
+
+	if strings.Contains(stack, want) == false {
+		t.Fail()
+	}
+}
+
+func TestNew(t *testing.T) {
+	msg := "new error"
+	err := tleerrors.New(msg)
+	stack := tleerrors.ErrorStack(err)
+	want := "errors_test.go"
+
+	if strings.Contains(stack, want) == false {
+		t.Fail()
 	}
 }
