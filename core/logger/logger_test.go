@@ -2,7 +2,6 @@ package logger_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/thelotter-enterprise/usergo/core/errors"
@@ -94,7 +93,6 @@ func TestLoggerReturnError(t *testing.T) {
 	goKitLogger := logger.NewLogger(loggerManager)
 	log := logger.SetLog(goKitLogger, loggerManager)
 	logErr := log.Logger.Log(params...)
-	fmt.Println(logErr)
 	if logErr == nil {
 		t.Error("Expected result from log.Logger.Log cannot ne nil")
 	}

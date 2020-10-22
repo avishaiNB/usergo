@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"fmt"
 
 	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
 )
@@ -38,7 +37,6 @@ func (loggerManager loggerManager) Debug(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, DebugLoggerLevel, message, params...)
 		if logErr != nil {
-			fmt.Println("Cannot print DebugLoggerLevel log", logErr, log)
 			err = loggerManager.addError(err, logErr.Error())
 		}
 	}
@@ -51,7 +49,6 @@ func (loggerManager loggerManager) Info(ctx context.Context, message string, par
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, InfoLoggerLevel, message, params...)
 		if logErr != nil {
-			fmt.Println("Cannot print InfoLoggerLevel log", logErr, log)
 			err = loggerManager.addError(err, logErr.Error())
 		}
 	}
@@ -64,7 +61,6 @@ func (loggerManager loggerManager) Warn(ctx context.Context, message string, par
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, WarnLoggerLevel, message, params...)
 		if logErr != nil {
-			fmt.Println("Cannot print WarnLoggerLevel log", logErr, log)
 			err = loggerManager.addError(err, logErr.Error())
 		}
 	}
@@ -77,7 +73,6 @@ func (loggerManager loggerManager) Error(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, ErrorLoggerLevel, message, params...)
 		if logErr != nil {
-			fmt.Println("Cannot print ErrorLoggerLevel log", logErr, log)
 			err = loggerManager.addError(err, logErr.Error())
 		}
 	}
@@ -90,7 +85,6 @@ func (loggerManager loggerManager) Panic(ctx context.Context, message string, pa
 	for _, log := range loggerManager.Loggers {
 		logErr := log.Log(ctx, PanicLoggerLevel, message, params...)
 		if logErr != nil {
-			fmt.Println("Cannot print PanicLoggerLevel log", logErr, log)
 			err = loggerManager.addError(err, logErr.Error())
 		}
 	}
