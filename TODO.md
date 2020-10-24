@@ -2,8 +2,6 @@ create and use base response object model
 context between processes: context extract headers
 amqp transports
 context timeout and object (now I return max, need to change it)
-define base errors
-replace log.Logger with core.Log
 // TODO: we need to calculate the deadline and timeout for the callee, so there should be some substruction
 functions in core.url should be moved to the encoding_decoding
 
