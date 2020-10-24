@@ -11,13 +11,13 @@ import (
 type Server struct {
 	Name     string
 	Address  string
-	Logger   tlelogger.Manager
+	Logger   *tlelogger.Manager
 	Tracer   tletracer.Tracer
 	RabbitMQ *RabbitMQ
 }
 
 // NewServer ...
-func NewServer(logger tlelogger.Manager, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
+func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
 	return Server{
 		Name:     serviceName,
 		RabbitMQ: rabbit,

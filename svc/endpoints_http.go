@@ -18,14 +18,14 @@ import (
 type UserHTTPEndpoints struct {
 	HTTPEndpoints *tlehttp.Endpoints
 	Service       Service
-	Logger        tlelogger.Manager
+	Logger        *tlelogger.Manager
 	Tracer        tletracer.Tracer
 }
 
 // NewUserHTTPEndpoints ...
-func NewUserHTTPEndpoints(log tlelogger.Manager, tracer tletracer.Tracer, service Service) *UserHTTPEndpoints {
+func NewUserHTTPEndpoints(logger *tlelogger.Manager, tracer tletracer.Tracer, service Service) *UserHTTPEndpoints {
 	userEndpoints := UserHTTPEndpoints{
-		Logger:        log,
+		Logger:        logger,
 		Tracer:        tracer,
 		Service:       service,
 		HTTPEndpoints: &tlehttp.Endpoints{},
@@ -73,7 +73,8 @@ func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 func (ue UserHTTPEndpoints) encodeUserByIDReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
-		ue.Logger.Error(
+		logger := *ue.Logger
+		logger.Error(
 			ctx,
 			"encodeUserByIDReponse",
 			"method", "EncodeReponseToJSONFunc", "error", err)
@@ -86,7 +87,8 @@ func (ue UserHTTPEndpoints) decodeUserByIDRequest(ctx context.Context, r *http.R
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
-		ue.Logger.Error(
+		logger := *ue.Logger
+		logger.Error(
 			ctx,
 			"decodeUserByIDRequest",
 			"level", "error",

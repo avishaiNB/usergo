@@ -48,18 +48,18 @@ func Run() {
 	// In this part we are building the service and extending it using middleware pattern
 	repo := NewRepository()
 	service := NewService(&logManager, tracer, repo)
-	service = NewLoggingMiddleware(&logManager)(service)            // Hook up the logging middleware
-	service = NewInstrumentingMiddleware(logManager, inst)(service) // Hook up the inst middleware
+	service = NewLoggingMiddleware(&logManager)(service)             // Hook up the logging middleware
+	service = NewInstrumentingMiddleware(&logManager, inst)(service) // Hook up the inst middleware
 
 	// setting up the http server
-	httpEndpoints := NewUserHTTPEndpoints(logManager, tracer, service)
-	httpServer := tlehttp.NewServer(logManager, tracer, serviceName, hostAddress)
+	httpEndpoints := NewUserHTTPEndpoints(&logManager, tracer, service)
+	httpServer := tlehttp.NewServer(&logManager, tracer, serviceName, hostAddress)
 
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
-	amqpEndpoints := NewUserAMQPConsumerEndpoints(logManager, tracer, service, &rabbitmq)
-	amqpServer := tlerabbitmq.NewServer(logManager, tracer, &rabbitmq, serviceName)
+	amqpEndpoints := NewUserAMQPConsumerEndpoints(&logManager, tracer, service, &rabbitmq)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs

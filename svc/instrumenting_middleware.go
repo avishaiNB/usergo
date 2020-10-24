@@ -10,7 +10,7 @@ import (
 )
 
 // NewInstrumentingMiddleware ..
-func NewInstrumentingMiddleware(logger tlelogger.Manager, inst tlemetrics.PrometheusInstrumentor) ServiceMiddleware {
+func NewInstrumentingMiddleware(logger *tlelogger.Manager, inst tlemetrics.PrometheusInstrumentor) ServiceMiddleware {
 	counter := inst.AddPromCounter("user", "getuserbyid", tlemetrics.RequestCount, []string{"method", "error"})
 	requestLatency := inst.AddPromSummary("user", "getuserbyid", tlemetrics.LatencyInMili, []string{"method", "error"})
 
@@ -29,7 +29,7 @@ type instrumentingMiddleware struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
 	next           Service
-	logger         tlelogger.Manager
+	logger         *tlelogger.Manager
 }
 
 func (mw instrumentingMiddleware) GetUserByID(ctx context.Context, userID int) (shared.User, error) {

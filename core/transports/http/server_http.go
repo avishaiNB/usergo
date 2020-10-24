@@ -24,7 +24,7 @@ type Server struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Logger  tlelogger.Manager
+	Logger  *tlelogger.Manager
 	Tracer  tletracer.Tracer
 }
 
@@ -43,7 +43,7 @@ type Endpoint struct {
 }
 
 // NewServer ...
-func NewServer(logger tlelogger.Manager, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
+func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
 	return Server{
 		Name:    serviceName,
 		Address: hostAddress,
@@ -61,20 +61,22 @@ func (server *Server) Run(endpoints *Endpoints) error {
 		return errors.New("no endpoints")
 	}
 
+	ctx := context.Background()
+	logger := *server.Logger
+
 	options := []httpkit.ServerOption{
-		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Logger.(kitlog.Logger))),
+		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(logger.(kitlog.Logger))),
 		tlectx.ReadBefore(),
 	}
 
-	ctx := context.Background()
 	for _, endpoint := range endpoints.ServerEndpoints {
-		server.Logger.Info(ctx, fmt.Sprintf("adding route http://%s/%s", server.Address, endpoint.Path))
+		logger.Info(ctx, fmt.Sprintf("adding route http://%s/%s", server.Address, endpoint.Path))
 		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc, options...)
 		server.Router.Methods(endpoint.Method).Path(endpoint.Path).Handler(getUserByIDHandler)
 	}
 
 	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)
-	server.Logger.Info(ctx, fmt.Sprintf("http server started and listen on %s", server.Address))
+	logger.Info(ctx, fmt.Sprintf("http server started and listen on %s", server.Address))
 	http.ListenAndServe(server.Address, server.Handler)
 
 	return nil
