@@ -26,6 +26,14 @@ type loggerManager struct {
 
 // NewLoggerManager create loggerManager and give you control on all loggers
 func NewLoggerManager(loggers ...Logger) Manager {
+	if len(loggers) == 0 {
+		loggerConfig := Config{
+			LoggerName: "StdoutLogger",
+		}
+
+		stdOutLogger := NewStdOutLogger(loggerConfig)
+		loggers = []Logger{stdOutLogger}
+	}
 	return &loggerManager{
 		Loggers: loggers,
 	}

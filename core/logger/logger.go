@@ -3,7 +3,6 @@ package logger
 import (
 	"context"
 
-	"github.com/go-kit/kit/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -49,7 +48,6 @@ const (
 // Logger - represents log.Logger
 // LoggerManager - represents LoggerManager
 type Log struct {
-	Logger        log.Logger
 	LoggerManager Manager
 }
 
@@ -79,39 +77,6 @@ type logger struct {
 // Logger represent convention of all possible loggers (file logger , stdout logger , humio logger etc.)
 type Logger interface {
 	Log(context.Context, Level, string, ...interface{}) error
-}
-
-//NewLogger create new logger which represents go-kit Logger
-func NewLogger(loggerManager Manager) log.Logger {
-	return &logger{
-		LoggerManager: loggerManager,
-	}
-}
-
-// NewLog create Log object with dafault params and stdout logger
-func NewLog() Log {
-	loggerConfig := Config{
-		LoggerName: "StdoutLogger",
-	}
-
-	stdOutLogger := NewStdOutLogger(loggerConfig)
-	loggers := []Logger{stdOutLogger}
-	logManager := NewLoggerManager(loggers...)
-	log := NewLogger(logManager)
-	return Log{
-		Logger:        log,
-		LoggerManager: logManager,
-	}
-}
-
-// SetLog create new Log object
-// logger - represent struct which "implement" log.Logger contract
-// loggerManager - represent struct which "implement" LoggerManager contract
-func SetLog(logger log.Logger, loggerManager Manager) Log {
-	return Log{
-		Logger:        logger,
-		LoggerManager: loggerManager,
-	}
 }
 
 // Log func in part of go-kit logger contract
