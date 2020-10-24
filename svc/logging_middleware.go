@@ -9,20 +9,21 @@ import (
 )
 
 // NewLoggingMiddleware ... ..
-func NewLoggingMiddleware(logger tlelogger.Manager) ServiceMiddleware {
+func NewLoggingMiddleware(logger *tlelogger.Manager) ServiceMiddleware {
 	return func(next Service) Service {
 		return loggingMiddleware{logger, next}
 	}
 }
 
 type loggingMiddleware struct {
-	logger tlelogger.Manager
+	logger *tlelogger.Manager
 	next   Service
 }
 
 func (mw loggingMiddleware) GetUserByID(ctx context.Context, userID int) (shared.User, error) {
 	defer func(begin time.Time) {
-		_ = mw.logger.Info(
+		logger := *mw.logger
+		_ = logger.Info(
 			ctx,
 			"GetUserByID",
 			"method", "GetUserByID",
@@ -35,7 +36,8 @@ func (mw loggingMiddleware) GetUserByID(ctx context.Context, userID int) (shared
 
 func (mw loggingMiddleware) ConsumeLoginCommand(ctx context.Context, userID int) error {
 	defer func(begin time.Time) {
-		_ = mw.logger.Info(
+		logger := *mw.logger
+		_ = logger.Info(
 			ctx,
 			"ConsumeLoginCommand",
 			"method", "ConsumeLoginCommand",
