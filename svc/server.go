@@ -16,14 +16,16 @@ import (
 // Run ...
 func Run() {
 	var (
-		serviceName      string = "user"
-		hostAddress      string = "localhost:8080"
-		zipkinURL        string = "http://localhost:9411/api/v2/spans"
-		rabbitMQUsername string = "thelotter"
-		rabbitMQPwd      string = "Dhvbuo1"
-		rabbitMQHost     string = "int-k8s1"
-		rabbitMQVhost    string = "thelotter"
-		rabbitMQPort     int    = 32672
+		serviceName      string                    = "user"
+		hostAddress      string                    = "localhost:8080"
+		zipkinURL        string                    = "http://localhost:9411/api/v2/spans"
+		rabbitMQUsername string                    = "thelotter"
+		rabbitMQPwd      string                    = "Dhvbuo1"
+		rabbitMQHost     string                    = "int-k8s1"
+		rabbitMQVhost    string                    = "thelotter"
+		rabbitMQPort     int                       = 32672
+		env              string                    = "dev"
+		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -33,32 +35,31 @@ func Run() {
 
 	// Setting up the infra services which will be used
 	stdConf := tlelogger.Config{
-		LevelName:  tlelogger.Debug,
-		Env:        "dev",
+		LevelName:  logLevel,
+		Env:        env,
 		LoggerName: "std",
 	}
 	stdLogger := tlelogger.NewStdOutLogger(stdConf)
 	logManager := tlelogger.NewLoggerManager(stdLogger)
 
-	logger := tlelogger.NewLog()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 	inst := tlemetrics.NewPrometheusInstrumentor(serviceName)
 
 	// In this part we are building the service and extending it using middleware pattern
 	repo := NewRepository()
-	service := NewService(logger, tracer, repo)
-	service = NewLoggingMiddleware(logger.Logger)(service) // Hook up the logging middleware
-	service = NewInstrumentingMiddleware(inst)(service)    // Hook up the inst middleware
+	service := NewService(logManager, tracer, repo)
+	service = NewLoggingMiddleware(logManager)(service)             // Hook up the logging middleware
+	service = NewInstrumentingMiddleware(logManager, inst)(service) // Hook up the inst middleware
 
 	// setting up the http server
-	httpEndpoints := NewUserHTTPEndpoints(logger, tracer, service)
-	httpServer := tlehttp.NewServer(logger, tracer, serviceName, hostAddress)
+	httpEndpoints := NewUserHTTPEndpoints(logManager, tracer, service)
+	httpServer := tlehttp.NewServer(logManager, tracer, serviceName, hostAddress)
 
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
-	amqpEndpoints := NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
-	amqpServer := tlerabbitmq.NewServer(logger, tracer, &rabbitmq, serviceName)
+	amqpEndpoints := NewUserAMQPConsumerEndpoints(logManager, tracer, service, &rabbitmq)
+	amqpServer := tlerabbitmq.NewServer(logManager, tracer, &rabbitmq, serviceName)
 
 	go func() {
 		sig := <-sigs

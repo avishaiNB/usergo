@@ -9,7 +9,7 @@ import (
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
-// UserServiceMiddleware used to chain behaviors on the UserService using middleware pattern
+// ServiceMiddleware used to chain behaviors on the UserService using middleware pattern
 type ServiceMiddleware func(Service) Service
 
 // Service API
@@ -21,15 +21,16 @@ type Service interface {
 type service struct {
 	repo   Repository
 	tracer tletracer.Tracer
-	log    tlelogger.Log
+	logger tlelogger.Manager
 }
 
 // NewService creates a new instance of service
 // service is where we define all the business logic.
-func NewService(log tlelogger.Log, tracer tletracer.Tracer, repo Repository) Service {
+func NewService(logger tlelogger.Manager, tracer tletracer.Tracer, repo Repository) Service {
 	return &service{
 		repo:   repo,
 		tracer: tracer,
+		logger: logger,
 	}
 }
 
@@ -40,6 +41,5 @@ func (s *service) GetUserByID(ctx context.Context, userID int) (shared.User, err
 }
 
 func (s *service) ConsumeLoginCommand(ctx context.Context, userID int) error {
-	s.log.Logger.Log("message", "login command consumed")
 	return nil
 }

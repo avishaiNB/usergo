@@ -13,16 +13,16 @@ import (
 // UserAMQPConsumerEndpoints ...
 type UserAMQPConsumerEndpoints struct {
 	Service   Service
-	Log       tlelogger.Log
+	Logger    tlelogger.Manager
 	Tracer    tletracer.Tracer
 	Consumers *[]tlerabbitmq.Consumer
 	RabbitMQ  *tlerabbitmq.RabbitMQ
 }
 
 // NewUserAMQPConsumerEndpoints will create all the AMQP endpopints
-func NewUserAMQPConsumerEndpoints(log tlelogger.Log, tracer tletracer.Tracer, service Service, rabbitMQ *tlerabbitmq.RabbitMQ) *UserAMQPConsumerEndpoints {
+func NewUserAMQPConsumerEndpoints(logger tlelogger.Manager, tracer tletracer.Tracer, service Service, rabbitMQ *tlerabbitmq.RabbitMQ) *UserAMQPConsumerEndpoints {
 	userEndpoints := UserAMQPConsumerEndpoints{
-		Log:      log,
+		Logger:   logger,
 		Tracer:   tracer,
 		Service:  service,
 		RabbitMQ: rabbitMQ,

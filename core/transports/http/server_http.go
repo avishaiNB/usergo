@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httpkit "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
@@ -23,7 +24,7 @@ type Server struct {
 	Address string
 	Router  *mux.Router
 	Handler http.Handler
-	Log     tlelogger.Log
+	Logger  tlelogger.Manager
 	Tracer  tletracer.Tracer
 }
 
@@ -42,12 +43,12 @@ type Endpoint struct {
 }
 
 // NewServer ...
-func NewServer(log tlelogger.Log, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
+func NewServer(logger tlelogger.Manager, tracer tletracer.Tracer, serviceName string, hostAddress string) Server {
 	return Server{
 		Name:    serviceName,
 		Address: hostAddress,
 		Router:  mux.NewRouter(),
-		Log:     log,
+		Logger:  logger,
 		Tracer:  tracer,
 	}
 }
@@ -61,18 +62,19 @@ func (server *Server) Run(endpoints *Endpoints) error {
 	}
 
 	options := []httpkit.ServerOption{
-		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Log.Logger)),
+		httpkit.ServerErrorHandler(transport.NewLogErrorHandler(server.Logger.(kitlog.Logger))),
 		tlectx.ReadBefore(),
 	}
 
+	ctx := context.Background()
 	for _, endpoint := range endpoints.ServerEndpoints {
-		server.Log.Logger.Log("message", fmt.Sprintf("adding route http://%s/%s", server.Address, endpoint.Path))
+		server.Logger.Info(ctx, fmt.Sprintf("adding route http://%s/%s", server.Address, endpoint.Path))
 		getUserByIDHandler := httpkit.NewServer(endpoint.Endpoint, endpoint.Dec, endpoint.Enc, options...)
 		server.Router.Methods(endpoint.Method).Path(endpoint.Path).Handler(getUserByIDHandler)
 	}
 
 	server.Handler = handlers.LoggingHandler(os.Stdout, server.Router)
-	server.Log.Logger.Log("message", fmt.Sprintf("http server started and listen on %s", server.Address))
+	server.Logger.Info(ctx, fmt.Sprintf("http server started and listen on %s", server.Address))
 	http.ListenAndServe(server.Address, server.Handler)
 
 	return nil

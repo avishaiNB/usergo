@@ -18,14 +18,14 @@ import (
 type UserHTTPEndpoints struct {
 	HTTPEndpoints *tlehttp.Endpoints
 	Service       Service
-	Log           tlelogger.Log
+	Logger        tlelogger.Manager
 	Tracer        tletracer.Tracer
 }
 
 // NewUserHTTPEndpoints ...
-func NewUserHTTPEndpoints(log tlelogger.Log, tracer tletracer.Tracer, service Service) *UserHTTPEndpoints {
+func NewUserHTTPEndpoints(log tlelogger.Manager, tracer tletracer.Tracer, service Service) *UserHTTPEndpoints {
 	userEndpoints := UserHTTPEndpoints{
-		Log:           log,
+		Logger:        log,
 		Tracer:        tracer,
 		Service:       service,
 		HTTPEndpoints: &tlehttp.Endpoints{},
@@ -73,7 +73,10 @@ func makeUserByIDEndpoint(service Service) endpoint.Endpoint {
 func (ue UserHTTPEndpoints) encodeUserByIDReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
-		ue.Log.Logger.Log("method", "EncodeReponseToJSONFunc", "error", err)
+		ue.Logger.Error(
+			ctx,
+			"encodeUserByIDReponse",
+			"method", "EncodeReponseToJSONFunc", "error", err)
 	}
 	return err
 }
@@ -83,7 +86,9 @@ func (ue UserHTTPEndpoints) decodeUserByIDRequest(ctx context.Context, r *http.R
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
-		ue.Log.Logger.Log(
+		ue.Logger.Error(
+			ctx,
+			"decodeUserByIDRequest",
 			"level", "error",
 			"method", "DecodeRequestFromJSONFunc",
 			"error", err,
