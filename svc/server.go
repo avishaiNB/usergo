@@ -47,7 +47,7 @@ func Run() {
 
 	// In this part we are building the service and extending it using middleware pattern
 	repo := NewRepository()
-	service := NewService(logManager, tracer, repo)
+	service := NewService(&logManager, tracer, repo)
 	service = NewLoggingMiddleware(logManager)(service)             // Hook up the logging middleware
 	service = NewInstrumentingMiddleware(logManager, inst)(service) // Hook up the inst middleware
 

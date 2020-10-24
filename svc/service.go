@@ -21,12 +21,12 @@ type Service interface {
 type service struct {
 	repo   Repository
 	tracer tletracer.Tracer
-	logger tlelogger.Manager
+	logger *tlelogger.Manager
 }
 
 // NewService creates a new instance of service
 // service is where we define all the business logic.
-func NewService(logger tlelogger.Manager, tracer tletracer.Tracer, repo Repository) Service {
+func NewService(logger *tlelogger.Manager, tracer tletracer.Tracer, repo Repository) Service {
 	return &service{
 		repo:   repo,
 		tracer: tracer,
