@@ -18,7 +18,7 @@ func TestClientIntegration(t *testing.T) {
 	id := 1
 
 	serviceDiscoverator := makeServiceDiscovery(logger)
-	c := client.NewServiceClientWithDefaults(logger, serviceDiscoverator, serviceName)
+	c := client.NewServiceClientWithDefaults(&logger, serviceDiscoverator, serviceName)
 
 	response := c.GetUserByID(ctx, id)
 

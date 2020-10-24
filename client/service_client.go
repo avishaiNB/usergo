@@ -14,7 +14,7 @@ import (
 
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
-	Logger      tlelogger.Manager
+	Logger      *tlelogger.Manager
 	SD          *tlesd.ServiceDiscovery
 	ServiceName string
 	CB          tlecb.CircuitBreaker
@@ -24,8 +24,7 @@ type ServiceClient struct {
 }
 
 // NewServiceClientWithDefaults with defaults
-func NewServiceClientWithDefaults(logger tlelogger.Manager, sd *tlesd.ServiceDiscovery, serviceName string) ServiceClient {
-
+func NewServiceClientWithDefaults(logger *tlelogger.Manager, sd *tlesd.ServiceDiscovery, serviceName string) ServiceClient {
 	return NewServiceClient(
 		logger,
 		sd,
@@ -38,7 +37,7 @@ func NewServiceClientWithDefaults(logger tlelogger.Manager, sd *tlesd.ServiceDis
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger tlelogger.Manager, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger *tlelogger.Manager, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
 		SD:          sd,

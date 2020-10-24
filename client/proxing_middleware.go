@@ -32,7 +32,7 @@ type Proxy struct {
 	router     *mux.Router
 	limiter    tleratelimit.RateLimiter
 	sd         tlesd.ServiceDiscovery
-	logger     tlelogger.Manager
+	logger     *tlelogger.Manager
 }
 
 type userByIDProxyMiddleware struct {
@@ -50,7 +50,7 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger tlelogger.Manager, router *mux.Router) Proxy {
+func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
 	return Proxy{
 		cb:      cb,
 		limiter: limiter,
@@ -64,7 +64,8 @@ func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tle
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddleware {
 	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
 	//consulInstancer := proxy.sd.DNSInstance("user")
-	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger.(kitlog.Logger))
+	logger := *proxy.logger
+	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), logger.(kitlog.Logger))
 	//TODO: refactor. dont like the nil. consider New().With()
 	lb := tleloadbalancer.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
