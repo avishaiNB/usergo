@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	kitLog "github.com/go-kit/kit/log"
 	"github.com/thelotter-enterprise/usergo/core/errors"
 	"github.com/thelotter-enterprise/usergo/core/logger"
 )
@@ -42,7 +43,7 @@ func TestLoggerManagerReturnError(t *testing.T) {
 	if loggerErr == nil {
 		t.Error("loggerManager.Error should return error")
 	}
-	customErrorMsg := "Custom error"
+	customErrorMsg := "Custom error application error"
 	if loggerErr.Error() != customErrorMsg {
 		t.Errorf("loggerManager.Error return %s; wants %s", loggerErr.Error(), customErrorMsg)
 	}
@@ -67,9 +68,7 @@ func TestLoggerReturnNoError(t *testing.T) {
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers...)
-	goKitLogger := logger.NewLogger(loggerManager)
-	log := logger.SetLog(goKitLogger, loggerManager)
-	logErr := log.Logger.Log(params...)
+	logErr := loggerManager.(kitLog.Logger).Log(params...)
 	if logErr != nil {
 		t.Error("log.Logger.Log return unexpected error", logErr)
 	}
@@ -94,9 +93,7 @@ func TestLoggerReturnError(t *testing.T) {
 	loggers = append(loggers, stdlogger)
 	loggers = append(loggers, fileLogger)
 	loggerManager := logger.NewLoggerManager(loggers...)
-	goKitLogger := logger.NewLogger(loggerManager)
-	log := logger.SetLog(goKitLogger, loggerManager)
-	logErr := log.Logger.Log(params...)
+	logErr := loggerManager.(kitLog.Logger).Log(params...)
 	if logErr == nil {
 		t.Error("Expected result from log.Logger.Log cannot ne nil")
 	}
