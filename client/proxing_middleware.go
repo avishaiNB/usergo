@@ -10,13 +10,14 @@ import (
 	"net/url"
 
 	"github.com/go-kit/kit/endpoint"
-	log "github.com/go-kit/kit/log"
+	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/circuitbreaker"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
@@ -31,7 +32,7 @@ type Proxy struct {
 	router     *mux.Router
 	limiter    tleratelimit.RateLimiter
 	sd         tlesd.ServiceDiscovery
-	logger     log.Logger
+	logger     tlelogger.Manager
 }
 
 type userByIDProxyMiddleware struct {
@@ -49,7 +50,7 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger log.Logger, router *mux.Router) Proxy {
+func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger tlelogger.Manager, router *mux.Router) Proxy {
 	return Proxy{
 		cb:      cb,
 		limiter: limiter,
@@ -63,7 +64,7 @@ func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tle
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddleware {
 	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
 	//consulInstancer := proxy.sd.DNSInstance("user")
-	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger)
+	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), proxy.logger.(kitlog.Logger))
 	//TODO: refactor. dont like the nil. consider New().With()
 	lb := tleloadbalancer.NewLoadBalancer(nil, endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)

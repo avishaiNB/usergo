@@ -32,6 +32,14 @@ func Run() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// Setting up the infra services which will be used
+	stdConf := tlelogger.Config{
+		LevelName:  tlelogger.Debug,
+		Env:        "dev",
+		LoggerName: "std",
+	}
+	stdLogger := tlelogger.NewStdOutLogger(stdConf)
+	logManager := tlelogger.NewLoggerManager(stdLogger)
+
 	logger := tlelogger.NewLog()
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 	inst := tlemetrics.NewPrometheusInstrumentor(serviceName)
@@ -48,7 +56,7 @@ func Run() {
 
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
-	rabbitmq := tlerabbitmq.NewRabbitMQ(logger, conn)
+	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
 	amqpEndpoints := NewUserAMQPConsumerEndpoints(logger, tracer, service, &rabbitmq)
 	amqpServer := tlerabbitmq.NewServer(logger, tracer, &rabbitmq, serviceName)
 

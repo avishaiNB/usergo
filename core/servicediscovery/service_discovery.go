@@ -1,6 +1,7 @@
 package servicediscovery
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -8,6 +9,7 @@ import (
 	"github.com/go-kit/kit/sd/dnssrv"
 	consulapi "github.com/hashicorp/consul/api"
 	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
@@ -20,13 +22,13 @@ const (
 type ServiceDiscovery struct {
 	ConsulAPI      *consulapi.Client
 	ConsulClient   *consul.Client
-	Logger         log.Logger
+	Logger         tlelogger.Manager
 	ConsulIntances map[string]*consul.Instancer
 	DNSIntances    map[string]*dnssrv.Instancer
 }
 
 // NewServiceDiscovery creates a new instance of the service directory
-func NewServiceDiscovery(logger log.Logger) ServiceDiscovery {
+func NewServiceDiscovery(logger tlelogger.Manager) ServiceDiscovery {
 	sd := ServiceDiscovery{
 		Logger:         logger,
 		ConsulIntances: map[string]*consul.Instancer{},
@@ -48,7 +50,10 @@ func (sd *ServiceDiscovery) WithConsul(consulAddress string) error {
 		client := consul.NewClient(sd.ConsulAPI)
 		sd.ConsulClient = &client
 	} else {
-		sd.Logger.Log("method", "NewServiceDiscovery", "input", consulAddress, "err", err)
+		sd.Logger.Error(
+			context.Background(),
+			"TBD message",
+			"method", "NewServiceDiscovery", "input", consulAddress, "err", err)
 	}
 
 	return err
@@ -70,7 +75,7 @@ func (sd *ServiceDiscovery) ConsulInstance(serviceName string, tags []string, on
 		return instancer, err
 	}
 
-	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger, serviceName, tags, onlyHealthy)
+	instancer = consul.NewInstancer(*sd.ConsulClient, sd.Logger.(log.Logger), serviceName, tags, onlyHealthy)
 	sd.ConsulIntances[key] = instancer
 
 	return instancer, nil
@@ -86,7 +91,7 @@ func (sd *ServiceDiscovery) DNSInstance(serviceName string) *dnssrv.Instancer {
 		return instancer
 	}
 
-	instancer = dnssrv.NewInstancer(serviceName, DefaultTTL, sd.Logger)
+	instancer = dnssrv.NewInstancer(serviceName, DefaultTTL, sd.Logger.(log.Logger))
 	sd.DNSIntances[key] = instancer
 
 	return instancer

@@ -6,6 +6,7 @@ import (
 
 	gokitZap "github.com/go-kit/kit/log/zap"
 	tlecontext "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -38,11 +39,12 @@ func NewStdOutLogger(loggerConfig Config) Logger {
 	config.EncoderConfig.LevelKey = "level"
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.CallerKey = "caller"
+	processName := utils.ProcessName()
 
 	config.InitialFields = make(map[string]interface{})
 	config.InitialFields["env"] = loggerConfig.Env
 	config.InitialFields["loggerName"] = loggerConfig.LoggerName
-	config.InitialFields["processName"] = loggerConfig.ProcessName
+	config.InitialFields["processName"] = processName
 	logger, err := config.Build()
 	if err != nil {
 		fmt.Println("Cannot init stdout logger", err)

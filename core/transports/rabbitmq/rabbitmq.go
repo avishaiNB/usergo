@@ -17,14 +17,14 @@ type RabbitMQ struct {
 	// AMQPConnection to rabbitMQ. Will be nil until Connect will be called
 	AMQPConnection *amqp.Connection
 
-	Log tlelogger.Log
+	LogManager *tlelogger.Manager
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
-func NewRabbitMQ(log tlelogger.Log, connection ConnectionMeta) RabbitMQ {
+func NewRabbitMQ(logManager *tlelogger.Manager, connection ConnectionMeta) RabbitMQ {
 	return RabbitMQ{
 		ConnectionMeta: connection,
-		Log:            log,
+		LogManager:     logManager,
 	}
 }
 

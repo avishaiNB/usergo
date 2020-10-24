@@ -12,10 +12,9 @@ func TestInregrationLogger(t *testing.T) {
 	isIntegrationTest = false
 	if isIntegrationTest {
 		loggerConfig := logger.Config{
-			Env:         "Dev",
-			LevelName:   logger.Info,
-			LoggerName:  "FileLogger",
-			ProcessName: "UserGo",
+			Env:        "Dev",
+			LevelName:  logger.Info,
+			LoggerName: "FileLogger",
 		}
 		ctx := context.Background()
 		logUser := LogUser{
@@ -28,7 +27,7 @@ func TestInregrationLogger(t *testing.T) {
 		stdlogger := logger.NewStdOutLogger(loggerConfig)
 		loggers = append(loggers, stdlogger)
 		loggers = append(loggers, fileLogger)
-		loggerManager := logger.NewLoggerManager(loggers)
+		loggerManager := logger.NewLoggerManager(loggers...)
 		loggerManager.Info(ctx, "Text", "Log user", logUser)
 		loggerManager.Info(ctx, "Text", "Log user1", logUser)
 	}
