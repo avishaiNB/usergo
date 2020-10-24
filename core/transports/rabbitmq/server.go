@@ -28,6 +28,8 @@ func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Rabbi
 
 // Run will ...
 func (server *Server) Run(endpoints *[]Consumer) error {
+	return nil
+
 	if endpoints == nil {
 		return errors.New("no endpoints")
 	}
