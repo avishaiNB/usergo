@@ -7,6 +7,7 @@ import (
 
 	httpkit "github.com/go-kit/kit/transport/http"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/context/manager"
 	"github.com/thelotter-enterprise/usergo/core/context/transport"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
@@ -28,13 +29,13 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 
 	correlationID := headerCorrelationID
 	if headerCorrelationID == "" {
-		correlationID = tlectx.NewCorrelation()
+		correlationID = manager.NewCorrelation()
 	}
 
 	var duration time.Duration
 	var deadline time.Time
 	if headerDuration == "" || headerDeadline == "" {
-		t := tlectx.NewTimeoutCalculator()
+		t := manager.NewCalculator()
 		duration, deadline = t.NewTimeout()
 	} else {
 		conv := utils.NewConvertor()
@@ -42,7 +43,7 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
 	}
 
-	m := tlectx.NewCtxManager()
+	m := manager.NewCtxManager()
 	ctx = m.SetCorrealtion(ctx, correlationID)
 	ctx = m.SetTimeout(ctx, duration, deadline)
 	ctx, _ = context.WithDeadline(ctx, deadline)
@@ -52,7 +53,7 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 
 func (httptrans httptransport) Write(ctx context.Context, req interface{}) context.Context {
 	r := req.(*http.Request)
-	m := tlectx.NewCtxManager()
+	m := manager.NewCtxManager()
 	conv := utils.NewConvertor()
 
 	newCtx, _ := transport.CreateOutboundContext(ctx)

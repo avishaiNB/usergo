@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/context/manager"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
@@ -78,7 +78,7 @@ func (rabbit *RabbitMQ) PublishOneWay(ctx context.Context, request interface{}, 
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
 func (rabbit *RabbitMQ) oneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
-	m := tlectx.NewCtxManager()
+	m := manager.NewCtxManager()
 	corrid := m.GetCorrelation(ctx)
 	duration, _ := m.GetTimeout(ctx)
 	var channel amqptransport.Channel

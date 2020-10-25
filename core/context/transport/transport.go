@@ -3,7 +3,7 @@ package transport
 import (
 	"context"
 
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/context/manager"
 )
 
 // Transport ...
@@ -17,8 +17,8 @@ type Transport interface {
 
 // CreateOutboundContext ...
 func CreateOutboundContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	m := tlectx.NewCtxManager()
-	calc := tlectx.NewTimeoutCalculator()
+	m := manager.NewCtxManager()
+	calc := manager.NewCalculator()
 	var cancel context.CancelFunc
 
 	_, newCtx := m.GetOrCreateCorrelationFromContext(ctx, true)

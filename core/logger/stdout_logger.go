@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	gokitZap "github.com/go-kit/kit/log/zap"
-	tlecontext "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/context/manager"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -55,7 +55,7 @@ func NewStdOutLogger(loggerConfig Config) Logger {
 }
 
 func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
-	m := tlecontext.NewCtxManager()
+	m := manager.NewCtxManager()
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
 	correlationID := m.GetCorrelation(ctx)
 	duration, timeout := m.GetTimeout(ctx)

@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	tlecontext "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/context/manager"
 )
 
 // Response is a base response which will be returned from the transport
@@ -40,7 +40,7 @@ type Request struct {
 
 // Wrap will wrap the data in a Request while copying the transport correlation id, duration and timeout
 func (r Request) Wrap(ctx context.Context, data interface{}) Request {
-	m := tlecontext.NewCtxManager()
+	m := manager.NewCtxManager()
 	corrid := m.GetOrCreateCorrelation(ctx)
 
 	req := Request{
