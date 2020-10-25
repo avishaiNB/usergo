@@ -55,7 +55,7 @@ func NewStdOutLogger(loggerConfig Config) Logger {
 }
 
 func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
-	m := tlecontext.NewManager()
+	m := tlecontext.NewCtxManager()
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
 	correlationID := m.GetCorrelation(ctx)
 	duration, timeout := m.GetTimeout(ctx)

@@ -22,7 +22,7 @@ type MessageMarshaller interface {
 func (m *MessageMarshall) Marshal(ctx context.Context, exchangeName string, data interface{}) (amqp.Publishing, error) {
 	urn := fmt.Sprintf("urn:message:%v", exchangeName)
 	msg := Message{Data: data, URN: urn}
-	mgr := tlectx.NewManager()
+	mgr := tlectx.NewCtxManager()
 	msg.CorrelationID = mgr.GetOrCreateCorrelation(ctx)
 	wrapper := MessageWrapper{MessageType: []string{urn}, Message: &msg}
 	body, err := json.Marshal(wrapper)

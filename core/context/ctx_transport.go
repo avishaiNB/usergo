@@ -9,8 +9,8 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
-// Transport ...
-type Transport interface {
+// CtxTransport ...
+type CtxTransport interface {
 
 	// ReadFromHTTPRequest will read from the http request the correlation ID, duration and deadline
 	// Then it will create a context that reflects the extracted information
@@ -27,13 +27,13 @@ type Transport interface {
 
 type trans struct{}
 
-// NewTransport ...
-func NewTransport() Transport {
+// NewCtxTransport ...
+func NewCtxTransport() CtxTransport {
 	return trans{}
 }
 
 func (t trans) CreateOutboundContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	m := NewManager()
+	m := NewCtxManager()
 	calc := NewTimeoutCalculator()
 	var cancel context.CancelFunc
 
@@ -67,7 +67,7 @@ func (t trans) ReadFromHTTPRequest(ctx context.Context, r *http.Request) context
 		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
 	}
 
-	m := NewManager()
+	m := NewCtxManager()
 	ctx = m.SetCorrealtion(ctx, correlationID)
 	ctx = m.SetTimeout(ctx, duration, deadline)
 	ctx, _ = context.WithDeadline(ctx, deadline)
@@ -76,7 +76,7 @@ func (t trans) ReadFromHTTPRequest(ctx context.Context, r *http.Request) context
 }
 
 func (t trans) WriteToHTTPRequest(ctx context.Context, r *http.Request) context.Context {
-	m := NewManager()
+	m := NewCtxManager()
 	conv := utils.NewConvertor()
 
 	newCtx, _ := t.CreateOutboundContext(ctx)
@@ -95,12 +95,12 @@ func (t trans) WriteToHTTPRequest(ctx context.Context, r *http.Request) context.
 
 // WriteBefore ...
 func WriteBefore() httpkit.ClientOption {
-	t := NewTransport()
+	t := NewCtxTransport()
 	return httpkit.ClientBefore(t.WriteToHTTPRequest)
 }
 
 // ReadBefore ...
 func ReadBefore() httpkit.ServerOption {
-	t := NewTransport()
+	t := NewCtxTransport()
 	return httpkit.ServerBefore(t.ReadFromHTTPRequest)
 }

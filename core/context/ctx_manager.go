@@ -31,13 +31,14 @@ const (
 	DeadlineKey DeadlineHeaderKey = "deadline"
 )
 
-// Manager ..
-type Manager interface {
+// CtxManager ..
+type CtxManager interface {
 	Root() context.Context
 	CreateOutboundContext(context.Context) (context.Context, context.CancelFunc)
 
 	SetTimeout(context.Context, time.Duration, time.Time) context.Context
 	GetTimeout(context.Context) (time.Duration, time.Time)
+	GetOrCreateTimeout(context.Context) (time.Duration, time.Time, context.Context)
 	GetOrCreateTimeoutFromContext(context.Context, bool) (time.Duration, time.Time, context.Context)
 
 	SetCorrealtion(context.Context, string) context.Context
@@ -48,8 +49,8 @@ type Manager interface {
 	GetOrCreateCorrelationFromContext(context.Context, bool) (string, context.Context)
 }
 
-// NewManager ...
-func NewManager() Manager {
+// NewCtxManager ...
+func NewCtxManager() CtxManager {
 	return ctxmgr{}
 }
 
@@ -169,6 +170,13 @@ func (c ctxmgr) GetOrCreateCorrelation(ctx context.Context) string {
 	}
 
 	return corrid
+}
+
+// GetOrCreateTimeoutFromContext will get duration and deadline from the context
+// if it does not exist it will create new duration and deadline
+// If appendToContext, it will update the input context with the duration and deadline
+func (c ctxmgr) GetOrCreateTimeout(ctx context.Context) (time.Duration, time.Time, context.Context) {
+	return c.GetOrCreateTimeoutFromContext(ctx, false)
 }
 
 // GetOrCreateTimeoutFromContext will get duration and deadline from the context

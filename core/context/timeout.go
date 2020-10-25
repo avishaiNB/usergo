@@ -28,7 +28,7 @@ func NewTimeoutCalculator() TimeoutCalculator {
 
 // NextTimeoutFromContext calculate the next deadline and duration from context which should be used by downstream services
 func (c timeoutcalc) NextTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
-	m := NewManager()
+	m := NewCtxManager()
 	duration, deadline := m.GetTimeout(ctx)
 	return c.NextTimeout(duration, deadline)
 }

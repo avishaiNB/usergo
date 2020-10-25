@@ -59,7 +59,7 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel Level, messag
 	if fileLogger.isLogFileExpired() {
 		fileLogger.reload()
 	}
-	m := tlecontext.NewManager()
+	m := tlecontext.NewCtxManager()
 	logLevel := fileLogger.castLoggerLevel(loggerLevel)
 	correlationID := m.GetCorrelation(ctx)
 	duration, timeout := m.GetTimeout(ctx)
