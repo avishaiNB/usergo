@@ -1,25 +1,20 @@
 package rabbitmq
 
 import (
-	"errors"
-
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
 // Server ...
 type Server struct {
-	Name     string
-	Address  string
 	Logger   *tlelogger.Manager
 	Tracer   tletracer.Tracer
 	RabbitMQ *RabbitMQ
 }
 
 // NewServer ...
-func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *RabbitMQ, serviceName string) Server {
+func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *RabbitMQ) Server {
 	return Server{
-		Name:     serviceName,
 		RabbitMQ: rabbit,
 		Logger:   logger,
 		Tracer:   tracer,
@@ -27,17 +22,13 @@ func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Rabbi
 }
 
 // Run will ...
-func (server *Server) Run(endpoints *[]Consumer) error {
-	return nil
-
-	if endpoints == nil {
-		return errors.New("no endpoints")
-	}
+func (server *Server) Run(consumers *[]Consumer) error {
+	defer server.RabbitMQ.CloseConnection()
 
 	server.RabbitMQ.OpenConnection()
 	//consumers := make(map[string]chan, 1)
 
-	for _, endpoint := range *endpoints {
+	for _, endpoint := range *consumers {
 		_, err := server.RabbitMQ.Consume(&endpoint)
 
 		if err == nil {

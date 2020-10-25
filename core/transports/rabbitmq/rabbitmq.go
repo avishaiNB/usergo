@@ -59,7 +59,7 @@ func (rabbit *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error
 
 	c, err := consumer.Channel.Consume(
 		consumer.QueueName,
-		consumer.Consumer,
+		consumer.ConsumerName,
 		consumer.AutoAck,
 		consumer.Exclusive,
 		consumer.NoLocal,

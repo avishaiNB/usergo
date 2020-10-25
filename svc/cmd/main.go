@@ -39,29 +39,26 @@ func main() {
 	errs := make(chan error, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// Setting up the infra services which will be used
-	stdConf := tlelogger.Config{
-		LevelName:  logLevel,
-		Env:        env,
-		LoggerName: "std",
-	}
+	// infra services
+	stdConf := tlelogger.Config{LevelName: logLevel, Env: env, LoggerName: "std"}
 	stdLogger := tlelogger.NewStdOutLogger(stdConf)
 	logManager := tlelogger.NewLoggerManager(stdLogger)
-
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
-	inst := tlemetrics.NewPrometheusInstrumentor(serviceName)
+	promMetricsInst := tlemetrics.NewPrometheusInstrumentor(serviceName)
 
 	// implementation
 	repo := tleimpl.NewRepository()
 	service := tleimpl.NewService(&logManager, tracer, repo)
 
 	// middlewares
-	service = svcmw.NewLoggingMiddleware(&logManager)(service)             // Hook up the logging middleware
-	service = svcmw.NewInstrumentingMiddleware(&logManager, inst)(service) // Hook up the inst middleware
+	service = svcmw.NewLoggingMiddleware(&logManager)(service)                        // Hook up the logging middleware
+	service = svcmw.NewInstrumentingMiddleware(&logManager, promMetricsInst)(service) // Hook up the inst middleware
+
+	// making all types of endpoints
+	endpoints := svctrans.MakeEndpoints(service)
 
 	// http
-	httpEndpoints := svctrans.MakeEndpoints(service)
-	handler := svchttp.NewService(httpEndpoints, make([]kithttp.ServerOption, 0), logManager.(log.Logger))
+	handler := svchttp.NewService(endpoints, make([]kithttp.ServerOption, 0), logManager.(log.Logger))
 	go func() {
 		server := &http.Server{
 			Addr:    hostAddress,
@@ -74,11 +71,11 @@ func main() {
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
-	amqpEndpoints := svcamqp.NewUserAMQPConsumerEndpoints(&logManager, tracer, service, &rabbitmq)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq, serviceName)
+	consumers := svcamqp.NewService(endpoints, &logManager)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq)
 
 	go func() {
-		err := amqpServer.Run(amqpEndpoints.Consumers)
+		err := amqpServer.Run(&consumers)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)
