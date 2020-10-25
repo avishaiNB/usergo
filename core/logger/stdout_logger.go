@@ -57,7 +57,7 @@ func NewStdOutLogger(loggerConfig Config) Logger {
 func (stdoutLogger stdoutLogger) Log(ctx context.Context, loggerLevel Level, message string, params ...interface{}) error {
 	m := tlecontext.NewManager()
 	logLevel := stdoutLogger.castLoggerLevel(loggerLevel)
-	correlationID := m.GetCorrelationID(ctx)
+	correlationID := m.GetCorrelation(ctx)
 	duration, timeout := m.GetTimeout(ctx)
 	gokitLogger := gokitZap.NewZapSugarLogger(stdoutLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)

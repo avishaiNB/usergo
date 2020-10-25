@@ -42,9 +42,9 @@ type Manager interface {
 
 	SetCorrealtion(context.Context, string) context.Context
 	SetRootCorrealtion(context.Context, string) context.Context
-	GetCorrelationID(context.Context) string
-	GetRootCorrelationID(context.Context) string
-	GetOrCreateCorrelationID(context.Context) string
+	GetCorrelation(context.Context) string
+	GetRootCorrelation(context.Context) string
+	GetOrCreateCorrelation(context.Context) string
 	GetOrCreateCorrelationFromContext(context.Context, bool) (string, context.Context)
 }
 
@@ -124,12 +124,12 @@ func (c ctxmgr) GetTimeout(ctx context.Context) (time.Duration, time.Time) {
 // GetCorrelationID will return the correlation ID from the context
 // if it cannot find it it will try to get the root correlation ID
 // If it cannot find it, it will return nil
-func (c ctxmgr) GetCorrelationID(ctx context.Context) string {
+func (c ctxmgr) GetCorrelation(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDKey)
 	var corrid string
 
 	if val == nil {
-		val = c.GetRootCorrelationID(ctx)
+		val = c.GetRootCorrelation(ctx)
 	}
 
 	if val != nil {
@@ -141,7 +141,7 @@ func (c ctxmgr) GetCorrelationID(ctx context.Context) string {
 
 // GetRootCorrelationID will return the correlation ID from the context
 // If it cannot find it, it will return nil
-func (c ctxmgr) GetRootCorrelationID(ctx context.Context) string {
+func (c ctxmgr) GetRootCorrelation(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDRootKey)
 
 	var corrid string
@@ -155,12 +155,12 @@ func (c ctxmgr) GetRootCorrelationID(ctx context.Context) string {
 // GetOrCreateCorrelationID will get the correlation ID from the context
 // If it cannot find, it will try to use the root correlation ID
 // If it does not exist, it will create a new correlation ID
-func (c ctxmgr) GetOrCreateCorrelationID(ctx context.Context) string {
+func (c ctxmgr) GetOrCreateCorrelation(ctx context.Context) string {
 	val := ctx.Value(CorrelationIDKey)
 	var corrid string
 
 	if val == nil {
-		val = c.GetRootCorrelationID(ctx)
+		val = c.GetRootCorrelation(ctx)
 		if val == nil {
 			corrid = newCorrelation()
 		}
@@ -193,7 +193,7 @@ func (c ctxmgr) GetOrCreateTimeoutFromContext(ctx context.Context, appendToConte
 // if it does not exist it will create new correlation ID
 // If appendToContext, it will update the input context with the correlation ID
 func (c ctxmgr) GetOrCreateCorrelationFromContext(ctx context.Context, appendToContext bool) (string, context.Context) {
-	corrid := c.GetCorrelationID(ctx)
+	corrid := c.GetCorrelation(ctx)
 
 	if corrid == "" {
 		corrid = newCorrelation()

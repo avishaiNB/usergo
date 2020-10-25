@@ -23,7 +23,7 @@ func (m *MessageMarshall) Marshal(ctx context.Context, exchangeName string, data
 	urn := fmt.Sprintf("urn:message:%v", exchangeName)
 	msg := Message{Data: data, URN: urn}
 	mgr := tlectx.NewManager()
-	msg.CorrelationID = mgr.GetOrCreateCorrelationID(ctx)
+	msg.CorrelationID = mgr.GetOrCreateCorrelation(ctx)
 	wrapper := MessageWrapper{MessageType: []string{urn}, Message: &msg}
 	body, err := json.Marshal(wrapper)
 

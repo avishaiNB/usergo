@@ -80,7 +80,7 @@ func (t trans) WriteToHTTPRequest(ctx context.Context, r *http.Request) context.
 	conv := utils.NewConvertor()
 
 	newCtx, _ := t.CreateOutboundContext(ctx)
-	corrid := m.GetCorrelationID(newCtx)
+	corrid := m.GetCorrelation(newCtx)
 	duration, deadline := m.GetTimeout(newCtx)
 
 	durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))

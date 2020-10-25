@@ -79,7 +79,7 @@ func (rabbit *RabbitMQ) PublishOneWay(ctx context.Context, request interface{}, 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
 func (rabbit *RabbitMQ) oneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
 	m := tlectx.NewManager()
-	corrid := m.GetCorrelationID(ctx)
+	corrid := m.GetCorrelation(ctx)
 	duration, _ := m.GetTimeout(ctx)
 	var channel amqptransport.Channel
 	var queue *amqp.Queue
