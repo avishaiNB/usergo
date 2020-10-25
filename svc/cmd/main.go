@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
@@ -32,6 +32,7 @@ func main() {
 		rabbitMQPort     int                       = 32672
 		env              string                    = "dev"
 		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
+		ctx              context.Context           = context.Background()
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -58,12 +59,13 @@ func main() {
 	endpoints := svctrans.MakeEndpoints(service)
 
 	// http
-	handler := svchttp.NewService(endpoints, make([]kithttp.ServerOption, 0), logManager.(log.Logger))
+	handler := svchttp.NewService(ctx, endpoints, make([]kithttp.ServerOption, 0), logManager)
 	go func() {
 		server := &http.Server{
 			Addr:    hostAddress,
 			Handler: handler,
 		}
+		logManager.Info(ctx, fmt.Sprintf("listening for http calls on %s", hostAddress))
 		errs <- server.ListenAndServe()
 		done <- true
 	}()
@@ -75,7 +77,8 @@ func main() {
 	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq)
 
 	go func() {
-		err := amqpServer.Run(&consumers)
+		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))
+		err := amqpServer.Run(ctx, &consumers)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

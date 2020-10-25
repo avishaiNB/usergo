@@ -52,7 +52,7 @@ func (rabbit *RabbitMQ) CloseConnection() error {
 
 // Consume ...
 func (rabbit *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
-	rabbit.setConsumerChannel(consumer)
+	rabbit.newConsumerChannel(consumer)
 	consumer.newExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
 	consumer.newQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
 	consumer.bind(consumer.QueueName, consumer.ExchangeName)
@@ -118,8 +118,11 @@ func (rabbit *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.
 	return f
 }
 
-// setConsumerChannel ...
-func (rabbit *RabbitMQ) setConsumerChannel(consumer *Consumer) {
+func (rabbit *RabbitMQ) newConsumerChannel(consumer *Consumer) {
+	if consumer.Channel != nil {
+		return
+	}
+
 	var err error
 	var ch *amqp.Channel
 	ch, err = rabbit.NewChannel()

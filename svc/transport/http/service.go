@@ -7,11 +7,12 @@ import (
 	"os"
 
 	"github.com/go-kit/kit/endpoint"
-	kitlogger "github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
@@ -20,11 +21,11 @@ import (
 )
 
 // NewService ..
-func NewService(svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger kitlogger.Logger) http.Handler {
+func NewService(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Manager) http.Handler {
 	// set-up router and initialize http endpoints
 	var (
 		router        = mux.NewRouter()
-		errorLogger   = kithttp.ServerErrorLogger(logger)
+		errorLogger   = kithttp.ServerErrorLogger(logger.(log.Logger))
 		errorEncoder  = kithttp.ServerErrorEncoder(encodeErrorResponse)
 		contextReader = tlectx.ReadBefore()
 	)
@@ -39,12 +40,7 @@ func NewService(svcEndpoints transport.Endpoints, options []kithttp.ServerOption
 
 	router.Methods("GET").Path(shared.UserByIDServerRoute).Handler(getUserByIDHandler)
 
-	// logger.Info(ctx, fmt.Sprintf("adding route http://%s/%s", server.Address, endpoint.Path))
-
 	return handlers.LoggingHandler(os.Stdout, router)
-
-	//logger.Info(ctx, fmt.Sprintf("http server started and listen on %s", server.Address))
-	//http.ListenAndServe(server.Address, server.Handler)
 }
 
 func makeUserByIDEndpoint(service svc.Service) endpoint.Endpoint {
