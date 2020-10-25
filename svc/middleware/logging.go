@@ -5,6 +5,7 @@ import (
 	"time"
 
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
+	tleutils "github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc"
 )
@@ -22,20 +23,23 @@ type loggingMiddleware struct {
 }
 
 func (mw loggingMiddleware) GetUserByID(ctx context.Context, userID int) (shared.User, error) {
+	dt := tleutils.DateTime{}
+
 	defer func(begin time.Time) {
 		logger := *mw.logger
-		_ = logger.Info(
+		logger.Info(
 			ctx,
 			"GetUserByID",
 			"method", "GetUserByID",
 			"took", time.Since(begin),
 		)
-	}(time.Now())
+	}(dt.Now())
 
 	return mw.next.GetUserByID(ctx, userID)
 }
 
 func (mw loggingMiddleware) ConsumeLoginCommand(ctx context.Context, userID int) error {
+	dt := tleutils.DateTime{}
 	defer func(begin time.Time) {
 		logger := *mw.logger
 		_ = logger.Info(
@@ -44,7 +48,7 @@ func (mw loggingMiddleware) ConsumeLoginCommand(ctx context.Context, userID int)
 			"method", "ConsumeLoginCommand",
 			"took", time.Since(begin),
 		)
-	}(time.Now())
+	}(dt.Now())
 
 	return mw.next.ConsumeLoginCommand(ctx, userID)
 }

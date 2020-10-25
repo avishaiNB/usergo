@@ -12,13 +12,15 @@ import (
 
 // Endpoints holds all Go kit endpoints for the Order service.
 type Endpoints struct {
-	UserByIDEndpoint endpoint.Endpoint
+	UserByIDEndpoint             endpoint.Endpoint
+	UserLoggedInConsumerEndpoint endpoint.Endpoint
 }
 
 // MakeEndpoints initializes all Go kit endpoints for the Order service.
 func MakeEndpoints(s svc.Service) Endpoints {
 	return Endpoints{
-		UserByIDEndpoint: makeUserByIDEndpoint(s),
+		UserByIDEndpoint:             makeUserByIDEndpoint(s),
+		UserLoggedInConsumerEndpoint: makeUserLoggedInConsumerEndpoint(s),
 	}
 }
 
@@ -36,5 +38,12 @@ func makeUserByIDEndpoint(service svc.Service) endpoint.Endpoint {
 
 		user, err := service.GetUserByID(ctx, data.ID)
 		return shared.NewUserResponse(user), err
+	}
+}
+
+func makeUserLoggedInConsumerEndpoint(service svc.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		err := service.ConsumeLoginCommand(ctx, 1)
+		return true, err
 	}
 }

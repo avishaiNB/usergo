@@ -5,11 +5,19 @@ import (
 
 	"github.com/streadway/amqp"
 
+	kitlogger "github.com/go-kit/kit/log"
+	kithttp "github.com/go-kit/kit/transport/http"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/svc"
+	"github.com/thelotter-enterprise/usergo/svc/transport"
 )
+
+// NewService ...
+func NewService(svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger kitlogger.Logger) {
+
+}
 
 // UserAMQPConsumerEndpoints ...
 type UserAMQPConsumerEndpoints struct {
