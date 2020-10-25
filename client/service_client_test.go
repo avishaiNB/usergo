@@ -37,7 +37,6 @@ func makeLogger() log.Logger {
 
 func makeServiceDiscovery(logger tlelogger.Manager) *tlesd.ServiceDiscovery {
 	consulAddress := "localhost:8500"
-	sd := tlesd.NewServiceDiscovery(logger)
-	sd.WithConsul(consulAddress)
+	sd := tlesd.NewConsulServiceDiscovery(logger, consulAddress)
 	return &sd
 }

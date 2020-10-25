@@ -31,7 +31,8 @@ type Proxy struct {
 	limmitermw endpoint.Middleware
 	router     *mux.Router
 	limiter    tleratelimit.RateLimiterConfig
-	sd         tlesd.ServiceDiscovery
+	consul     *tlesd.ConsulServiceDiscovery
+	dns        *tlesd.DNSServiceDiscovery
 	logger     *tlelogger.Manager
 }
 
@@ -50,19 +51,20 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(limiter tleratelimit.RateLimiterConfig, sd *tlesd.ServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
+func NewProxy(limiter tleratelimit.RateLimiterConfig, consul *tlesd.ConsulServiceDiscovery, dns *tlesd.DNSServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
 	return Proxy{
 		limiter: limiter,
 		router:  router,
-		sd:      *sd,
+		consul:  consul,
+		dns:     dns,
 		logger:  logger,
 	}
 }
 
 // UserByIDMiddleware ..
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddleware {
-	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
-	//consulInstancer := proxy.sd.DNSInstance("user")
+	consulInstancer, _ := proxy.consul.ConsulInstance(ctx, "user", []string{}, true)
+	//dnsInstancer := proxy.dns.DNSInstance("user")
 	logger := *proxy.logger
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), logger.(kitlog.Logger))
 	//TODO: refactor. dont like the nil. consider New().With()
