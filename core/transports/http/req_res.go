@@ -41,10 +41,11 @@ type Request struct {
 
 // Wrap will wrap the data in a Request while copying the transport correlation id, duration and timeout
 func (r Request) Wrap(ctx context.Context, data interface{}) Request {
+	m := tlecontext.NewManager()
 	conv := utils.NewConvertor()
-	corrid, _ := tlecontext.GetOrCreateCorrelationFromContext(ctx, false)
+	corrid, _ := m.GetOrCreateCorrelationFromContext(ctx, false)
 	// TODO: we need to calculate the deadline and timeout for the callee, so there should be some substruction
-	duration, deadline, _ := tlecontext.GetOrCreateTimeoutFromContext(ctx, false)
+	duration, deadline, _ := m.GetOrCreateTimeoutFromContext(ctx, false)
 	req := Request{
 		Data:                  data,
 		DeadlineUnix:          conv.FromTimeToUnix(deadline),

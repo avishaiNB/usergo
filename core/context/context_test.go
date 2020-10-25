@@ -14,8 +14,8 @@ func TestNewFrom(t *testing.T) {
 	duration := time.Second * 10
 	deadline := time.Now().UTC().Add(duration)
 
-	ctx = tlectx.SetCorrealtionIntoContext(ctx, correlationID)
-	ctx = tlectx.SetTimeoutIntoContext(ctx, duration, deadline)
+	ctx = tlectx.SetCorrealtion(ctx, correlationID)
+	ctx = tlectx.SetTimeout(ctx, duration, deadline)
 	ctx, cancel = context.WithDeadline(ctx, deadline)
 
 	if c.Cancel == nil {
@@ -46,15 +46,15 @@ func TestSetContext(t *testing.T) {
 	duration := time.Second * 10
 	deadline := time.Now().UTC().Add(duration)
 
-	ctx = tlectx.SetCorrealtionIntoContext(ctx, corrid)
+	ctx = tlectx.SetCorrealtion(ctx, corrid)
 	corridResult := tlectx.GetCorrelationID(ctx)
 
 	if corrid != corridResult {
 		t.Error("correlation does not match")
 	}
 
-	ctx = tlectx.SetTimeoutIntoContext(ctx, duration, deadline)
-	durationResult, deadlineResult := tlectx.GetTimeoutFromContext(ctx)
+	ctx = tlectx.SetTimeout(ctx, duration, deadline)
+	durationResult, deadlineResult := tlectx.GetTimeout(ctx)
 
 	if durationResult != duration {
 		t.Error("duration does not match")
@@ -84,7 +84,7 @@ func TestGetOrCreateTimeout_Create(t *testing.T) {
 	ctx := context.Background()
 
 	duration, deadline, ctx := tlectx.GetOrCreateTimeoutFromContext(ctx, true)
-	actualDuration, actualDeadlne := tlectx.GetTimeoutFromContext(ctx)
+	actualDuration, actualDeadlne := tlectx.GetTimeout(ctx)
 
 	if actualDuration != duration {
 		t.Error("duration does not match")

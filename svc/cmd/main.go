@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	kithttp "github.com/go-kit/kit/transport/http"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
@@ -32,7 +33,7 @@ func main() {
 		rabbitMQPort     int                       = 32672
 		env              string                    = "dev"
 		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
-		ctx              context.Context           = context.Background()
+		ctx              context.Context           = tlectx.NewManager().Root()
 	)
 
 	sigs := make(chan os.Signal, 1)

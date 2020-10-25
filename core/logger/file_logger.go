@@ -59,10 +59,10 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel Level, messag
 	if fileLogger.isLogFileExpired() {
 		fileLogger.reload()
 	}
-
+	m := tlecontext.NewManager()
 	logLevel := fileLogger.castLoggerLevel(loggerLevel)
-	correlationID := tlecontext.GetCorrelationID(ctx)
-	duration, timeout := tlecontext.GetTimeoutFromContext(ctx)
+	correlationID := m.GetCorrelationID(ctx)
+	duration, timeout := m.GetTimeout(ctx)
 
 	gokitLogger := gokitZap.NewZapSugarLogger(fileLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)
