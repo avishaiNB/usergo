@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/thelotter-enterprise/usergo/core/cache"
 	tlecache "github.com/thelotter-enterprise/usergo/core/cache"
+	"github.com/thelotter-enterprise/usergo/core/errors"
 )
 
 func Test_Cache(t *testing.T) {
@@ -18,6 +20,7 @@ func Test_Cache(t *testing.T) {
 		expected   interface{}
 		err        error
 	}{
+
 		"Set": {
 			region:     "region1",
 			key:        "key1",
@@ -81,10 +84,11 @@ func Test_Cache(t *testing.T) {
 				}
 				v, err := cache.GetOrCreate(regionName, key, expiration, fn)
 				assert.Equal(t, nil, v)
-				assert.Equal(t, tlecache.ErrTimeOutError, err)
+				expectedErr := errors.New("GetOrCreate error")
+				assert.Equal(t, errors.NewTimeoutError(expectedErr, "Timedout request"), err)
 			},
 			expected: nil,
-			err:      tlecache.ErrKeyNotFound,
+			err:      errors.NewNotFoundError(errors.New("Get return error"), "Key key2 not found"),
 		},
 	}
 
@@ -103,5 +107,14 @@ func Test_Cache(t *testing.T) {
 			assert.Equal(t, tc.expected, v)
 			assert.Equal(t, tc.err, err)
 		})
+	}
+}
+
+func TestJitter(t *testing.T) {
+	dur := time.Duration(5)
+	expectedDuration := time.Duration(4)
+	duration := cache.Jitter(dur, 1)
+	if duration != expectedDuration {
+		t.Errorf("Jitter return %d; expect %d ", duration, expectedDuration)
 	}
 }

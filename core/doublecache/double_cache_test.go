@@ -1,12 +1,15 @@
-package doublecache
+package doublecache_test
 
 import (
 	"testing"
 	"time"
 
+	"github.com/thelotter-enterprise/usergo/core/errors"
+
 	"github.com/stretchr/testify/assert"
 
 	cache "github.com/thelotter-enterprise/usergo/core/cache"
+	tledoublecache "github.com/thelotter-enterprise/usergo/core/doublecache"
 )
 
 func Test_DoubleCache(t *testing.T) {
@@ -15,44 +18,47 @@ func Test_DoubleCache(t *testing.T) {
 		key        string
 		expiration time.Duration
 		input      interface{}
-		action     func(t *testing.T, doubleCache *DoubleCache, regionName string, key string, input interface{}, expiration time.Duration)
+		action     func(t *testing.T, doubleCache *tledoublecache.DoubleCache, regionName string, key string, input interface{}, expiration time.Duration)
+		isExpired  bool
 		pValue     interface{}
-		pError     error
+		isPOk      bool
 		bValue     interface{}
-		bError     error
+		isBOk      bool
 	}{
 		"Set": {
 			region:     "1",
 			key:        "1",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 			},
-			pValue: 3,
-			pError: nil,
-			bValue: 3,
-			bError: nil,
+			isExpired: false,
+			pValue:    3,
+			isPOk:     true,
+			bValue:    3,
+			isBOk:     true,
 		},
 		"Set default": {
 			region:     cache.DefaultRegion,
 			key:        "1",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.SetDefault(key, input, expiration)
 			},
-			pValue: 3,
-			pError: nil,
-			bValue: 3,
-			bError: nil,
+			isExpired: false,
+			pValue:    3,
+			isPOk:     true,
+			bValue:    3,
+			isBOk:     true,
 		},
 		"Get from primary": {
 			region:     "1",
 			key:        "1",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				fn := func() (interface{}, error) {
@@ -63,38 +69,40 @@ func Test_DoubleCache(t *testing.T) {
 				assert.Equal(t, input, v)
 				assert.Equal(t, nil, err)
 			},
-			pValue: 3,
-			pError: nil,
-			bValue: 3,
-			bError: nil,
+			isExpired: false,
+			pValue:    3,
+			isPOk:     true,
+			bValue:    3,
+			isBOk:     true,
 		},
 		"Value expire in primary, Get from backup": {
 			region:     "2",
 			key:        "2",
 			expiration: 20 * time.Millisecond,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
-				wait := time.Duration((1 + doubleCache.primary.JitterFactor) * float64(expiration))
+				wait := time.Duration((1 + cache.DefaultJitterFactor) * float64(expiration))
 				time.Sleep(wait + time.Millisecond)
 			},
-			pValue: nil,
-			pError: cache.ErrKeyNotFound,
-			bValue: 3,
-			bError: nil,
+			isExpired: true,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    3,
+			isBOk:     true,
 		},
 		"Value expire in primary, Get from backup and call backend to renew data": {
 			region:     "2",
 			key:        "2",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
-				wait := time.Duration((1 + doubleCache.primary.JitterFactor) * float64(expiration))
+				wait := time.Duration((1 + cache.DefaultJitterFactor) * float64(expiration))
 				time.Sleep(wait + time.Millisecond)
 
 				fn := func() (interface{}, error) {
@@ -105,111 +113,118 @@ func Test_DoubleCache(t *testing.T) {
 				assert.Equal(t, nil, err)
 				time.Sleep(500 * time.Millisecond)
 			},
-			pValue: 4,
-			pError: nil,
-			bValue: 4,
-			bError: nil,
+			isExpired: true,
+			pValue:    4,
+			isPOk:     false,
+			bValue:    4,
+			isBOk:     true,
 		},
 		"Value expire in primary, Get from backup and call backend to renew data with timeout": {
 			region:     "2",
 			key:        "2",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
-				wait := time.Duration((1 + doubleCache.primary.JitterFactor) * float64(expiration))
+				wait := time.Duration((1 + cache.DefaultJitterFactor) * float64(expiration))
 				time.Sleep(wait + time.Millisecond)
 
 				fn := func() (interface{}, error) {
-					time.Sleep(doubleCache.backup.Timeout + 1)
+					time.Sleep(cache.DefaultTimeout + 1)
 					return 4, nil
 				}
 				_, _ = doubleCache.GetOrCreate(region, key, expiration, fn)
 			},
-			pValue: nil,
-			pError: cache.ErrKeyNotFound,
-			bValue: 3,
-			bError: nil,
+			isExpired: true,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    3,
+			isBOk:     true,
 		},
 		"Value missing in both": {
 			region:     "2",
 			key:        "2",
 			expiration: 2 * time.Second,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				fn := func() (interface{}, error) {
-					return 4, nil
+					return 4, errors.New("Cannot find")
 				}
 				v, err := doubleCache.GetOrCreate(region, key, expiration, fn)
-				assert.Equal(t, 4, v)
-				assert.Equal(t, nil, err)
+				assert.Equal(t, nil, v)
+				assert.Equal(t, errors.New("Cannot find"), err)
 			},
-			pValue: 4,
-			pError: nil,
-			bValue: 4,
-			bError: nil,
+			isExpired: true,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    nil,
+			isBOk:     false,
 		},
 		"Value expire in both": {
 			region:     "2",
 			key:        "2",
 			expiration: 20 * time.Millisecond,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait until the item is expire in both backups
 				// Expiration time * (backup factor + jitter factor )
-				wait := time.Duration(float64(expiration) * (doubleCache.BackupExpirationFactor + doubleCache.backup.JitterFactor))
+				wait := time.Duration(float64(expiration) * (doubleCache.BackupExpirationFactor + cache.DefaultJitterFactor))
 				time.Sleep(wait + time.Second)
 			},
-			pValue: nil,
-			pError: cache.ErrKeyNotFound,
-			bValue: nil,
-			bError: cache.ErrKeyNotFound,
+			isExpired: true,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    nil,
+			isBOk:     false,
 		},
 		"Region not found": {
 			region:     "2",
 			key:        "2",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 			},
-			pValue: nil,
-			pError: cache.ErrRegionKeyNotFound,
-			bValue: nil,
-			bError: cache.ErrRegionKeyNotFound,
+			isExpired: false,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    nil,
+			isBOk:     false,
 		},
 		"Item not found": {
 			region:     "2",
 			key:        "2",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, "fake", input, expiration)
 			},
-			pValue: nil,
-			pError: cache.ErrKeyNotFound,
-			bValue: nil,
-			bError: cache.ErrKeyNotFound,
+			isExpired: false,
+			pValue:    nil,
+			isPOk:     false,
+			bValue:    nil,
+			isBOk:     false,
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			config := DefaultConfig()
+			config := tledoublecache.DefaultConfig()
 			config.Timeout = 500 * time.Millisecond
 
-			c := NewDoubleCache(config)
+			c := tledoublecache.NewDoubleCache(config)
 			tc.action(t, c, tc.region, tc.key, tc.input, tc.expiration)
 
-			v, err := c.primary.Get(tc.region, tc.key)
-			assert.Equal(t, tc.pValue, v)
-			assert.Equal(t, tc.pError, err)
-
-			v, err = c.backup.Get(tc.region, tc.key)
-			assert.Equal(t, tc.bValue, v)
-			assert.Equal(t, tc.bError, err)
+			v, ok := c.Get(tc.region, tc.key)
+			if !tc.isExpired {
+				assert.Equal(t, tc.pValue, v)
+				assert.Equal(t, tc.isPOk, ok)
+			} else {
+				assert.Equal(t, tc.bValue, v)
+				assert.Equal(t, tc.isBOk, ok)
+			}
 		})
 	}
 }

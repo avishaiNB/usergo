@@ -1,4 +1,4 @@
-package doublecache
+package doublecache_test
 
 import (
 	"math/rand"
@@ -10,6 +10,7 @@ import (
 	"github.com/pingcap/go-ycsb/pkg/generator"
 
 	cache "github.com/thelotter-enterprise/usergo/core/cache"
+	doublecache "github.com/thelotter-enterprise/usergo/core/doublecache"
 )
 
 const (
@@ -64,8 +65,8 @@ func runDoubleCacheBenchmark(b *testing.B, keys, regions []string, refreshFuncti
 	keyMask := keySize - 1
 	regionMask := regionSize - 1
 
-	config := DefaultConfig()
-	cache := NewDoubleCache(config)
+	config := doublecache.DefaultConfig()
+	cache := doublecache.NewDoubleCache(config)
 
 	if initializeCache {
 		for i := 0; i < keySize; i++ {
