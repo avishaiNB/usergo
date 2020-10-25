@@ -33,7 +33,7 @@ func main() {
 		rabbitMQPort     int                       = 32672
 		env              string                    = "dev"
 		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
-		ctx              context.Context           = manager.NewCtxManager().Root()
+		ctx              context.Context           = manager.Root()
 	)
 
 	sigs := make(chan os.Signal, 1)

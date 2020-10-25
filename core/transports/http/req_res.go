@@ -40,8 +40,7 @@ type Request struct {
 
 // Wrap will wrap the data in a Request while copying the transport correlation id, duration and timeout
 func (r Request) Wrap(ctx context.Context, data interface{}) Request {
-	m := manager.NewCtxManager()
-	corrid := m.GetOrCreateCorrelation(ctx)
+	corrid := manager.GetOrCreateCorrelation(ctx)
 
 	req := Request{
 		Data: data,

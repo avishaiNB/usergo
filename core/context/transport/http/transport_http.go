@@ -35,7 +35,7 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 	var duration time.Duration
 	var deadline time.Time
 	if headerDuration == "" || headerDeadline == "" {
-		t := manager.NewCalculator()
+		t := manager.NewTimeoutCalculator()
 		duration, deadline = t.NewTimeout()
 	} else {
 		conv := utils.NewConvertor()
@@ -43,9 +43,8 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
 	}
 
-	m := manager.NewCtxManager()
-	ctx = m.SetCorrealtion(ctx, correlationID)
-	ctx = m.SetTimeout(ctx, duration, deadline)
+	ctx = manager.SetCorrealtion(ctx, correlationID)
+	ctx = manager.SetTimeout(ctx, duration, deadline)
 	ctx, _ = context.WithDeadline(ctx, deadline)
 
 	return ctx
@@ -53,12 +52,11 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 
 func (httptrans httptransport) Write(ctx context.Context, req interface{}) context.Context {
 	r := req.(*http.Request)
-	m := manager.NewCtxManager()
 	conv := utils.NewConvertor()
 
 	newCtx, _ := transport.CreateOutboundContext(ctx)
-	corrid := m.GetCorrelation(newCtx)
-	duration, deadline := m.GetTimeout(newCtx)
+	corrid := manager.GetCorrelation(newCtx)
+	duration, deadline := manager.GetTimeout(newCtx)
 
 	durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))
 	deadlineHeader := conv.FromInt64ToString(conv.FromTimeToUnix(deadline))

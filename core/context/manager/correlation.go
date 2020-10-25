@@ -4,19 +4,19 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
-// CorrelationID used to create correlation ID
-type CorrelationID interface {
+// Correlation used to create correlation ID
+type Correlation interface {
 	New() string
 }
 
-type correlationid struct{}
+type correlation struct{}
 
 // NewCorrelationID creates a new instance of the correlationID interface
-func NewCorrelationID() CorrelationID {
-	return correlationid{}
+func NewCorrelationID() Correlation {
+	return correlation{}
 }
 
 // NewCorrelation will return a new correlation ID as string
-func (correlationid) New() string {
+func (correlation) New() string {
 	return utils.NewUUID()
 }

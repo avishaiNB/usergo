@@ -12,8 +12,8 @@ const (
 	MaxTimeout time.Duration = time.Second * 15
 )
 
-// Calculator ...
-type Calculator interface {
+// TimeoutCalculator ...
+type TimeoutCalculator interface {
 	NextTimeoutFromContext(context.Context) (time.Duration, time.Time)
 	NextTimeout(time.Duration, time.Time) (time.Duration, time.Time)
 	NewTimeout() (time.Duration, time.Time)
@@ -21,15 +21,14 @@ type Calculator interface {
 
 type timeoutcalc struct{}
 
-// NewCalculator creates a new instance of timeout calculator
-func NewCalculator() Calculator {
+// NewTimeoutCalculator creates a new instance of timeout calculator
+func NewTimeoutCalculator() TimeoutCalculator {
 	return timeoutcalc{}
 }
 
 // NextTimeoutFromContext calculate the next deadline and duration from context which should be used by downstream services
 func (c timeoutcalc) NextTimeoutFromContext(ctx context.Context) (time.Duration, time.Time) {
-	m := NewCtxManager()
-	duration, deadline := m.GetTimeout(ctx)
+	duration, deadline := GetTimeout(ctx)
 	return c.NextTimeout(duration, deadline)
 }
 

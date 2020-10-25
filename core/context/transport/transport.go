@@ -17,14 +17,13 @@ type Transport interface {
 
 // CreateOutboundContext ...
 func CreateOutboundContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	m := manager.NewCtxManager()
-	calc := manager.NewCalculator()
+	calc := manager.NewTimeoutCalculator()
 	var cancel context.CancelFunc
 
-	_, newCtx := m.GetOrCreateCorrelationFromContext(ctx, true)
+	_, newCtx := manager.GetOrCreateCorrelationFromContext(ctx, true)
 	duration, deadline := calc.NextTimeoutFromContext(ctx)
 
-	newCtx = m.SetTimeout(newCtx, duration, deadline)
+	newCtx = manager.SetTimeout(newCtx, duration, deadline)
 	newCtx, cancel = context.WithDeadline(newCtx, deadline)
 
 	return newCtx, cancel
