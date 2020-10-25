@@ -1,11 +1,8 @@
-// Package doublecache cache provides advanced high performance cache services.
-package doublecache
+package cache
 
 import (
 	"sync"
 	"time"
-
-	cache "github.com/thelotter-enterprise/usergo/core/cache"
 )
 
 const (
@@ -18,46 +15,46 @@ type lockKey struct {
 
 // DoubleCache is a cache with 2-layer of cache
 type DoubleCache struct {
-	primary                *cache.Cache
-	backup                 *cache.Cache
+	primary                *Cache
+	backup                 *Cache
 	locks                  map[lockKey]chan bool
 	mu                     sync.RWMutex
 	BackupExpirationFactor float64
 }
 
-// Config is used to configure the double cache
-type Config struct {
+// DoubleCacheConfig is used to configure the double cache
+type DoubleCacheConfig struct {
 	Expiration             time.Duration
 	Timeout                time.Duration
 	JitterFactor           float64
 	BackupExpirationFactor float64
 }
 
-// DefaultConfig returns a default configuration of the double cache
-func DefaultConfig() Config {
-	return Config{
-		Expiration:             cache.DefaultExpiration,
-		Timeout:                cache.DefaultTimeout,
-		JitterFactor:           cache.DefaultJitterFactor,
+// DefaultDoubleCacheConfig returns a default configuration of the double cache
+func DefaultDoubleCacheConfig() DoubleCacheConfig {
+	return DoubleCacheConfig{
+		Expiration:             DefaultExpiration,
+		Timeout:                DefaultTimeout,
+		JitterFactor:           DefaultJitterFactor,
 		BackupExpirationFactor: defaultBackupExpirationFactor,
 	}
 }
 
 // NewDoubleCache create a DoubleCache
-func NewDoubleCache(config Config) *DoubleCache {
+func NewDoubleCache(doubleCacheConfig DoubleCacheConfig) *DoubleCache {
 	return &DoubleCache{
-		primary: cache.NewCache(cache.Config{
-			Expiration:   config.Expiration,
-			Timeout:      config.Timeout,
-			JitterFactor: config.JitterFactor,
+		primary: NewCache(Config{
+			Expiration:   doubleCacheConfig.Expiration,
+			Timeout:      doubleCacheConfig.Timeout,
+			JitterFactor: doubleCacheConfig.JitterFactor,
 		}),
-		backup: cache.NewCache(cache.Config{
-			Expiration:   time.Duration(float64(config.Expiration) * config.BackupExpirationFactor),
-			Timeout:      config.Timeout,
-			JitterFactor: config.JitterFactor,
+		backup: NewCache(Config{
+			Expiration:   time.Duration(float64(doubleCacheConfig.Expiration) * doubleCacheConfig.BackupExpirationFactor),
+			Timeout:      doubleCacheConfig.Timeout,
+			JitterFactor: doubleCacheConfig.JitterFactor,
 		}),
 		locks:                  make(map[lockKey]chan bool),
-		BackupExpirationFactor: config.BackupExpirationFactor,
+		BackupExpirationFactor: doubleCacheConfig.BackupExpirationFactor,
 	}
 }
 
@@ -76,7 +73,7 @@ func (d *DoubleCache) Get(region, key string) (interface{}, bool) {
 
 // GetDefault will get an item from the default region
 func (d *DoubleCache) GetDefault(key string) (interface{}, bool) {
-	return d.Get(cache.DefaultRegion, key)
+	return d.Get(DefaultRegion, key)
 }
 
 // GetOrCreate get an item
@@ -85,7 +82,7 @@ func (d *DoubleCache) GetDefault(key string) (interface{}, bool) {
 func (d *DoubleCache) GetOrCreate(
 	region, key string,
 	expiration time.Duration,
-	refreshFunction cache.RefreshFunction,
+	refreshFunction RefreshFunction,
 ) (interface{}, error) {
 	v, err := d.primary.Get(region, key)
 	if err == nil {
@@ -116,15 +113,15 @@ func (d *DoubleCache) GetOrCreate(
 func (d *DoubleCache) GetOrCreateDefault(
 	key string,
 	expiration time.Duration,
-	refreshFunction cache.RefreshFunction,
+	refreshFunction RefreshFunction,
 ) (interface{}, error) {
-	return d.GetOrCreate(cache.DefaultRegion, key, expiration, refreshFunction)
+	return d.GetOrCreate(DefaultRegion, key, expiration, refreshFunction)
 }
 
 func (d *DoubleCache) refreshData(
 	region, key string,
 	expiration time.Duration,
-	refreshFunction cache.RefreshFunction,
+	refreshFunction RefreshFunction,
 ) (interface{}, error) {
 	v, err := d.primary.GetOrCreate(region, key, expiration, refreshFunction)
 	if err == nil {

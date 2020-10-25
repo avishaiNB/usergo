@@ -1,60 +1,13 @@
-package doublecache_test
+package cache_test
 
 import (
 	"math/rand"
-	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/pingcap/go-ycsb/pkg/generator"
-
 	cache "github.com/thelotter-enterprise/usergo/core/cache"
-	doublecache "github.com/thelotter-enterprise/usergo/core/doublecache"
 )
-
-const (
-	workloadSize     = 1 << 20
-	regionSize       = 1 << 6
-	miniumExpiration = 300
-	maxExpiration    = 1000
-)
-
-// zipfKeyList will return an array of string following a Zipf distribution
-// where some values are more offen than other like we would have in real life
-func zipfKeyList(size int) []string {
-	// To ensure repetition of keys in the array,
-	// we are generating keys in the range from 0 to size/3.
-	maxKey := int64(size) / 3
-
-	// scrambled zipfian to ensure same keys are not together
-	z := generator.NewScrambledZipfian(0, maxKey, generator.ZipfianConstant)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	keys := make([]string, size)
-	for i := 0; i < size; i++ {
-		keys[i] = strconv.Itoa(int(z.Next(r)))
-	}
-
-	return keys
-}
-
-// oneEntryKeyList will return a unique list of keys
-func oneEntryKeyList(size int) []string {
-	v := rand.Int() % (size / 3)
-	s := strconv.Itoa(v)
-
-	keys := make([]string, size)
-	for i := 0; i < size; i++ {
-		keys[i] = s
-	}
-
-	return keys
-}
-
-func randomExpiration() time.Duration {
-	return time.Duration(rand.Intn(maxExpiration-miniumExpiration+1)+miniumExpiration) * time.Microsecond
-}
 
 func runDoubleCacheBenchmark(b *testing.B, keys, regions []string, refreshFunction cache.RefreshFunction, percentageWrites uint64, initializeCache bool) {
 	b.ReportAllocs()
@@ -65,8 +18,8 @@ func runDoubleCacheBenchmark(b *testing.B, keys, regions []string, refreshFuncti
 	keyMask := keySize - 1
 	regionMask := regionSize - 1
 
-	config := doublecache.DefaultConfig()
-	cache := doublecache.NewDoubleCache(config)
+	config := cache.DefaultDoubleCacheConfig()
+	cache := cache.NewDoubleCache(config)
 
 	if initializeCache {
 		for i := 0; i < keySize; i++ {
