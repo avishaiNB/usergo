@@ -1,4 +1,4 @@
-package doublecache_test
+package cache_test
 
 import (
 	"testing"
@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	cache "github.com/thelotter-enterprise/usergo/core/cache"
-	tledoublecache "github.com/thelotter-enterprise/usergo/core/doublecache"
 )
 
 func Test_DoubleCache(t *testing.T) {
@@ -18,7 +17,7 @@ func Test_DoubleCache(t *testing.T) {
 		key        string
 		expiration time.Duration
 		input      interface{}
-		action     func(t *testing.T, doubleCache *tledoublecache.DoubleCache, regionName string, key string, input interface{}, expiration time.Duration)
+		action     func(t *testing.T, doubleCache *cache.DoubleCache, regionName string, key string, input interface{}, expiration time.Duration)
 		isExpired  bool
 		pValue     interface{}
 		isPOk      bool
@@ -30,7 +29,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "1",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 			},
 			isExpired: false,
@@ -44,7 +43,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "1",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.SetDefault(key, input, expiration)
 			},
 			isExpired: false,
@@ -58,7 +57,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "1",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				fn := func() (interface{}, error) {
@@ -80,7 +79,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 20 * time.Millisecond,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
@@ -98,7 +97,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
@@ -124,7 +123,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 1 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait for expiration * (1 + jitter)
@@ -147,7 +146,7 @@ func Test_DoubleCache(t *testing.T) {
 			region:     "2",
 			key:        "2",
 			expiration: 2 * time.Second,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				fn := func() (interface{}, error) {
 					return 4, errors.New("Cannot find")
 				}
@@ -166,7 +165,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 20 * time.Millisecond,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, key, input, expiration)
 
 				// We wait until the item is expire in both backups
@@ -185,7 +184,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 			},
 			isExpired: false,
 			pValue:    nil,
@@ -198,7 +197,7 @@ func Test_DoubleCache(t *testing.T) {
 			key:        "2",
 			expiration: 2 * time.Second,
 			input:      3,
-			action: func(t *testing.T, doubleCache *tledoublecache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
+			action: func(t *testing.T, doubleCache *cache.DoubleCache, region, key string, input interface{}, expiration time.Duration) {
 				doubleCache.Set(region, "fake", input, expiration)
 			},
 			isExpired: false,
@@ -211,10 +210,10 @@ func Test_DoubleCache(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			config := tledoublecache.DefaultConfig()
+			config := cache.DefaultDoubleCacheConfig()
 			config.Timeout = 500 * time.Millisecond
 
-			c := tledoublecache.NewDoubleCache(config)
+			c := cache.NewDoubleCache(config)
 			tc.action(t, c, tc.region, tc.key, tc.input, tc.expiration)
 
 			v, ok := c.Get(tc.region, tc.key)
