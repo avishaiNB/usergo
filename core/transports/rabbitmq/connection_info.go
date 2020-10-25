@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-// ConnectionMeta ...
-type ConnectionMeta struct {
+// ConnectionInfo ...
+type ConnectionInfo struct {
 	// URL like amqp://guest:guest@localhost:5672/
 	URL string
 
@@ -25,10 +25,10 @@ type ConnectionMeta struct {
 	Host string
 }
 
-// NewConnectionMeta ...
-func NewConnectionMeta(host string, port int, username string, password string, vhost string) ConnectionMeta {
+// NewConnectionInfo ...
+func NewConnectionInfo(host string, port int, username string, password string, vhost string) ConnectionInfo {
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost)
-	return ConnectionMeta{
+	return ConnectionInfo{
 		URL:         url,
 		Host:        host,
 		VirtualHost: vhost,

@@ -1,23 +1,26 @@
-package svc
+package middleware
 
 import (
 	"context"
 
 	metrics "github.com/go-kit/kit/metrics"
+	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	"github.com/thelotter-enterprise/usergo/shared"
+	"github.com/thelotter-enterprise/usergo/svc"
 )
 
 // NewInstrumentingMiddleware ..
-func NewInstrumentingMiddleware(inst tlemetrics.PrometheusInstrumentor) ServiceMiddleware {
+func NewInstrumentingMiddleware(logger *tlelogger.Manager, inst tlemetrics.PrometheusInstrumentor) ServiceMiddleware {
 	counter := inst.AddPromCounter("user", "getuserbyid", tlemetrics.RequestCount, []string{"method", "error"})
 	requestLatency := inst.AddPromSummary("user", "getuserbyid", tlemetrics.LatencyInMili, []string{"method", "error"})
 
-	return func(next Service) Service {
+	return func(next svc.Service) svc.Service {
 		mw := instrumentingMiddleware{
 			next:           next,
 			requestCount:   counter,
 			requestLatency: requestLatency,
+			logger:         logger,
 		}
 		return mw
 	}
@@ -26,7 +29,8 @@ func NewInstrumentingMiddleware(inst tlemetrics.PrometheusInstrumentor) ServiceM
 type instrumentingMiddleware struct {
 	requestCount   metrics.Counter
 	requestLatency metrics.Histogram
-	next           Service
+	next           svc.Service
+	logger         *tlelogger.Manager
 }
 
 func (mw instrumentingMiddleware) GetUserByID(ctx context.Context, userID int) (shared.User, error) {

@@ -6,14 +6,14 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 )
 
-func TestConnectionMetaURL(t *testing.T) {
+func TestConnectionInfoURL(t *testing.T) {
 	username := "user"
 	pwd := "pwd"
 	host := "localhost"
 	vhost := "thelotter"
 	port := 5672
 
-	connectionMeta := rabbitmq.NewConnectionMeta(host, port, username, pwd, vhost)
+	connectionMeta := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
 
 	want := "amqp://user:pwd@localhost:5672/thelotter"
 	is := connectionMeta.URL

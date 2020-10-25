@@ -12,7 +12,7 @@ import (
 
 // RabbitMQ contains data required to make a connection to the rabbitMQ instance
 type RabbitMQ struct {
-	ConnectionMeta ConnectionMeta
+	ConnectionMeta ConnectionInfo
 
 	// AMQPConnection to rabbitMQ. Will be nil until Connect will be called
 	AMQPConnection *amqp.Connection
@@ -21,7 +21,7 @@ type RabbitMQ struct {
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
-func NewRabbitMQ(logManager *tlelogger.Manager, connection ConnectionMeta) RabbitMQ {
+func NewRabbitMQ(logManager *tlelogger.Manager, connection ConnectionInfo) RabbitMQ {
 	return RabbitMQ{
 		ConnectionMeta: connection,
 		LogManager:     logManager,
@@ -52,14 +52,14 @@ func (rabbit *RabbitMQ) CloseConnection() error {
 
 // Consume ...
 func (rabbit *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
-	rabbit.setConsumerChannel(consumer)
+	rabbit.newConsumerChannel(consumer)
 	consumer.newExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
 	consumer.newQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
 	consumer.bind(consumer.QueueName, consumer.ExchangeName)
 
 	c, err := consumer.Channel.Consume(
 		consumer.QueueName,
-		consumer.Consumer,
+		consumer.ConsumerName,
 		consumer.AutoAck,
 		consumer.Exclusive,
 		consumer.NoLocal,
@@ -118,8 +118,11 @@ func (rabbit *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.
 	return f
 }
 
-// setConsumerChannel ...
-func (rabbit *RabbitMQ) setConsumerChannel(consumer *Consumer) {
+func (rabbit *RabbitMQ) newConsumerChannel(consumer *Consumer) {
+	if consumer.Channel != nil {
+		return
+	}
+
 	var err error
 	var ch *amqp.Channel
 	ch, err = rabbit.NewChannel()

@@ -27,7 +27,7 @@ func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
 	logManager := tlelogger.NewNopManager()
-	conn := rabbitmq.NewConnectionMeta(host, port, username, pwd, vhost)
+	conn := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
 	rabbit := rabbitmq.NewRabbitMQ(&logManager, conn)
 
 	rabbit.OpenConnection()

@@ -9,7 +9,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Consumer ...Consumer
+// Consumer ...
 type Consumer struct {
 	Sub                *amqpkit.Subscriber
 	Channel            *amqp.Channel
@@ -19,7 +19,7 @@ type Consumer struct {
 	ExchangeDurable    bool
 	ExchangeAutoDelete bool
 	ExchangeName       string
-	Consumer           string
+	ConsumerName       string
 	AutoAck            bool
 	Exclusive          bool
 	NoLocal            bool
@@ -29,18 +29,20 @@ type Consumer struct {
 
 // NewConsumer will create a new rabbitMQ consumer
 func NewConsumer(
-	name string,
+	consumerName string,
 	exchangeName string,
 	queueName string,
 	endpoint endpoint.Endpoint,
-	dec amqptransport.DecodeRequestFunc) Consumer {
+	dec amqptransport.DecodeRequestFunc,
+	enc amqptransport.EncodeResponseFunc,
+	options ...amqptransport.SubscriberOption) Consumer {
 
-	sub := newSubscriber(endpoint, exchangeName, dec)
+	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
 	consumer := Consumer{
 		Sub:                sub,
 		QueueName:          queueName,
 		ExchangeName:       exchangeName,
-		Consumer:           name,
+		ConsumerName:       consumerName,
 		Args:               nil,
 		Exclusive:          true,
 		AutoAck:            true,
@@ -56,20 +58,26 @@ func NewConsumer(
 }
 
 // NewSubscriber ...
-func newSubscriber(endpoint endpoint.Endpoint, exchangeName string, dec amqptransport.DecodeRequestFunc) *amqptransport.Subscriber {
-	sub := amqptransport.NewSubscriber(
-		endpoint,
-		dec,
-		amqptransport.EncodeJSONResponse,
-		amqptransport.SubscriberResponsePublisher(amqptransport.NopResponsePublisher),
-		amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder),
+func newSubscriber(
+	endpoint endpoint.Endpoint,
+	exchangeName string,
+	dec amqptransport.DecodeRequestFunc,
+	enc amqptransport.EncodeResponseFunc,
+	options ...amqptransport.SubscriberOption) *amqptransport.Subscriber {
+
+	ops := make([]amqpkit.SubscriberOption, 0)
+	ops = append(ops, options...)
+	ops = append(ops, amqptransport.SubscriberResponsePublisher(amqptransport.NopResponsePublisher))
+	ops = append(ops, amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder))
+	ops = append(
+		ops,
 		amqptransport.SubscriberBefore(
 			amqptransport.SetPublishExchange(exchangeName),
 			readMessageIntoContext(),
-			//amqptransport.SetPublishKey(key),
 			amqptransport.SetPublishDeliveryMode(2),
-		),
-	)
+		))
+
+	sub := amqptransport.NewSubscriber(endpoint, dec, enc, ops...)
 
 	return sub
 }
