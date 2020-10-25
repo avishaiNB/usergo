@@ -63,7 +63,7 @@ type ctxmgr struct {
 // When we need to call external service, we need to create a new context with deadlines, durtion and correlation ID
 func (c ctxmgr) Root() context.Context {
 	ctx := context.Background()
-	corrid := newCorrelation()
+	corrid := NewCorrelation()
 	ctx = c.SetRootCorrealtion(ctx, corrid)
 
 	return ctx
@@ -163,7 +163,7 @@ func (c ctxmgr) GetOrCreateCorrelation(ctx context.Context) string {
 	if val == nil {
 		val = c.GetRootCorrelation(ctx)
 		if val == nil {
-			corrid = newCorrelation()
+			corrid = NewCorrelation()
 		}
 	} else {
 		corrid = val.(string)
@@ -204,7 +204,7 @@ func (c ctxmgr) GetOrCreateCorrelationFromContext(ctx context.Context, appendToC
 	corrid := c.GetCorrelation(ctx)
 
 	if corrid == "" {
-		corrid = newCorrelation()
+		corrid = NewCorrelation()
 		if appendToContext {
 			ctx = c.SetCorrealtion(ctx, corrid)
 		}
@@ -213,7 +213,8 @@ func (c ctxmgr) GetOrCreateCorrelationFromContext(ctx context.Context, appendToC
 	return corrid, ctx
 }
 
-func newCorrelation() string {
+// NewCorrelation ...
+func NewCorrelation() string {
 	c := NewCorrelationID()
 	return c.New()
 }
