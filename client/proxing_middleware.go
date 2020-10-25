@@ -18,6 +18,7 @@ import (
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
+	tlelimiter "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
@@ -27,10 +28,9 @@ import (
 
 // Proxy ...
 type Proxy struct {
-	cb         tlecb.CircuitBreaker
 	limmitermw endpoint.Middleware
 	router     *mux.Router
-	limiter    tleratelimit.RateLimiter
+	limiter    tleratelimit.RateLimiterConfig
 	sd         tlesd.ServiceDiscovery
 	logger     *tlelogger.Manager
 }
@@ -50,9 +50,8 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
+func NewProxy(limiter tleratelimit.RateLimiterConfig, sd *tlesd.ServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
 	return Proxy{
-		cb:      cb,
 		limiter: limiter,
 		router:  router,
 		sd:      *sd,
@@ -80,8 +79,8 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 	path := fmt.Sprintf(shared.UserByIDClientRoute, id)
 
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
-		breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
-		limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
+		breakermw := tlecb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
+		limitermw := tlelimiter.NewDefaultErrorLimitterMiddleware()
 
 		tgt, _ := url.Parse(instance) // e.g. parse http://localhost:8080"
 		tgt.Path = path
