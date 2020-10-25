@@ -1,11 +1,11 @@
-package manager_test
+package context_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	tlectx "github.com/thelotter-enterprise/usergo/core/context/manager"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 func TestNewFrom(t *testing.T) {
@@ -14,29 +14,12 @@ func TestNewFrom(t *testing.T) {
 	duration := time.Second * 10
 	deadline := time.Now().UTC().Add(duration)
 
-	ctx = tlectx.SetCorrealtion(ctx, correlationID)
+	ctx = tlectx.SetCorrealtion(ctx, corrid)
 	ctx = tlectx.SetTimeout(ctx, duration, deadline)
-	ctx, cancel = context.WithDeadline(ctx, deadline)
+	ctx, cancel := context.WithDeadline(ctx, deadline)
 
-	if c.Cancel == nil {
+	if cancel == nil {
 		t.Fail()
-	}
-
-	if c.CorrelationID != corrid {
-		t.Error("correlation does not match")
-	}
-
-	if c.Duration != duration {
-		t.Error("duration does not match")
-	}
-
-	if c.Deadline != deadline {
-		t.Error("deadline does not match")
-	}
-
-	actualDeadline, _ := c.Context.Deadline()
-	if actualDeadline != deadline {
-		t.Error("context deadline does not match")
 	}
 }
 
@@ -47,7 +30,7 @@ func TestSetContext(t *testing.T) {
 	deadline := time.Now().UTC().Add(duration)
 
 	ctx = tlectx.SetCorrealtion(ctx, corrid)
-	corridResult := tlectx.GetCorrelationID(ctx)
+	corridResult := tlectx.GetCorrelation(ctx)
 
 	if corrid != corridResult {
 		t.Error("correlation does not match")
@@ -69,7 +52,7 @@ func TestGetOrCreateCorrelationID_Create(t *testing.T) {
 	ctx := context.Background()
 	var corrid string
 	corrid, ctx = tlectx.GetOrCreateCorrelationFromContext(ctx, true)
-	actualCorrelationID := tlectx.GetCorrelationID(ctx)
+	actualCorrelationID := tlectx.GetCorrelation(ctx)
 
 	if actualCorrelationID == "" {
 		t.Error("correlation was not set to context")

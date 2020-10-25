@@ -17,8 +17,9 @@ func TestClientIntegration(t *testing.T) {
 	ctx := context.Background()
 	id := 1
 
-	serviceDiscoverator := makeServiceDiscovery(logger)
-	c := client.NewServiceClientWithDefaults(&logger, serviceDiscoverator, serviceName)
+	consulServiceDiscoverator := makeConsulServiceDiscovery(logger)
+	dnsServiceDiscoverator := makeDNSServiceDiscovery(logger)
+	c := client.NewServiceClientWithDefaults(&logger, consulServiceDiscoverator, dnsServiceDiscoverator, serviceName)
 
 	response := c.GetUserByID(ctx, id)
 
@@ -35,8 +36,13 @@ func makeLogger() log.Logger {
 	return logger
 }
 
-func makeServiceDiscovery(logger tlelogger.Manager) *tlesd.ServiceDiscovery {
+func makeConsulServiceDiscovery(logger tlelogger.Manager) *tlesd.ConsulServiceDiscovery {
 	consulAddress := "localhost:8500"
 	sd := tlesd.NewConsulServiceDiscovery(logger, consulAddress)
+	return &sd
+}
+
+func makeDNSServiceDiscovery(logger tlelogger.Manager) *tlesd.DNSServiceDiscovery {
+	sd := tlesd.NewDNSServiceDiscovery(logger)
 	return &sd
 }

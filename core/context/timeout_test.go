@@ -1,14 +1,14 @@
-package manager_test
+package context_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/thelotter-enterprise/usergo/core/context/timeout"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 func TestNewTimeout(t *testing.T) {
-	calc := timeout.NewTimeoutCalculator()
+	calc := tlectx.NewTimeoutCalculator()
 	duration, _ := calc.NewTimeout()
 
 	if duration != tlectx.MaxTimeout {
@@ -17,7 +17,7 @@ func TestNewTimeout(t *testing.T) {
 }
 
 func TestNextTimeout(t *testing.T) {
-	calc := timeout.NewTimeoutCalculator()
+	calc := tlectx.NewTimeoutCalculator()
 	duration1, deadline1 := calc.NewTimeout()
 	duration2, deadline2 := calc.NextTimeout(duration1, deadline1)
 	wantTimeout := time.Second * 13

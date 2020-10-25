@@ -1,10 +1,8 @@
-package manager
+package context
 
 import (
 	"context"
 	"time"
-
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 // Root is the context which is created for a service / application when it initialized
@@ -35,28 +33,28 @@ func CreateOutboundContext(ctx context.Context) (context.Context, context.Cancel
 
 // SetCorrealtion will set into the given context a corraltion ID value
 func SetCorrealtion(ctx context.Context, correlationID string) context.Context {
-	ctx = context.WithValue(ctx, tlectx.CorrelationIDKey, correlationID)
+	ctx = context.WithValue(ctx, CorrelationIDKey, correlationID)
 	return ctx
 }
 
 // SetRootCorrealtion will set into the given context a corraltion ID value
 func SetRootCorrealtion(ctx context.Context, correlationID string) context.Context {
-	ctx = context.WithValue(ctx, tlectx.CorrelationIDRootKey, correlationID)
+	ctx = context.WithValue(ctx, CorrelationIDRootKey, correlationID)
 	return ctx
 }
 
 // SetTimeout will set in to the given context the duration and the deadline
 func SetTimeout(ctx context.Context, duration time.Duration, deadline time.Time) context.Context {
-	ctx = context.WithValue(ctx, tlectx.DurationKey, duration)
-	ctx = context.WithValue(ctx, tlectx.DeadlineKey, deadline)
+	ctx = context.WithValue(ctx, DurationKey, duration)
+	ctx = context.WithValue(ctx, DeadlineKey, deadline)
 	return ctx
 }
 
 // GetTimeout will return the duration and the deadline from the given context
 // If it cannot find it, it will respectively return nil
 func GetTimeout(ctx context.Context) (time.Duration, time.Time) {
-	durationAsInterface := ctx.Value(tlectx.DurationKey)
-	deadlineAsInterface := ctx.Value(tlectx.DeadlineKey)
+	durationAsInterface := ctx.Value(DurationKey)
+	deadlineAsInterface := ctx.Value(DeadlineKey)
 
 	var duration time.Duration
 	var deadline time.Time
@@ -75,7 +73,7 @@ func GetTimeout(ctx context.Context) (time.Duration, time.Time) {
 // if it cannot find it it will try to get the root correlation ID
 // If it cannot find it, it will return nil
 func GetCorrelation(ctx context.Context) string {
-	val := ctx.Value(tlectx.CorrelationIDKey)
+	val := ctx.Value(CorrelationIDKey)
 	var corrid string
 
 	if val == nil {
@@ -92,7 +90,7 @@ func GetCorrelation(ctx context.Context) string {
 // GetRootCorrelation will return the correlation ID from the context
 // If it cannot find it, it will return nil
 func GetRootCorrelation(ctx context.Context) string {
-	val := ctx.Value(tlectx.CorrelationIDRootKey)
+	val := ctx.Value(CorrelationIDRootKey)
 
 	var corrid string
 	if val != nil {
@@ -106,7 +104,7 @@ func GetRootCorrelation(ctx context.Context) string {
 // If it cannot find, it will try to use the root correlation ID
 // If it does not exist, it will create a new correlation ID
 func GetOrCreateCorrelation(ctx context.Context) string {
-	val := ctx.Value(tlectx.CorrelationIDKey)
+	val := ctx.Value(CorrelationIDKey)
 	var corrid string
 
 	if val == nil {

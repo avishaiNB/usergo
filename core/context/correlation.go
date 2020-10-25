@@ -1,4 +1,4 @@
-package manager
+package context
 
 import (
 	"github.com/thelotter-enterprise/usergo/core/utils"

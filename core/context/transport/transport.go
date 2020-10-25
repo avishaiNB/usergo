@@ -3,7 +3,7 @@ package transport
 import (
 	"context"
 
-	"github.com/thelotter-enterprise/usergo/core/context/manager"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 )
 
 // Transport ...
@@ -17,13 +17,13 @@ type Transport interface {
 
 // CreateOutboundContext ...
 func CreateOutboundContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	calc := manager.NewTimeoutCalculator()
+	calc := tlectx.NewTimeoutCalculator()
 	var cancel context.CancelFunc
 
-	_, newCtx := manager.GetOrCreateCorrelationFromContext(ctx, true)
+	_, newCtx := tlectx.GetOrCreateCorrelationFromContext(ctx, true)
 	duration, deadline := calc.NextTimeoutFromContext(ctx)
 
-	newCtx = manager.SetTimeout(newCtx, duration, deadline)
+	newCtx = tlectx.SetTimeout(newCtx, duration, deadline)
 	newCtx, cancel = context.WithDeadline(newCtx, deadline)
 
 	return newCtx, cancel

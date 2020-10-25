@@ -7,7 +7,7 @@ import (
 	"time"
 
 	gokitZap "github.com/go-kit/kit/log/zap"
-	"github.com/thelotter-enterprise/usergo/core/context/manager"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -60,8 +60,8 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel Level, messag
 		fileLogger.reload()
 	}
 	logLevel := fileLogger.castLoggerLevel(loggerLevel)
-	correlationID := manager.GetCorrelation(ctx)
-	duration, timeout := manager.GetTimeout(ctx)
+	correlationID := tlectx.GetCorrelation(ctx)
+	duration, timeout := tlectx.GetTimeout(ctx)
 
 	gokitLogger := gokitZap.NewZapSugarLogger(fileLogger.zapLogger, logLevel)
 	params = addParamsToLog(CorrelationID, correlationID, params)
