@@ -16,21 +16,6 @@ func Root() context.Context {
 	return ctx
 }
 
-// CreateOutboundContext should use to create the context which will be used for an outbound call to a service
-// It will create a new context with new corraltion ID, duration and deadline
-func CreateOutboundContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	t := NewTimeoutCalculator()
-	var cancel context.CancelFunc
-
-	_, newCtx := GetOrCreateCorrelationFromContext(ctx, true)
-	duration, deadline := t.NextTimeoutFromContext(ctx)
-
-	newCtx = SetTimeout(newCtx, duration, deadline)
-	newCtx, cancel = context.WithDeadline(newCtx, deadline)
-
-	return newCtx, cancel
-}
-
 // SetCorrealtion will set into the given context a corraltion ID value
 func SetCorrealtion(ctx context.Context, correlationID string) context.Context {
 	ctx = context.WithValue(ctx, CorrelationIDKey, correlationID)
