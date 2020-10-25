@@ -61,7 +61,7 @@ func (fileLogger *fileLogger) Log(ctx context.Context, loggerLevel Level, messag
 	}
 
 	logLevel := fileLogger.castLoggerLevel(loggerLevel)
-	correlationID := tlecontext.GetCorrelationFromContext(ctx)
+	correlationID := tlecontext.GetCorrelationID(ctx)
 	duration, timeout := tlecontext.GetTimeoutFromContext(ctx)
 
 	gokitLogger := gokitZap.NewZapSugarLogger(fileLogger.zapLogger, logLevel)

@@ -67,8 +67,7 @@ func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddle
 	//dnsInstancer := proxy.dns.DNSInstance("user")
 	logger := *proxy.logger
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), logger.(kitlog.Logger))
-	//TODO: refactor. dont like the nil. consider New().With()
-	lb := tleloadbalancer.NewLoadBalancer(nil, endpointer)
+	lb := tleloadbalancer.NewDynamicLoadBalancer(endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next Service) Service {
