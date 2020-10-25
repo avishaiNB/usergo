@@ -72,7 +72,7 @@ func main() {
 	}()
 
 	// setting up RabbitMQ server
-	conn := tlerabbitmq.NewConnectionMeta(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
 	amqpEndpoints := svcamqp.NewUserAMQPConsumerEndpoints(&logManager, tracer, service, &rabbitmq)
 	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq, serviceName)

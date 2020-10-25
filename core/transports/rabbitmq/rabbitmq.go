@@ -12,7 +12,7 @@ import (
 
 // RabbitMQ contains data required to make a connection to the rabbitMQ instance
 type RabbitMQ struct {
-	ConnectionMeta ConnectionMeta
+	ConnectionMeta ConnectionInfo
 
 	// AMQPConnection to rabbitMQ. Will be nil until Connect will be called
 	AMQPConnection *amqp.Connection
@@ -21,7 +21,7 @@ type RabbitMQ struct {
 }
 
 // NewRabbitMQ will create a new instance of empty RabbitMQ
-func NewRabbitMQ(logManager *tlelogger.Manager, connection ConnectionMeta) RabbitMQ {
+func NewRabbitMQ(logManager *tlelogger.Manager, connection ConnectionInfo) RabbitMQ {
 	return RabbitMQ{
 		ConnectionMeta: connection,
 		LogManager:     logManager,
