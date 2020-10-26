@@ -19,7 +19,8 @@ func NewHTTPTransport() transport.Transport {
 	return httptransport{}
 }
 
-func (httptrans httptransport) Read(ctx context.Context, req interface{}) context.Context {
+// Read will read from http.Request into context
+func (httptrans httptransport) Read(ctx context.Context, req interface{}) (context.Context, context.CancelFunc) {
 	r := req.(*http.Request)
 
 	headerCorrelationID := r.Header.Get(string(tlectx.CorrelationIDKey))
@@ -44,16 +45,17 @@ func (httptrans httptransport) Read(ctx context.Context, req interface{}) contex
 
 	ctx = tlectx.SetCorrealtion(ctx, correlationID)
 	ctx = tlectx.SetTimeout(ctx, duration, deadline)
-	ctx, _ = context.WithDeadline(ctx, deadline)
+	ctx, cancel := context.WithDeadline(ctx, deadline)
 
-	return ctx
+	return ctx, cancel
 }
 
-func (httptrans httptransport) Write(ctx context.Context, req interface{}) context.Context {
+// Write will write from context into http.Request
+func (httptrans httptransport) Write(ctx context.Context, req interface{}) (context.Context, context.CancelFunc) {
 	r := req.(*http.Request)
 	conv := utils.NewConvertor()
 
-	newCtx, _ := transport.CreateOutboundContext(ctx)
+	newCtx, cancel := transport.CreateTransportContext(ctx)
 	corrid := tlectx.GetCorrelation(newCtx)
 	duration, deadline := tlectx.GetTimeout(newCtx)
 
@@ -64,17 +66,19 @@ func (httptrans httptransport) Write(ctx context.Context, req interface{}) conte
 	r.Header.Add(string(tlectx.DurationKey), durationHeader)
 	r.Header.Add(string(tlectx.DeadlineKey), deadlineHeader)
 
-	return ctx
+	return newCtx, cancel
 }
 
 func write(ctx context.Context, r *http.Request) context.Context {
 	t := NewHTTPTransport()
-	return t.Write(ctx, r)
+	newCtx, _ := t.Write(ctx, r)
+	return newCtx
 }
 
 func read(ctx context.Context, r *http.Request) context.Context {
 	t := NewHTTPTransport()
-	return t.Read(ctx, r)
+	newCtx, _ := t.Read(ctx, r)
+	return newCtx
 }
 
 // WriteBefore ...
