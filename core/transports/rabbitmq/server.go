@@ -26,7 +26,7 @@ func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Rabbi
 }
 
 // Run will start all the listening on all the consumers
-func (server *Server) Run(ctx context.Context, consumers *[]Consumer) error {
+func (server *Server) Run(ctx context.Context, consumers *[]Subscriber) error {
 	// cleaning up
 	defer server.close(ctx, consumers)
 
@@ -42,7 +42,7 @@ func (server *Server) Run(ctx context.Context, consumers *[]Consumer) error {
 	return nil
 }
 
-func (server *Server) consume(ctx context.Context, consumers *[]Consumer) {
+func (server *Server) consume(ctx context.Context, consumers *[]Subscriber) {
 	logger := *server.Logger
 
 	for _, consumer := range *consumers {
@@ -78,7 +78,7 @@ func (server *Server) open(ctx context.Context) error {
 	return nil
 }
 
-func (server *Server) close(ctx context.Context, consumers *[]Consumer) {
+func (server *Server) close(ctx context.Context, consumers *[]Subscriber) {
 	logger := *server.Logger
 	logger.Debug(ctx, "closing rabbitmq connection")
 	server.RabbitMQ.CloseConnection()

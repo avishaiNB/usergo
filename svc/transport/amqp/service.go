@@ -13,10 +13,10 @@ import (
 
 // NewService will create all the rabbitMQ consumers information
 // it will not run them.
-func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager) []tlerabbitmq.Consumer {
-	consumers := make([]tlerabbitmq.Consumer, 0)
+func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager) []tlerabbitmq.Subscriber {
+	consumers := make([]tlerabbitmq.Subscriber, 0)
 
-	loggedInConsumer := tlerabbitmq.NewConsumer(
+	loggedInConsumer := tlerabbitmq.NewSubscriber(
 		"user_login_consumer",
 		"exchange1",
 		"queueq",

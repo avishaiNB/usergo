@@ -51,7 +51,7 @@ func (rabbit *RabbitMQ) CloseConnection() error {
 }
 
 // Consume ...
-func (rabbit *RabbitMQ) Consume(consumer *Consumer) (<-chan amqp.Delivery, error) {
+func (rabbit *RabbitMQ) Consume(consumer *Subscriber) (<-chan amqp.Delivery, error) {
 	rabbit.newConsumerChannel(consumer)
 	consumer.newExchange(consumer.ExchangeName, consumer.ExchangeDurable, consumer.ExchangeAutoDelete)
 	consumer.newQueue(consumer.QueueName, consumer.QueueDurable, consumer.QueueAutoDelete)
@@ -118,7 +118,7 @@ func (rabbit *RabbitMQ) DefaultRequestEncoder(exchangeName string) func(context.
 	return f
 }
 
-func (rabbit *RabbitMQ) newConsumerChannel(consumer *Consumer) {
+func (rabbit *RabbitMQ) newConsumerChannel(consumer *Subscriber) {
 	if consumer.Channel != nil {
 		return
 	}
@@ -133,7 +133,7 @@ func (rabbit *RabbitMQ) newConsumerChannel(consumer *Consumer) {
 }
 
 // newQueue will create a new queue
-func (c *Consumer) newQueue(name string, durable bool, autoDelete bool) (amqp.Queue, error) {
+func (c *Subscriber) newQueue(name string, durable bool, autoDelete bool) (amqp.Queue, error) {
 	var err error
 	var queue amqp.Queue
 
@@ -149,7 +149,7 @@ func (c *Consumer) newQueue(name string, durable bool, autoDelete bool) (amqp.Qu
 	return queue, err
 }
 
-func (c *Consumer) newExchange(name string, durable bool, autoDelete bool) error {
+func (c *Subscriber) newExchange(name string, durable bool, autoDelete bool) error {
 
 	err := c.Channel.ExchangeDeclare(
 		name,       // name
@@ -165,7 +165,7 @@ func (c *Consumer) newExchange(name string, durable bool, autoDelete bool) error
 }
 
 // bind will bind the rabbitMQ queue and exchange together
-func (c *Consumer) bind(queueName string, exchangeName string) error {
+func (c *Subscriber) bind(queueName string, exchangeName string) error {
 	err := c.Channel.QueueBind(
 		queueName,
 		"", // bindingKey
