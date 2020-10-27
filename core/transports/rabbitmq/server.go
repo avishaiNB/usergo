@@ -49,7 +49,7 @@ func (server *Server) consume(ctx context.Context, consumers *[]Subscriber) {
 		messages, err := server.RabbitMQ.Consume(&consumer)
 
 		if err != nil {
-			msg := fmt.Sprintf("failed to consume %s", consumer.ConsumerName)
+			msg := fmt.Sprintf("failed to consume %s", consumer.SubscriberName)
 			logger.Error(ctx, msg)
 		}
 
@@ -87,7 +87,7 @@ func (server *Server) close(ctx context.Context, consumers *[]Subscriber) {
 		if consumer.Channel != nil {
 			err := consumer.Channel.Close()
 			if err != nil {
-				msg := fmt.Sprintf("failed to close channel on consumer %s", consumer.ConsumerName)
+				msg := fmt.Sprintf("failed to close channel on consumer %s", consumer.SubscriberName)
 				logger.Error(ctx, msg)
 			}
 		}

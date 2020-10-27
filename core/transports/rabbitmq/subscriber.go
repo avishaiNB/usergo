@@ -1,25 +1,25 @@
 package rabbitmq
 
 import (
-	"context"
-
 	"github.com/go-kit/kit/endpoint"
 	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
+	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
 )
 
 // Subscriber ...
 type Subscriber struct {
 	Sub                *amqpkit.Subscriber
 	Channel            *amqp.Channel
+	Consumers          map[string]Consumer
 	QueueName          string
 	QueueDurable       bool
 	QueueAutoDelete    bool
 	ExchangeDurable    bool
 	ExchangeAutoDelete bool
 	ExchangeName       string
-	ConsumerName       string
+	SubscriberName     string
 	AutoAck            bool
 	Exclusive          bool
 	NoLocal            bool
@@ -29,20 +29,22 @@ type Subscriber struct {
 
 // NewSubscriber will create a new rabbitMQ consumer
 func NewSubscriber(
-	consumerName string,
+	subscriberName string,
 	exchangeName string,
 	queueName string,
 	endpoint endpoint.Endpoint,
 	dec amqptransport.DecodeRequestFunc,
 	enc amqptransport.EncodeResponseFunc,
-	options ...amqptransport.SubscriberOption) Subscriber {
+	options []amqptransport.SubscriberOption,
+	consumers ...Consumer,
+) Subscriber {
 
-	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
-	consumer := Subscriber{
+	sub := newSubscriber(endpoint, exchangeName, dec, enc, options)
+	s := Subscriber{
 		Sub:                sub,
 		QueueName:          queueName,
 		ExchangeName:       exchangeName,
-		ConsumerName:       consumerName,
+		SubscriberName:     subscriberName,
 		Args:               nil,
 		Exclusive:          true,
 		AutoAck:            true,
@@ -52,9 +54,12 @@ func NewSubscriber(
 		ExchangeDurable:    true,
 		QueueAutoDelete:    false,
 		QueueDurable:       true,
+		Consumers:          make(map[string]Consumer),
 	}
 
-	return consumer
+	s.registerConsumers(consumers...)
+
+	return s
 }
 
 // NewSubscriber ...
@@ -63,7 +68,7 @@ func newSubscriber(
 	exchangeName string,
 	dec amqptransport.DecodeRequestFunc,
 	enc amqptransport.EncodeResponseFunc,
-	options ...amqptransport.SubscriberOption) *amqptransport.Subscriber {
+	options []amqptransport.SubscriberOption) *amqptransport.Subscriber {
 
 	ops := make([]amqpkit.SubscriberOption, 0)
 	ops = append(ops, options...)
@@ -73,7 +78,7 @@ func newSubscriber(
 		ops,
 		amqptransport.SubscriberBefore(
 			amqptransport.SetPublishExchange(exchangeName),
-			readMessageIntoContext(),
+			tlectxamqp.ReadMessageRequestFunc(),
 			amqptransport.SetPublishDeliveryMode(2),
 		))
 
@@ -82,9 +87,11 @@ func newSubscriber(
 	return sub
 }
 
-// TODO: need to read into the context the correaltion ID and etc.
-func readMessageIntoContext() amqptransport.RequestFunc {
-	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
-		return ctx
+// registerConsumer will register the consumers
+// If two consumers register targeting the same exchange, an error will be raised
+func (s *Subscriber) registerConsumers(consumers ...Consumer) error {
+	for _, consumer := range consumers {
+		s.Consumers[consumer.Name()] = consumer
 	}
+	return nil
 }
