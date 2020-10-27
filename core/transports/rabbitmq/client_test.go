@@ -28,7 +28,7 @@ func TestPublisherEndpoint(t *testing.T) {
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
 	logManager := tlelogger.NewNopManager()
 	conn := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
-	rabbit := rabbitmq.NewClient(&logManager, conn)
+	rabbit := rabbitmq.NewClient(&logManager, conn, nil)
 
 	rabbit.OpenConnection()
 	err := rabbit.PublishOneWay(ctx, req, exchangeName, rabbit.DefaultRequestEncoder(exchangeName))
@@ -36,16 +36,4 @@ func TestPublisherEndpoint(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-// Integration Test! Should not run on automated build
-func TestSubscribers(t *testing.T) {
-	ctx := context.Background()
-	logManager := tlelogger.NewNopManager()
-	conn := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
-
-	rabbit := rabbitmq.NewClient(&logManager, conn, nil, nil)
-	defer rabbit.CloseConnection()
-	rabbit.OpenConnection()
-	//err := rabbit.PublishOneWay(ctx, req, exchangeName, rabbit.DefaultRequestEncoder(exchangeName))
 }

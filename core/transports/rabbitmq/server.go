@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/streadway/amqp"
 	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
@@ -56,8 +57,9 @@ func (server *Server) consume(ctx context.Context) {
 		if err == nil {
 			go func() {
 				for d := range messages {
-					logger.Debug(ctx, "Received a message: %s", d.Body)
-					sub.Sub.ServeDelivery(sub.Channel)
+					// logger.Debug(ctx, "Received a message: %s", d.Body)
+					fmt.Printf("Received a message: %s", d.Body)
+					sub.Sub.ServeDelivery(sub.Channel)(&amqp.Delivery{})
 				}
 			}()
 		}
