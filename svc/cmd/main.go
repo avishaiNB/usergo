@@ -73,13 +73,13 @@ func main() {
 
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
-	rabbitmq := tlerabbitmq.NewClient(&logManager, conn, nil, nil)
 	subscribers := svcamqp.NewService(endpoints, &logManager)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq)
+	client := tlerabbitmq.NewClient(&logManager, conn, subscribers)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, client)
 
 	go func() {
 		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))
-		err := amqpServer.Run(ctx, subscribers)
+		err := amqpServer.Run(ctx)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

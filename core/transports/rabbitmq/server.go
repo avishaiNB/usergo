@@ -11,53 +11,53 @@ import (
 
 // Server ...
 type Server struct {
-	Logger   *tlelogger.Manager
-	Tracer   tletracer.Tracer
-	RabbitMQ *Client
+	Logger *tlelogger.Manager
+	Tracer tletracer.Tracer
+	Client *Client
 }
 
 // NewServer ...
 func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Client) Server {
 	return Server{
-		RabbitMQ: rabbit,
-		Logger:   logger,
-		Tracer:   tracer,
+		Client: rabbit,
+		Logger: logger,
+		Tracer: tracer,
 	}
 }
 
 // Run will start all the listening on all the consumers
-func (server *Server) Run(ctx context.Context, consumers *[]Subscriber) error {
+func (server *Server) Run(ctx context.Context) error {
 	// cleaning up
-	defer server.close(ctx, consumers)
+	defer server.close(ctx)
 
 	if err := server.open(ctx); err != nil {
 		return err
 	}
 
 	forever := make(chan bool)
-
-	server.consume(ctx, consumers)
+	server.consume(ctx)
 	<-forever
 
 	return nil
 }
 
-func (server *Server) consume(ctx context.Context, consumers *[]Subscriber) {
+func (server *Server) consume(ctx context.Context) {
 	logger := *server.Logger
 
-	for _, consumer := range *consumers {
-		messages, err := server.RabbitMQ.Consume(&consumer)
+	for _, sub := range *server.Client.Subscribers {
+		ch, err := server.Client.NewChannel()
+		messages, err := sub.Consume(ch)
 
 		if err != nil {
-			msg := fmt.Sprintf("failed to consume %s", consumer.SubscriberName)
+			msg := fmt.Sprintf("failed to consume %s", sub.SubscriberName)
 			logger.Error(ctx, msg)
 		}
 
 		if err == nil {
 			go func() {
 				for d := range messages {
-					// TODO: how to consume the messages?
 					logger.Debug(ctx, "Received a message: %s", d.Body)
+					sub.Sub.ServeDelivery(sub.Channel)
 				}
 			}()
 		}
@@ -68,7 +68,7 @@ func (server *Server) open(ctx context.Context) error {
 	logger := *server.Logger
 
 	logger.Debug(ctx, "opening rabbitmq connection")
-	_, err := server.RabbitMQ.OpenConnection()
+	_, err := server.Client.OpenConnection()
 
 	if err != nil {
 		msg := "failed to open rabbitmq connection"
@@ -78,16 +78,16 @@ func (server *Server) open(ctx context.Context) error {
 	return nil
 }
 
-func (server *Server) close(ctx context.Context, consumers *[]Subscriber) {
+func (server *Server) close(ctx context.Context) {
 	logger := *server.Logger
 	logger.Debug(ctx, "closing rabbitmq connection")
-	server.RabbitMQ.CloseConnection()
+	server.Client.CloseConnection()
 
-	for _, consumer := range *consumers {
-		if consumer.Channel != nil {
-			err := consumer.Channel.Close()
+	for _, sub := range *server.Client.Subscribers {
+		if sub.Channel != nil {
+			err := sub.Channel.Close()
 			if err != nil {
-				msg := fmt.Sprintf("failed to close channel on consumer %s", consumer.SubscriberName)
+				msg := fmt.Sprintf("failed to close channel on consumer %s", sub.SubscriberName)
 				logger.Error(ctx, msg)
 			}
 		}

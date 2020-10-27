@@ -7,6 +7,7 @@ import (
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
@@ -24,21 +25,16 @@ type Client struct {
 
 	LogManager *tlelogger.Manager
 
-	// PrivateSubscriber will listening to queue like xxx-uuid
-	PrivateSubscriber *Subscriber
-
-	// CommandSubscriber will be listening to queue like xxx-command
-	CommandSubscriber *Subscriber
+	Subscribers *[]Subscriber
 }
 
 // NewClient will create a new instance of empty RabbitMQ
-func NewClient(logManager *tlelogger.Manager, connection ConnectionInfo, commandSubscriber *Subscriber, privateSubscriber *Subscriber) Client {
-	return Client{
-		ConnInfo:          connection,
-		LogManager:        logManager,
-		IsConnected:       false,
-		PrivateSubscriber: privateSubscriber,
-		CommandSubscriber: commandSubscriber,
+func NewClient(logManager *tlelogger.Manager, connection ConnectionInfo, subscribers *[]Subscriber) *Client {
+	return &Client{
+		ConnInfo:    connection,
+		LogManager:  logManager,
+		IsConnected: false,
+		Subscribers: subscribers,
 	}
 }
 
@@ -63,19 +59,6 @@ func (rabbit *Client) CloseConnection() error {
 		err = rabbit.AMQPConnection.Close()
 	}
 	return err
-}
-
-// Consume ...
-func (rabbit *Client) Consume(sub *Subscriber) (<-chan amqp.Delivery, error) {
-	rabbit.newSubscriberChannel(sub)
-
-	sub.QosTopology(sub.Channel)
-	sub.BuildQueueTopology(sub.Channel, sub.QueueName)
-	sub.BuildExchangeTopology(sub.Channel, sub.ExchangeName)
-	sub.BindQueueTopology(sub.Channel, sub.QueueName, sub.ExchangeName)
-	c, err := sub.ConsumeTopology(sub.Channel, sub.QueueName)
-
-	return c, err
 }
 
 // PublishOneWay will 'send and forget' a message to the given exchange
@@ -139,4 +122,17 @@ func (rabbit *Client) newSubscriberChannel(sub *Subscriber) {
 	if err == nil {
 		sub.Channel = ch
 	}
+}
+
+// NewChannel will create a new rabbitMQ channel
+func (rabbit *Client) NewChannel() (*amqp.Channel, error) {
+	var err error
+	var ch *amqp.Channel
+	if rabbit.AMQPConnection == nil {
+		err = errors.NewApplicationErrorf("Connect to rabbit before tring to get a channel")
+	} else {
+		ch, err = rabbit.AMQPConnection.Channel()
+	}
+
+	return ch, err
 }

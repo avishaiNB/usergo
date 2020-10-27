@@ -15,7 +15,6 @@ import (
 type Subscriber struct {
 	Sub                   *amqpkit.Subscriber
 	Channel               *amqp.Channel
-	Consumers             map[string]Consumer
 	ExchangeName          string
 	QueueName             string
 	SubscriberName        string
@@ -35,27 +34,23 @@ func NewPrivateSubscriber(
 	endpoint endpoint.Endpoint,
 	dec amqptransport.DecodeRequestFunc,
 	enc amqptransport.EncodeResponseFunc,
-	options []amqptransport.SubscriberOption,
-	consumers ...Consumer,
+	options ...amqptransport.SubscriberOption,
 ) Subscriber {
 
 	queueName = fmt.Sprintf("%s-private-%s", queueName, utils.NewUUID())
 	topology := NewTopology()
-	sub := newSubscriber(endpoint, exchangeName, dec, enc, options)
+	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
 	s := Subscriber{
 		Sub:                   sub,
 		QueueName:             queueName,
 		ExchangeName:          exchangeName,
 		SubscriberName:        subscriberName,
-		Consumers:             make(map[string]Consumer),
 		BuildQueueTopology:    topology.BuildNonDurableQueue,
 		BuildExchangeTopology: topology.BuildNonDurableExchange,
 		BindQueueTopology:     topology.QueueBind,
 		ConsumeTopology:       topology.Consume,
 		QosTopology:           topology.Qos,
 	}
-
-	s.registerConsumers(consumers...)
 
 	return s
 }
@@ -68,27 +63,23 @@ func NewCommandSubscriber(
 	endpoint endpoint.Endpoint,
 	dec amqptransport.DecodeRequestFunc,
 	enc amqptransport.EncodeResponseFunc,
-	options []amqptransport.SubscriberOption,
-	consumers ...Consumer,
+	options ...amqptransport.SubscriberOption,
 ) Subscriber {
 
 	queueName = queueName + "-command"
 	topology := NewTopology()
-	sub := newSubscriber(endpoint, exchangeName, dec, enc, options)
+	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
 	s := Subscriber{
 		Sub:                   sub,
 		QueueName:             queueName,
 		ExchangeName:          exchangeName,
 		SubscriberName:        subscriberName,
-		Consumers:             make(map[string]Consumer),
 		BuildQueueTopology:    topology.BuildDurableQueue,
 		BuildExchangeTopology: topology.BuildDurableExchange,
 		BindQueueTopology:     topology.QueueBind,
 		ConsumeTopology:       topology.Consume,
 		QosTopology:           topology.Qos,
 	}
-
-	s.registerConsumers(consumers...)
 
 	return s
 }
@@ -99,7 +90,7 @@ func newSubscriber(
 	exchangeName string,
 	dec amqptransport.DecodeRequestFunc,
 	enc amqptransport.EncodeResponseFunc,
-	options []amqptransport.SubscriberOption) *amqptransport.Subscriber {
+	options ...amqptransport.SubscriberOption) *amqptransport.Subscriber {
 
 	ops := make([]amqpkit.SubscriberOption, 0)
 	ops = append(ops, options...)
@@ -118,11 +109,14 @@ func newSubscriber(
 	return sub
 }
 
-// registerConsumer will register the consumers
-// If two consumers register targeting the same exchange, an error will be raised
-func (s *Subscriber) registerConsumers(consumers ...Consumer) error {
-	for _, consumer := range consumers {
-		s.Consumers[consumer.Name()] = consumer
-	}
-	return nil
+// Consume ...
+func (sub *Subscriber) Consume(ch *amqp.Channel) (<-chan amqp.Delivery, error) {
+	sub.Channel = ch
+	sub.QosTopology(sub.Channel)
+	sub.BuildQueueTopology(sub.Channel, sub.QueueName)
+	sub.BuildExchangeTopology(sub.Channel, sub.ExchangeName)
+	sub.BindQueueTopology(sub.Channel, sub.QueueName, sub.ExchangeName)
+	c, err := sub.ConsumeTopology(sub.Channel, sub.QueueName)
+
+	return c, err
 }

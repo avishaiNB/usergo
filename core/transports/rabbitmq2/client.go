@@ -29,7 +29,7 @@ type client struct {
 // NewClient initializes RabbitMQ publisher and subscriber.
 // Example of connection string: 'amqp://guest:guest@tle-rabbitmq-headless:5672/thelotter'
 func NewClient(serviceName string, connectionInfo ConnectionInfo) (Client, error) {
-	config := NewConfig(connectionInfo)
+	config := NewConfig(connectionInfo.URL)
 
 	commandSubscriber, err := newCommandSubscriber(config, serviceName)
 	if err != nil {
