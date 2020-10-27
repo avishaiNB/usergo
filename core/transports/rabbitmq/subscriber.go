@@ -23,6 +23,7 @@ type Subscriber struct {
 	BuildExchangeTopology func(*amqp.Channel, string) error
 	BindQueueTopology     func(*amqp.Channel, string, string) error
 	ConsumeTopology       func(*amqp.Channel, string) (<-chan amqp.Delivery, error)
+	QosTopology           func(ch *amqp.Channel) error
 	// TBD: IsConnected
 }
 
@@ -51,6 +52,7 @@ func NewPrivateSubscriber(
 		BuildExchangeTopology: topology.BuildNonDurableExchange,
 		BindQueueTopology:     topology.QueueBind,
 		ConsumeTopology:       topology.Consume,
+		QosTopology:           topology.Qos,
 	}
 
 	s.registerConsumers(consumers...)
@@ -83,6 +85,7 @@ func NewCommandSubscriber(
 		BuildExchangeTopology: topology.BuildDurableExchange,
 		BindQueueTopology:     topology.QueueBind,
 		ConsumeTopology:       topology.Consume,
+		QosTopology:           topology.Qos,
 	}
 
 	s.registerConsumers(consumers...)

@@ -68,8 +68,10 @@ func (rabbit *Client) CloseConnection() error {
 // Consume ...
 func (rabbit *Client) Consume(sub *Subscriber) (<-chan amqp.Delivery, error) {
 	rabbit.newSubscriberChannel(sub)
-	sub.BuildExchangeTopology(sub.Channel, sub.ExchangeName)
+
+	sub.QosTopology(sub.Channel)
 	sub.BuildQueueTopology(sub.Channel, sub.QueueName)
+	sub.BuildExchangeTopology(sub.Channel, sub.ExchangeName)
 	sub.BindQueueTopology(sub.Channel, sub.QueueName, sub.ExchangeName)
 	c, err := sub.ConsumeTopology(sub.Channel, sub.QueueName)
 

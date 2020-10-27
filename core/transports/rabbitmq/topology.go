@@ -10,6 +10,7 @@ type Topology interface {
 	BuildNonDurableExchange(channel *amqp.Channel, name string) error
 	QueueBind(channel *amqp.Channel, queue, exchange string) error
 	Consume(channel *amqp.Channel, queue string) (<-chan amqp.Delivery, error)
+	Qos(ch *amqp.Channel) error
 	Publish(channel *amqp.Channel, exchange, key string, msg amqp.Publishing) error
 }
 
@@ -93,6 +94,10 @@ func (b topology) Consume(ch *amqp.Channel, queue string) (<-chan amqp.Delivery,
 		false, //	No wait
 		nil,   // 	Extra args
 	)
+}
+
+func (b topology) Qos(ch *amqp.Channel) error {
+	return ch.Qos(8, 0, false)
 }
 
 // Publish ..
