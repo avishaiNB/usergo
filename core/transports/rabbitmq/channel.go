@@ -6,7 +6,7 @@ import (
 )
 
 // NewChannel will create a new rabbitMQ channel
-func (a *RabbitMQ) NewChannel() (*amqp.Channel, error) {
+func (a *Client) NewChannel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
 	if a.AMQPConnection == nil {
