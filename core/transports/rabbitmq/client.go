@@ -10,7 +10,7 @@ import (
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
-// Client ...
+// Client is a rabbit contract to publish and consume messages
 type Client interface {
 	Consume(context.Context)
 	Publish(context.Context, *Message, string, amqptransport.EncodeRequestFunc) error
@@ -24,7 +24,8 @@ type client struct {
 	publisher         *Publisher
 }
 
-// NewClient will create a new instance of empty RabbitMQ
+// NewClient will create a new instance of a client
+// Best practice is to have a single one per application and reuse it
 func NewClient(connMgr *ConnectionManager, logManager *tlelogger.Manager, publisher *Publisher, subscribers *[]Subscriber) Client {
 	return &client{
 		logger:            logManager,
@@ -59,7 +60,8 @@ func (c *client) Consume(ctx context.Context) {
 	}
 }
 
-// Publish ...
+// Publish will publish a message into the requested exchange
+// if the exchange do not exist it will create it
 func (c *client) Publish(ctx context.Context, message *Message, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
 	p := *c.publisher
 	ep, _ := p.PublishOneWay(ctx, exchangeName, encodeFunc)
@@ -68,7 +70,8 @@ func (c *client) Publish(ctx context.Context, message *Message, exchangeName str
 	return err
 }
 
-// Close will close the open connection attached to the RabbitMQ instance
+// Close will close the open connections and channels
+// This must be called before the application terminate to prevent connection or channel leaks
 func (c *client) Close(ctx context.Context) error {
 	var err error
 

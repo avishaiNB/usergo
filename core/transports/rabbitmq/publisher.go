@@ -36,6 +36,8 @@ func (p publisher) PublishOneWay(ctx context.Context, exchangeName string, encod
 		return nil, errors.NewApplicationErrorf("before publishing, you must connect to rabbitMQ")
 	}
 
+	// TODO: create the exchnage if it does not exist!!!
+
 	corrid := tlectx.GetCorrelation(ctx)
 	duration, _ := tlectx.GetTimeout(ctx)
 	var queue *amqp.Queue

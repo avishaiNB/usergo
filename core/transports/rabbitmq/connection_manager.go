@@ -16,6 +16,7 @@ type ConnectionManager interface {
 }
 
 // NewConnectionManager will create a new ConnectionManager
+// Best practice is to have a single instance of it and reuse it, in order to save connections
 func NewConnectionManager(connInfo ConnectionInfo) ConnectionManager {
 	c := connmgr{
 		connectionInfo: connInfo,
