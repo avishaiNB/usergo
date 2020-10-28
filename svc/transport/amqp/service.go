@@ -10,6 +10,8 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	"github.com/thelotter-enterprise/usergo/core/utils"
+	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc/transport"
 )
 
@@ -38,12 +40,17 @@ func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, con
 }
 
 func decodeLoggedInUserCommand(_ context.Context, msg *amqp.Delivery) (interface{}, error) {
+	var data shared.LoggedInCommandData
+	decoder := utils.NewDecoder()
+
 	m := tlerabbitmq.Message{
 		Payload: &tlerabbitmq.MessagePayload{},
 	}
 	err := json.Unmarshal(msg.Body, &m)
 	if err != nil {
-		return &tlerabbitmq.MessagePayload{}, errors.NewApplicationError(err, "failed to decode loggedInUserCommand")
+		return m, errors.NewApplicationError(err, "failed to decode loggedInUserCommand")
 	}
-	return m.Payload, nil
+	err = decoder.MapDecode(m.Payload.Data, &data)
+	m.Payload.Data = data
+	return m, err
 }

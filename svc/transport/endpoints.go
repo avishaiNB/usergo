@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc"
@@ -43,7 +44,9 @@ func makeUserByIDEndpoint(service svc.Service) endpoint.Endpoint {
 
 func makeUserLoggedInConsumerEndpoint(service svc.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		err := service.ConsumeLoginCommand(ctx, 1)
+		message := request.(tlerabbitmq.Message)
+		data := message.Payload.Data.(shared.LoggedInCommandData)
+		err := service.ConsumeLoginCommand(ctx, data.ID)
 		return true, err
 	}
 }

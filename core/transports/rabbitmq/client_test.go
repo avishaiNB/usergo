@@ -6,12 +6,8 @@ import (
 
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	"github.com/thelotter-enterprise/usergo/shared"
 )
-
-type rabbitRequest struct {
-	ID   int
-	Name string
-}
 
 const (
 	exchangeName string = "exchange1"
@@ -25,7 +21,7 @@ const (
 // Integration Test! Should not run on automated build
 func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
-	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
+	req := shared.LoggedInCommandData{ID: 1, Name: "guy kolbis"}
 	message, newCtx, _ := rabbitmq.NewMessage(ctx, req, "thelotter.userloggedin")
 
 	logManager := tlelogger.NewNopManager()

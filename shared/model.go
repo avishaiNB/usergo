@@ -37,3 +37,9 @@ func NewByIDRequest(ctx context.Context, id int) tlehttp.Request {
 func NewUserResponse(user User) ByIDResponseData {
 	return ByIDResponseData{User: user}
 }
+
+// LoggedInCommandData ...
+type LoggedInCommandData struct {
+	ID   int
+	Name string
+}
