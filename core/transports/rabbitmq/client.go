@@ -42,16 +42,10 @@ func (c *client) Consume(ctx context.Context) {
 		ch, err := conn.GetChannel()
 		messages, err := sub.Consume(ch)
 
-		if err != nil {
-			// msg := fmt.Sprintf("failed to consume %s", sub.SubscriberName)
-			// logger.Error(ctx, msg)
-		}
-
 		if err == nil {
 			go func() {
 				for msg := range messages {
-					// logger.Debug(ctx, "Received a message: %s", d.Body)
-					fmt.Printf("Received raw message: %s", msg.Body)
+					fmt.Printf("Received message: %s", msg.Body)
 					sub.KitSubscriber.ServeDelivery(sub.Channel)(&msg)
 				}
 			}()

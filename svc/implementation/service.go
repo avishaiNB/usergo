@@ -2,6 +2,7 @@ package implementation
 
 import (
 	"context"
+	"fmt"
 
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	"github.com/thelotter-enterprise/usergo/shared"
@@ -33,5 +34,6 @@ func (s *service) GetUserByID(ctx context.Context, userID int) (shared.User, err
 }
 
 func (s *service) ConsumeLoginCommand(ctx context.Context, userID int) error {
+	fmt.Printf("consumed LoggedInCommand, user: %d", userID)
 	return nil
 }

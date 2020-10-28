@@ -1,11 +1,13 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
+	"github.com/streadway/amqp"
 	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
@@ -94,7 +96,7 @@ func newKitSubscriber(
 
 	ops := make([]amqpkit.SubscriberOption, 0)
 	ops = append(ops, options...)
-	ops = append(ops, amqptransport.SubscriberResponsePublisher(amqptransport.NopResponsePublisher))
+	ops = append(ops, amqptransport.SubscriberResponsePublisher(nopResponsePublisher))
 	ops = append(ops, amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder))
 	ops = append(
 		ops,
@@ -107,4 +109,9 @@ func newKitSubscriber(
 	sub := amqptransport.NewSubscriber(endpoint, dec, enc, ops...)
 
 	return sub
+}
+
+func nopResponsePublisher(ctx context.Context, deliv *amqp.Delivery, ch amqpkit.Channel, pub *amqp.Publishing) error {
+	// if there was an error we dont want to ack
+	return deliv.Ack(false)
 }

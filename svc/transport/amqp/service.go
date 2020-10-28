@@ -52,5 +52,6 @@ func decodeLoggedInUserCommand(_ context.Context, msg *amqp.Delivery) (interface
 	}
 	err = decoder.MapDecode(m.Payload.Data, &data)
 	m.Payload.Data = data
+
 	return m, err
 }
