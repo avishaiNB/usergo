@@ -1,10 +1,10 @@
-package logger2_test
+package logger_test
 
 import (
 	"testing"
 
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
-	logger "github.com/thelotter-enterprise/usergo/core/logger2"
+	logger "github.com/thelotter-enterprise/usergo/core/logger"
 )
 
 func TestLogger(t *testing.T) {

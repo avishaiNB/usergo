@@ -3,7 +3,6 @@ package servicediscovery
 import (
 	"context"
 
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd/consul"
 	consulapi "github.com/hashicorp/consul/api"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
@@ -14,13 +13,13 @@ import (
 type ConsulServiceDiscovery struct {
 	ConsulAPI      *consulapi.Client
 	ConsulClient   *consul.Client
-	Logger         tlelogger.Manager
+	Logger         tlelogger.Logger
 	ConsulAddress  string
 	ConsulIntances map[string]*consul.Instancer
 }
 
 // NewConsulServiceDiscovery creates a new instance of the service directory
-func NewConsulServiceDiscovery(logger tlelogger.Manager, consulAddress string) ConsulServiceDiscovery {
+func NewConsulServiceDiscovery(logger tlelogger.Logger, consulAddress string) ConsulServiceDiscovery {
 	sd := ConsulServiceDiscovery{
 		Logger:         logger,
 		ConsulAddress:  consulAddress,
@@ -49,7 +48,7 @@ func (sd *ConsulServiceDiscovery) ConsulInstance(ctx context.Context, serviceNam
 
 	if err == nil {
 		client := consul.NewClient(sd.ConsulAPI)
-		instancer = consul.NewInstancer(client, sd.Logger.(log.Logger), serviceName, tags, onlyHealthy)
+		instancer = consul.NewInstancer(client, sd.Logger, serviceName, tags, onlyHealthy)
 
 		sd.ConsulAPI = api
 		sd.ConsulClient = &client

@@ -13,12 +13,12 @@ import (
 type service struct {
 	repo   svc.Repository
 	tracer tletracer.Tracer
-	logger *tlelogger.Manager
+	logger *tlelogger.Logger
 }
 
 // NewService creates a new instance of service
 // service is where we define all the business logic.
-func NewService(logger *tlelogger.Manager, tracer tletracer.Tracer, repo svc.Repository) svc.Service {
+func NewService(logger *tlelogger.Logger, tracer tletracer.Tracer, repo svc.Repository) svc.Service {
 	return &service{
 		repo:   repo,
 		tracer: tracer,

@@ -32,7 +32,7 @@ func main() {
 		rabbitMQVhost    string                    = "thelotter"
 		rabbitMQPort     int                       = 32672
 		env              string                    = "dev"
-		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
+		logLevel         tlelogger.AtomicLevelName = tlelogger.DebugLogLevel
 		ctx              context.Context           = tlectx.Root()
 	)
 
@@ -42,31 +42,29 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// infra services
-	stdConf := tlelogger.Config{LevelName: logLevel, Env: env, LoggerName: "std"}
-	stdLogger := tlelogger.NewStdOutLogger(stdConf)
-	logManager := tlelogger.NewLoggerManager(stdLogger)
+	logger, _ := tlelogger.NewLogger(env, "Fiel", logLevel)
 	tracer := tletracer.NewTracer(serviceName, hostAddress, zipkinURL)
 	promMetricsInst := tlemetrics.NewPrometheusInstrumentor(serviceName)
 
 	// implementation
 	repo := tleimpl.NewRepository()
-	service := tleimpl.NewService(&logManager, tracer, repo)
+	service := tleimpl.NewService(logger, tracer, repo)
 
 	// middlewares
-	service = svcmw.NewLoggingMiddleware(&logManager)(service)                        // Hook up the logging middleware
-	service = svcmw.NewInstrumentingMiddleware(&logManager, promMetricsInst)(service) // Hook up the inst middleware
+	service = svcmw.NewLoggingMiddleware(logger)(service)                        // Hook up the logging middleware
+	service = svcmw.NewInstrumentingMiddleware(logger, promMetricsInst)(service) // Hook up the inst middleware
 
 	// making all types of endpoints
 	endpoints := svctrans.MakeEndpoints(service)
 
 	// http
-	handler := svchttp.NewService(ctx, endpoints, make([]kithttp.ServerOption, 0), logManager)
+	handler := svchttp.NewService(ctx, endpoints, make([]kithttp.ServerOption, 0), *logger)
 	go func() {
 		server := &http.Server{
 			Addr:    hostAddress,
 			Handler: handler,
 		}
-		logManager.Info(ctx, fmt.Sprintf("listening for http calls on %s", hostAddress))
+		tlelogger.InfoWithContext(ctx, logger, fmt.Sprintf("listening for http calls on %s", hostAddress))
 		errs <- server.ListenAndServe()
 		done <- true
 	}()
@@ -74,13 +72,13 @@ func main() {
 	// setting up RabbitMQ server
 	connInfo := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	conn := tlerabbitmq.NewConnectionManager(connInfo)
-	subscribers := svcamqp.NewService(endpoints, &logManager, &conn)
+	subscribers := svcamqp.NewService(endpoints, logger, &conn)
 	publisher := tlerabbitmq.NewPublisher(&conn)
-	client := tlerabbitmq.NewClient(&conn, &logManager, &publisher, subscribers)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &client, &conn)
+	client := tlerabbitmq.NewClient(&conn, logger, &publisher, subscribers)
+	amqpServer := tlerabbitmq.NewServer(logger, tracer, &client, &conn)
 
 	go func() {
-		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))
+		tlelogger.InfoWithContext(ctx, logger, fmt.Sprintf("listening for amqp messages"))
 		err := amqpServer.Run(ctx)
 		if err != nil {
 			errs <- err

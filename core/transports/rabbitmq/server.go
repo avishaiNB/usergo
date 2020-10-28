@@ -15,14 +15,14 @@ type Server interface {
 }
 
 type server struct {
-	logger            *tlelogger.Manager
+	logger            *tlelogger.Logger
 	tracer            tletracer.Tracer
 	connectionManager *ConnectionManager
 	client            *Client
 }
 
 // NewServer will create a new instance of Server which can be executed to start and recieving messages
-func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Client, conn *ConnectionManager) Server {
+func NewServer(logger *tlelogger.Logger, tracer tletracer.Tracer, rabbit *Client, conn *ConnectionManager) Server {
 	return &server{
 		client:            rabbit,
 		logger:            logger,

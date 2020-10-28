@@ -3,7 +3,6 @@ package servicediscovery
 import (
 	"time"
 
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/sd/dnssrv"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	"github.com/thelotter-enterprise/usergo/core/utils"
@@ -16,12 +15,12 @@ const (
 
 // DNSServiceDiscovery provide service discovery capabilities for consul and for DNS (k8s)
 type DNSServiceDiscovery struct {
-	Logger      tlelogger.Manager
+	Logger      tlelogger.Logger
 	DNSIntances map[string]*dnssrv.Instancer
 }
 
 // NewDNSServiceDiscovery creates a new instance of the service directory
-func NewDNSServiceDiscovery(logger tlelogger.Manager) DNSServiceDiscovery {
+func NewDNSServiceDiscovery(logger tlelogger.Logger) DNSServiceDiscovery {
 	sd := DNSServiceDiscovery{
 		Logger:      logger,
 		DNSIntances: map[string]*dnssrv.Instancer{},
@@ -39,7 +38,7 @@ func (sd *DNSServiceDiscovery) DNSInstance(serviceName string) *dnssrv.Instancer
 		return instancer
 	}
 
-	instancer = dnssrv.NewInstancer(serviceName, DefaultTTL, sd.Logger.(log.Logger))
+	instancer = dnssrv.NewInstancer(serviceName, DefaultTTL, sd.Logger)
 	sd.DNSIntances[key] = instancer
 
 	return instancer

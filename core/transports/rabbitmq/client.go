@@ -19,14 +19,14 @@ type Client interface {
 
 type client struct {
 	connectionManager *ConnectionManager
-	logger            *tlelogger.Manager
+	logger            *tlelogger.Logger
 	subscribers       *[]Subscriber
 	publisher         *Publisher
 }
 
 // NewClient will create a new instance of a client
 // Best practice is to have a single one per application and reuse it
-func NewClient(connMgr *ConnectionManager, logManager *tlelogger.Manager, publisher *Publisher, subscribers *[]Subscriber) Client {
+func NewClient(connMgr *ConnectionManager, logManager *tlelogger.Logger, publisher *Publisher, subscribers *[]Subscriber) Client {
 	return &client{
 		logger:            logManager,
 		subscribers:       subscribers,

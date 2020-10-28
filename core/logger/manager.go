@@ -1,4 +1,4 @@
-package logger2
+package logger
 
 import (
 	"context"
@@ -49,8 +49,8 @@ func Debug(logger log.Logger, message string, args ...interface{}) error {
 }
 
 func logWithContext(ctx context.Context, logger log.Logger, message string, args ...interface{}) error {
-	correlationID := tlecontext.GetCorrelationFromContext(ctx)
-	duration, deadline := tlecontext.GetTimeoutFromContext(ctx)
+	correlationID := tlecontext.GetCorrelation(ctx)
+	duration, deadline := tlecontext.GetTimeout(ctx)
 	return logger.Log(
 		"message", message,
 		"correaltionId", correlationID,

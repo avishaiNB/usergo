@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -21,12 +20,12 @@ import (
 )
 
 // NewService will set-up router and initialize http endpoints
-func NewService(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Manager) http.Handler {
+func NewService(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Logger) http.Handler {
 	var (
 		router = mux.NewRouter()
 
 		// server options:
-		errorLogger   = kithttp.ServerErrorLogger(logger.(log.Logger))
+		errorLogger   = kithttp.ServerErrorLogger(logger)
 		errorEncoder  = kithttp.ServerErrorEncoder(encodeErrorResponse)
 		contextReader = tlectxhttp.ReadBefore()
 	)
