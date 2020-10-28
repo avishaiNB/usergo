@@ -2,19 +2,14 @@ package rabbitmq
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/go-kit/kit/endpoint"
 	amqpkit "github.com/go-kit/kit/transport/amqp"
-	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
-	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
-	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 // Subscriber ...
 type Subscriber struct {
-	Sub                   *amqpkit.Subscriber
+	KitSubscriber         *amqpkit.Subscriber
 	ConnectionManager     *ConnectionManager
 	Channel               *amqp.Channel
 	IsConnected           bool
@@ -26,94 +21,6 @@ type Subscriber struct {
 	BindQueueTopology     func(*amqp.Channel, string, string) error
 	ConsumeTopology       func(*amqp.Channel, string) (<-chan amqp.Delivery, error)
 	QosTopology           func(ch *amqp.Channel) error
-	// TBD: IsConnected
-}
-
-// NewPrivateSubscriber will create a new rabbitMQ consumer
-func NewPrivateSubscriber(
-	connMgr *ConnectionManager,
-	subscriberName string,
-	exchangeName string,
-	queueName string,
-	endpoint endpoint.Endpoint,
-	dec amqptransport.DecodeRequestFunc,
-	enc amqptransport.EncodeResponseFunc,
-	options ...amqptransport.SubscriberOption,
-) Subscriber {
-
-	queueName = fmt.Sprintf("%s-private-%s", queueName, utils.NewUUID())
-	topology := NewTopology()
-	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
-	s := Subscriber{
-		ConnectionManager:     connMgr,
-		Sub:                   sub,
-		QueueName:             queueName,
-		ExchangeName:          exchangeName,
-		SubscriberName:        subscriberName,
-		BuildQueueTopology:    topology.BuildNonDurableQueue,
-		BuildExchangeTopology: topology.BuildNonDurableExchange,
-		BindQueueTopology:     topology.QueueBind,
-		ConsumeTopology:       topology.Consume,
-		QosTopology:           topology.Qos,
-	}
-
-	return s
-}
-
-// NewCommandSubscriber will create a new rabbitMQ consumer
-func NewCommandSubscriber(
-	connMgr *ConnectionManager,
-	subscriberName string,
-	exchangeName string,
-	queueName string,
-	endpoint endpoint.Endpoint,
-	dec amqptransport.DecodeRequestFunc,
-	enc amqptransport.EncodeResponseFunc,
-	options ...amqptransport.SubscriberOption,
-) Subscriber {
-
-	queueName = queueName + "-command"
-	topology := NewTopology()
-	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
-	s := Subscriber{
-		ConnectionManager:     connMgr,
-		Sub:                   sub,
-		QueueName:             queueName,
-		ExchangeName:          exchangeName,
-		SubscriberName:        subscriberName,
-		BuildQueueTopology:    topology.BuildDurableQueue,
-		BuildExchangeTopology: topology.BuildDurableExchange,
-		BindQueueTopology:     topology.QueueBind,
-		ConsumeTopology:       topology.Consume,
-		QosTopology:           topology.Qos,
-	}
-
-	return s
-}
-
-// NewSubscriber ...
-func newSubscriber(
-	endpoint endpoint.Endpoint,
-	exchangeName string,
-	dec amqptransport.DecodeRequestFunc,
-	enc amqptransport.EncodeResponseFunc,
-	options ...amqptransport.SubscriberOption) *amqptransport.Subscriber {
-
-	ops := make([]amqpkit.SubscriberOption, 0)
-	ops = append(ops, options...)
-	ops = append(ops, amqptransport.SubscriberResponsePublisher(amqptransport.NopResponsePublisher))
-	ops = append(ops, amqptransport.SubscriberErrorEncoder(amqptransport.ReplyErrorEncoder))
-	ops = append(
-		ops,
-		amqptransport.SubscriberBefore(
-			amqptransport.SetPublishExchange(exchangeName),
-			tlectxamqp.ReadMessageRequestFunc(),
-			amqptransport.SetPublishDeliveryMode(2),
-		))
-
-	sub := amqptransport.NewSubscriber(endpoint, dec, enc, ops...)
-
-	return sub
 }
 
 // Consume ...

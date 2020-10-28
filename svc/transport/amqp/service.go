@@ -19,8 +19,9 @@ func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, con
 	exchangeName := "exchange1"
 	queueName := "queue1"
 	subscriberName := "command_subscriber"
-	loggedInSubscriber := tlerabbitmq.NewCommandSubscriber(
-		connMgr,
+	subMgr := tlerabbitmq.NewSubscriberManager(connMgr)
+
+	loggedInSubscriber := subMgr.NewCommandSubscriber(
 		subscriberName,
 		exchangeName,
 		queueName,
