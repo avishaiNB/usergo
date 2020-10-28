@@ -33,21 +33,23 @@ type Client interface {
 	GetTime(string) time.Time
 	//GetDuration represents convention of get function which return time.Duration
 	GetDuration(string) time.Duration
+	//GetStringMap represents convention of get function which return map[string]interface{}
+	GetStringMap(key string) map[string]interface{}
 }
 
 type client struct {
 	viperClient *viper.Viper
 }
 
-// NewConfiguration create new configuration client , based on consul config f
+// NewServiceConfiguration create new configuration client , based on consul config f
 // configType describe what is config file format (json , yaml etc.)
 // viper client save all configs in inner cache
 // viperclient monitor source file and pull new changes to cache
 // Add 	_ "github.com/spf13/viper/remote" in main file for working with remote config source
-func NewConfiguration(configType string) (Client, error) {
+func NewServiceConfiguration(configType string) (Client, error) {
 	viperClient := viper.New()
 	viperClient.SetConfigType(configType)
-	err := addConsulProviderToClient(viperClient)
+	err := addConsulProviderToClient(viperClient, "configuration/"+tleutils.ProcessName())
 
 	if err != nil {
 		return nil, err
@@ -58,9 +60,28 @@ func NewConfiguration(configType string) (Client, error) {
 	}, nil
 }
 
-func addConsulProviderToClient(viperClient *viper.Viper) error {
+// NewGlobalConfiguration create new configuration client , based on consul config f
+// configType describe what is config file format (json , yaml etc.)
+// viper client save all configs in inner cache
+// viperclient monitor source file and pull new changes to cache
+// Add 	_ "github.com/spf13/viper/remote" in main file for working with remote config source
+func NewGlobalConfiguration(configType string) (Client, error) {
+	viperClient := viper.New()
+	viperClient.SetConfigType(configType)
+	err := addConsulProviderToClient(viperClient, "configuration/global")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &client{
+		viperClient: viperClient,
+	}, nil
+}
+
+func addConsulProviderToClient(viperClient *viper.Viper, path string) error {
 	consulClient := getConsulAddress()
-	viperClient.AddRemoteProvider("consul", consulClient, "configurations/"+tleutils.ProcessName())
+	viperClient.AddRemoteProvider("consul", consulClient, path)
 	err := viperClient.ReadRemoteConfig()
 
 	if err != nil {
@@ -121,4 +142,9 @@ func (configClient client) GetTime(key string) time.Time {
 //GetTime return value from config , if cannot find key return 0s
 func (configClient client) GetDuration(key string) time.Duration {
 	return configClient.viperClient.GetDuration(key)
+}
+
+//GetTime return value from config , if cannot find key return empty map
+func (configClient client) GetStringMap(key string) map[string]interface{} {
+	return configClient.viperClient.GetStringMap(key)
 }

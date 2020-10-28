@@ -1,12 +1,19 @@
 package configuration_test
 
 import (
+	"fmt"
 	"testing"
 
+	_ "github.com/spf13/viper/remote"
 	"github.com/thelotter-enterprise/usergo/core/configuration"
 )
 
 func TestConfiguration(t *testing.T) {
+	x, _ := configuration.NewConfiguration(configuration.JSON)
+	val1 := x.Get("LogLevel", 1)
+	val2 := x.Get("DefaultLogLevel", 1)
+	fmt.Println(val1)
+	fmt.Println(val2)
 	conf := configuration.NewNopConfigurationClient()
 	stringValue := getStringValueFromConfig(conf, "Status")
 	if stringValue != "Status" {

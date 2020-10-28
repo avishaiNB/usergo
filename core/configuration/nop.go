@@ -4,7 +4,7 @@ import "time"
 
 type nopConfigurationClient struct{}
 
-// NewNopConfigurationClient returns a log.Logger that doesn't do anything.
+// NewNopConfigurationClient returns a Client that doesn't do anything.
 // Should be used `for testing only
 func NewNopConfigurationClient() Client {
 	return nopConfigurationClient{}
@@ -48,4 +48,8 @@ func (nopConfigurationClient nopConfigurationClient) GetTime(key string) time.Ti
 
 func (nopConfigurationClient nopConfigurationClient) GetDuration(key string) time.Duration {
 	return time.Duration(1)
+}
+
+func (nopConfigurationClient nopConfigurationClient) GetStringMap(key string) map[string]interface{} {
+	return nil
 }
