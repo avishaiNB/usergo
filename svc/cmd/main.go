@@ -72,11 +72,12 @@ func main() {
 	}()
 
 	// setting up RabbitMQ server
-	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
-	subscribers := svcamqp.NewService(endpoints, &logManager)
-	publisher := tlerabbitmq.NewPublisher(conn)
-	client := tlerabbitmq.NewClient(&logManager, conn, &publisher, subscribers)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, client)
+	connInfo := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	conn := tlerabbitmq.NewConnectionManager(connInfo)
+	subscribers := svcamqp.NewService(endpoints, &logManager, &conn)
+	publisher := tlerabbitmq.NewPublisher(&conn)
+	client := tlerabbitmq.NewClient(&conn, &logManager, &publisher, subscribers)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, client, &conn)
 
 	go func() {
 		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))

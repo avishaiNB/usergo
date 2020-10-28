@@ -17,16 +17,15 @@ type Publisher interface {
 }
 
 type publisher struct {
-	connection     *amqp.Connection
-	ConnectionInfo ConnectionInfo
-	ch             *amqp.Channel
-	isConnected    bool
+	connectionManager *ConnectionManager
+	ch                *amqp.Channel
+	isConnected       bool
 }
 
 // NewPublisher will create a new publisher and will establish a connection to rabbit
-func NewPublisher(connInfo ConnectionInfo) Publisher {
+func NewPublisher(conn *ConnectionManager) Publisher {
 	p := publisher{
-		ConnectionInfo: connInfo,
+		connectionManager: conn,
 	}
 	p.connect()
 	return &p
@@ -80,41 +79,26 @@ func DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publ
 func (p *publisher) Close(ctx context.Context) error {
 	var err error
 
-	if p.isConnected {
-		connerr := p.connection.Close()
+	if p.isConnected && p.ch != nil {
+		cherr := p.ch.Close()
 
-		if connerr != nil {
-			err = errors.NewApplicationErrorf("failed to close rabbit connection %s", connerr.Error())
+		if cherr != nil {
+			err = errors.NewApplicationError(err, cherr.Error())
 		} else {
-			if p.ch != nil {
-				cherr := p.ch.Close()
-
-				if cherr != nil {
-					err = errors.Annotate(err, cherr.Error())
-				}
-			}
+			p.isConnected = false
 		}
-	}
-
-	if err == nil {
-		p.isConnected = false
 	}
 
 	return err
 }
 
 func (p *publisher) connect() error {
-	conn, err := amqp.Dial(p.ConnectionInfo.URL)
-	if err != nil {
-		return errors.NewApplicationError(err, "failed to connect to rabbit")
+	connMgr := *p.connectionManager
+	ch, err := connMgr.GetChannel()
+	if err == nil {
+		p.ch = ch
+		//p.changeConnection(ctx, conn, ch)
+		p.isConnected = true
 	}
-	ch, err := conn.Channel()
-	if err != nil {
-		return errors.NewApplicationError(err, "failed to create channel")
-	}
-	p.ch = ch
-	p.connection = conn
-	//p.changeConnection(ctx, conn, ch)
-	p.isConnected = true
-	return nil
+	return err
 }

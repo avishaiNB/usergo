@@ -5,24 +5,25 @@ import (
 	"fmt"
 
 	"github.com/streadway/amqp"
-	tleerrors "github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
 // Server ...
 type Server struct {
-	Logger *tlelogger.Manager
-	Tracer tletracer.Tracer
-	Client *Client
+	Logger            *tlelogger.Manager
+	Tracer            tletracer.Tracer
+	ConnectionManager *ConnectionManager
+	Client            *Client
 }
 
 // NewServer ...
-func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Client) Server {
+func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Client, conn *ConnectionManager) Server {
 	return Server{
-		Client: rabbit,
-		Logger: logger,
-		Tracer: tracer,
+		Client:            rabbit,
+		Logger:            logger,
+		Tracer:            tracer,
+		ConnectionManager: conn,
 	}
 }
 
@@ -30,10 +31,6 @@ func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Clien
 func (server *Server) Run(ctx context.Context) error {
 	// cleaning up
 	defer server.close(ctx)
-
-	if err := server.open(ctx); err != nil {
-		return err
-	}
 
 	forever := make(chan bool)
 	server.consume(ctx)
@@ -44,9 +41,9 @@ func (server *Server) Run(ctx context.Context) error {
 
 func (server *Server) consume(ctx context.Context) {
 	logger := *server.Logger
-
+	conn := *server.ConnectionManager
 	for _, sub := range *server.Client.Subscribers {
-		ch, err := server.Client.NewChannel()
+		ch, err := conn.GetChannel()
 		messages, err := sub.Consume(ch)
 
 		if err != nil {
@@ -66,32 +63,18 @@ func (server *Server) consume(ctx context.Context) {
 	}
 }
 
-func (server *Server) open(ctx context.Context) error {
-	logger := *server.Logger
-
-	logger.Debug(ctx, "opening rabbitmq connection")
-	_, err := server.Client.OpenConnection()
-
-	if err != nil {
-		msg := "failed to open rabbitmq connection"
-		logger.Error(ctx, msg)
-		return tleerrors.NewApplicationError(err, msg)
-	}
-	return nil
-}
-
 func (server *Server) close(ctx context.Context) {
-	logger := *server.Logger
-	logger.Debug(ctx, "closing rabbitmq connection")
-	server.Client.CloseConnection()
+	// logger := *server.Logger
+	// logger.Debug(ctx, "closing rabbitmq connection")
+	// server.Client.CloseConnection()
 
-	for _, sub := range *server.Client.Subscribers {
-		if sub.Channel != nil {
-			err := sub.Channel.Close()
-			if err != nil {
-				msg := fmt.Sprintf("failed to close channel on consumer %s", sub.SubscriberName)
-				logger.Error(ctx, msg)
-			}
-		}
-	}
+	// for _, sub := range *server.Client.Subscribers {
+	// 	if sub.Channel != nil {
+	// 		err := sub.Channel.Close()
+	// 		if err != nil {
+	// 			msg := fmt.Sprintf("failed to close channel on consumer %s", sub.SubscriberName)
+	// 			logger.Error(ctx, msg)
+	// 		}
+	// 	}
+	// }
 }

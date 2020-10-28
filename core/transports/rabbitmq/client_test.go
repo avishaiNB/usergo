@@ -32,9 +32,10 @@ func TestPublisherEndpoint(t *testing.T) {
 	}
 
 	logManager := tlelogger.NewNopManager()
-	conn := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
-	publisher := rabbitmq.NewPublisher(conn)
-	client := rabbitmq.NewClient(&logManager, conn, &publisher, nil)
+	connInfo := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
+	conn := rabbitmq.NewConnectionManager(connInfo)
+	publisher := rabbitmq.NewPublisher(&conn)
+	client := rabbitmq.NewClient(&conn, &logManager, &publisher, nil)
 	err := client.Publish(ctx, &message, exchangeName, rabbitmq.DefaultRequestEncoder(exchangeName))
 
 	if err != nil {

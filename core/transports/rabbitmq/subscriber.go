@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
@@ -14,7 +15,9 @@ import (
 // Subscriber ...
 type Subscriber struct {
 	Sub                   *amqpkit.Subscriber
+	ConnectionManager     *ConnectionManager
 	Channel               *amqp.Channel
+	IsConnected           bool
 	ExchangeName          string
 	QueueName             string
 	SubscriberName        string
@@ -28,6 +31,7 @@ type Subscriber struct {
 
 // NewPrivateSubscriber will create a new rabbitMQ consumer
 func NewPrivateSubscriber(
+	connMgr *ConnectionManager,
 	subscriberName string,
 	exchangeName string,
 	queueName string,
@@ -41,6 +45,7 @@ func NewPrivateSubscriber(
 	topology := NewTopology()
 	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
 	s := Subscriber{
+		ConnectionManager:     connMgr,
 		Sub:                   sub,
 		QueueName:             queueName,
 		ExchangeName:          exchangeName,
@@ -57,6 +62,7 @@ func NewPrivateSubscriber(
 
 // NewCommandSubscriber will create a new rabbitMQ consumer
 func NewCommandSubscriber(
+	connMgr *ConnectionManager,
 	subscriberName string,
 	exchangeName string,
 	queueName string,
@@ -70,6 +76,7 @@ func NewCommandSubscriber(
 	topology := NewTopology()
 	sub := newSubscriber(endpoint, exchangeName, dec, enc, options...)
 	s := Subscriber{
+		ConnectionManager:     connMgr,
 		Sub:                   sub,
 		QueueName:             queueName,
 		ExchangeName:          exchangeName,
@@ -119,4 +126,25 @@ func (sub *Subscriber) Consume(ch *amqp.Channel) (<-chan amqp.Delivery, error) {
 	c, err := sub.ConsumeTopology(sub.Channel, sub.QueueName)
 
 	return c, err
+}
+
+// Close will shutdown the client gracely
+func (sub *Subscriber) Close(ctx context.Context) error {
+	conn := *sub.ConnectionManager
+	err := conn.CloseChannel(ctx, sub.Channel)
+	if err == nil {
+		sub.IsConnected = false
+	}
+	return err
+}
+
+func (sub *Subscriber) connect() error {
+	conn := *sub.ConnectionManager
+	ch, err := conn.GetChannel()
+	if err == nil {
+		sub.Channel = ch
+		sub.IsConnected = true
+	}
+	//p.changeConnection(ctx, conn, ch)
+	return err
 }
