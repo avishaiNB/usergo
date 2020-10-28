@@ -9,7 +9,7 @@ import (
 )
 
 func TestConfiguration(t *testing.T) {
-	x, _ := configuration.NewConfiguration(configuration.JSON)
+	x, _ := configuration.NewServiceConfiguration(configuration.JSON)
 	val1 := x.Get("LogLevel", 1)
 	val2 := x.Get("DefaultLogLevel", 1)
 	fmt.Println(val1)
