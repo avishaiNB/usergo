@@ -16,7 +16,7 @@ func TestConnectionInfoURL(t *testing.T) {
 	connectionMeta := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
 
 	want := "amqp://user:pwd@localhost:5672/thelotter"
-	is := connectionMeta.URL
+	is := connectionMeta.ConnectionString
 	if is != want {
 		t.Fail()
 	}

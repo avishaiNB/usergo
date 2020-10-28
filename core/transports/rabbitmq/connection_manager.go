@@ -7,7 +7,7 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/errors"
 )
 
-// ConnectionManager ...
+// ConnectionManager responsibility is to manage the connecation which we open with rabbit
 type ConnectionManager interface {
 	GetConnection() (*amqp.Connection, error)
 	GetChannel() (*amqp.Channel, error)
@@ -15,7 +15,7 @@ type ConnectionManager interface {
 	CloseChannel(context.Context, *amqp.Channel) error
 }
 
-// NewConnectionManager ...
+// NewConnectionManager will create a new ConnectionManager
 func NewConnectionManager(connInfo ConnectionInfo) ConnectionManager {
 	c := connmgr{
 		connectionInfo: connInfo,
@@ -31,6 +31,8 @@ type connmgr struct {
 	isConnected    bool
 }
 
+// GetConnection will return the single connection to rabbit
+// If a connection does not exist it will create a new one and return it
 func (c *connmgr) GetConnection() (*amqp.Connection, error) {
 	var err error
 	if c.isConnected == false {
@@ -39,6 +41,7 @@ func (c *connmgr) GetConnection() (*amqp.Connection, error) {
 	return c.connection, err
 }
 
+// GetChannel will use the single connection to create a channel and return it
 func (c *connmgr) GetChannel() (*amqp.Channel, error) {
 	var ch *amqp.Channel
 
@@ -52,7 +55,7 @@ func (c *connmgr) GetChannel() (*amqp.Channel, error) {
 	return ch, err
 }
 
-// CloseChannel ...
+// CloseChannel will saifly close the channel
 func (c *connmgr) CloseChannel(ctx context.Context, ch *amqp.Channel) error {
 	if ch != nil {
 		err := ch.Close()
@@ -63,7 +66,7 @@ func (c *connmgr) CloseChannel(ctx context.Context, ch *amqp.Channel) error {
 	return nil
 }
 
-// Close will shutdown the client gracely
+// CloseConnection will saifly close the single connection
 func (c *connmgr) CloseConnection(ctx context.Context) error {
 	var err error
 
@@ -80,7 +83,7 @@ func (c *connmgr) CloseConnection(ctx context.Context) error {
 }
 
 func (c *connmgr) connect() error {
-	conn, err := amqp.Dial(c.connectionInfo.URL)
+	conn, err := amqp.Dial(c.connectionInfo.ConnectionString)
 	if err != nil {
 		return errors.NewApplicationErrorf("failed to connect to rabbit", err.Error())
 	}
