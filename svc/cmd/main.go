@@ -77,7 +77,7 @@ func main() {
 	subscribers := svcamqp.NewService(endpoints, &logManager, &conn)
 	publisher := tlerabbitmq.NewPublisher(&conn)
 	client := tlerabbitmq.NewClient(&conn, &logManager, &publisher, subscribers)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, client, &conn)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &client, &conn)
 
 	go func() {
 		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))

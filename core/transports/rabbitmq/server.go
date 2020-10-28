@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/streadway/amqp"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 )
 
-// Server ...
+// Server responsibility to initiate the ability to consume messages
 type Server interface {
 	Run(context.Context) error
 	Shutdown(context.Context)
@@ -22,7 +21,7 @@ type server struct {
 	client            *Client
 }
 
-// NewServer ...
+// NewServer will create a new instance of Server which can be executed to start and recieving messages
 func NewServer(logger *tlelogger.Manager, tracer tletracer.Tracer, rabbit *Client, conn *ConnectionManager) Server {
 	return &server{
 		client:            rabbit,
@@ -38,38 +37,16 @@ func (s server) Run(ctx context.Context) error {
 	defer s.Shutdown(ctx)
 
 	forever := make(chan bool)
-	s.consume(ctx)
+	c := *s.client
+	c.Consume(ctx)
 	<-forever
 
 	return nil
 }
 
-func (s server) consume(ctx context.Context) {
-	logger := *s.logger
-	conn := *s.connectionManager
-	for _, sub := range *s.client.Subscribers {
-		ch, err := conn.GetChannel()
-		messages, err := sub.Consume(ch)
-
-		if err != nil {
-			msg := fmt.Sprintf("failed to consume %s", sub.SubscriberName)
-			logger.Error(ctx, msg)
-		}
-
-		if err == nil {
-			go func() {
-				for d := range messages {
-					// logger.Debug(ctx, "Received a message: %s", d.Body)
-					fmt.Printf("Received a message: %s", d.Body)
-					sub.KitSubscriber.ServeDelivery(sub.Channel)(&amqp.Delivery{})
-				}
-			}()
-		}
-	}
-}
-
 // Shutdown will close the server and call client to close resources
 func (s server) Shutdown(ctx context.Context) {
-	s.client.Close(ctx)
+	c := *s.client
+	c.Close(ctx)
 	fmt.Print("Shutdown amqp server")
 }

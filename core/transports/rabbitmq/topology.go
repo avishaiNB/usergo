@@ -22,7 +22,7 @@ func NewTopology() Topology {
 	return topology{}
 }
 
-// BuildDurableQueue ...
+// BuildDurableQueue will create a durable queue
 func (b topology) BuildDurableQueue(ch *amqp.Channel, name string) (amqp.Queue, error) {
 	return ch.QueueDeclare(
 		name,
@@ -34,7 +34,7 @@ func (b topology) BuildDurableQueue(ch *amqp.Channel, name string) (amqp.Queue, 
 	)
 }
 
-// BuildNonDurableQueue ...
+// BuildNonDurableQueue will create a non durable queue
 func (b topology) BuildNonDurableQueue(ch *amqp.Channel, name string) (amqp.Queue, error) {
 	return ch.QueueDeclare(
 		name,
@@ -46,7 +46,7 @@ func (b topology) BuildNonDurableQueue(ch *amqp.Channel, name string) (amqp.Queu
 	)
 }
 
-// BuildDurableExchange ...
+// BuildDurableExchange will create a durable exchange
 func (b topology) BuildDurableExchange(ch *amqp.Channel, name string) error {
 	return ch.ExchangeDeclare(
 		name,
@@ -59,7 +59,7 @@ func (b topology) BuildDurableExchange(ch *amqp.Channel, name string) error {
 	)
 }
 
-// BuildNonDurableExchange ...
+// BuildNonDurableExchange will create a non durable exchange
 func (b topology) BuildNonDurableExchange(ch *amqp.Channel, name string) error {
 	return ch.ExchangeDeclare(
 		name,
@@ -72,7 +72,7 @@ func (b topology) BuildNonDurableExchange(ch *amqp.Channel, name string) error {
 	)
 }
 
-// QueueBind ...
+// QueueBind binds the queue with an exchange
 func (b topology) QueueBind(ch *amqp.Channel, queue, exchange string) error {
 	return ch.QueueBind(
 		queue,
@@ -83,7 +83,7 @@ func (b topology) QueueBind(ch *amqp.Channel, queue, exchange string) error {
 	)
 }
 
-// Consume ..
+// Consume will return a channel that will allow to consume messages from the queue
 func (b topology) Consume(ch *amqp.Channel, queue string) (<-chan amqp.Delivery, error) {
 	return ch.Consume(
 		queue,
@@ -96,11 +96,13 @@ func (b topology) Consume(ch *amqp.Channel, queue string) (<-chan amqp.Delivery,
 	)
 }
 
+// Qos controls how many messages or how many bytes the server will try to keep on
+// the network for consumers before receiving delivery acks.
 func (b topology) Qos(ch *amqp.Channel) error {
 	return ch.Qos(8, 0, false)
 }
 
-// Publish ..
+// Publish will publish a message to the rabbit channel
 func (b topology) Publish(ch *amqp.Channel, exchange, key string, msg amqp.Publishing) error {
 	return ch.Publish(
 		exchange, // 	Exchange
