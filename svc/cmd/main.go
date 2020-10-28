@@ -74,7 +74,8 @@ func main() {
 	// setting up RabbitMQ server
 	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	subscribers := svcamqp.NewService(endpoints, &logManager)
-	client := tlerabbitmq.NewClient(&logManager, conn, subscribers)
+	publisher := tlerabbitmq.NewPublisher(conn)
+	client := tlerabbitmq.NewClient(&logManager, conn, &publisher, subscribers)
 	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, client)
 
 	go func() {

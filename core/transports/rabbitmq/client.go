@@ -3,10 +3,8 @@ package rabbitmq
 import (
 	"context"
 
-	"github.com/go-kit/kit/endpoint"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
@@ -26,112 +24,124 @@ type Client struct {
 	LogManager *tlelogger.Manager
 
 	Subscribers *[]Subscriber
+
+	Publisher *Publisher
 }
 
 // NewClient will create a new instance of empty RabbitMQ
-func NewClient(logManager *tlelogger.Manager, connection ConnectionInfo, subscribers *[]Subscriber) *Client {
+func NewClient(logManager *tlelogger.Manager, connection ConnectionInfo, publisher *Publisher, subscribers *[]Subscriber) *Client {
 	return &Client{
 		ConnInfo:    connection,
 		LogManager:  logManager,
 		IsConnected: false,
 		Subscribers: subscribers,
+		Publisher:   publisher,
 	}
+}
+
+// Publish ...
+func (c *Client) Publish(ctx context.Context, message *Message, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
+	p := *c.Publisher
+	ep, _ := p.PublishOneWay(ctx, exchangeName, encodeFunc)
+	_, err := ep(ctx, message)
+
+	return err
 }
 
 // OpenConnection will create a new connection to RabbitMQ based on the input entered when created the RabbitMQ instance
 // Connection will be returned BUT also stored in the RabbitMQ instance
-func (rabbit *Client) OpenConnection() (*amqp.Connection, error) {
-	if rabbit.AMQPConnection != nil {
-		return rabbit.AMQPConnection, nil
+func (c *Client) OpenConnection() (*amqp.Connection, error) {
+	if c.AMQPConnection != nil {
+		return c.AMQPConnection, nil
 	}
-	conn, err := amqp.Dial(rabbit.ConnInfo.URL)
+	conn, err := amqp.Dial(c.ConnInfo.URL)
 	if err == nil {
-		rabbit.AMQPConnection = conn
-		rabbit.IsConnected = true
+		c.AMQPConnection = conn
+		c.IsConnected = true
 	}
 	return conn, err
 }
 
 // CloseConnection will close the open connection attached to the RabbitMQ instance
-func (rabbit *Client) CloseConnection() error {
+func (c *Client) CloseConnection() error {
 	var err error
-	if rabbit.AMQPConnection != nil && rabbit.IsConnected {
-		err = rabbit.AMQPConnection.Close()
+	if c.AMQPConnection != nil && c.IsConnected {
+		err = c.AMQPConnection.Close()
 	}
 	return err
 }
 
 // PublishOneWay will 'send and forget' a message to the given exchange
-func (rabbit *Client) PublishOneWay(ctx context.Context, request interface{}, tgtExchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
-	e := rabbit.oneWayPublisherEndpoint(ctx, tgtExchangeName, encodeFunc)
-	_, err := e(ctx, request)
-	return err
-}
+// func (rabbit *Client) PublishOneWay(ctx context.Context, request interface{}, tgtExchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
+// 	e := rabbit.oneWayPublisherEndpoint(ctx, tgtExchangeName, encodeFunc)
+// 	_, err := e(ctx, request)
+// 	return err
+// }
 
 // OneWayPublisherEndpoint will create a 'send and forget' publisher endpoint
-func (rabbit *Client) oneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
-	corrid := tlectx.GetCorrelation(ctx)
-	duration, _ := tlectx.GetTimeout(ctx)
-	var channel amqptransport.Channel
-	var queue *amqp.Queue
-	channel, _ = rabbit.NewChannel()
-	queue = &amqp.Queue{Name: ""}
+// func (rabbit *Client) oneWayPublisherEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) endpoint.Endpoint {
+// 	corrid := tlectx.GetCorrelation(ctx)
+// 	duration, _ := tlectx.GetTimeout(ctx)
+// 	var channel amqptransport.Channel
+// 	var queue *amqp.Queue
+// 	channel, _ = rabbit.NewChannel()
+// 	queue = &amqp.Queue{Name: ""}
 
-	publisher := amqptransport.NewPublisher(
-		channel,
-		queue,
-		encodeFunc,
-		rabbit.NoopResponseDecoder,
-		amqptransport.PublisherBefore(
-			amqptransport.SetCorrelationID(corrid),
-			amqptransport.SetPublishDeliveryMode(2), // queue implementation use - non-persistent (1) or persistent (2)
-			amqptransport.SetPublishExchange(exchangeName)),
-		amqptransport.PublisherTimeout(duration),
-		amqptransport.PublisherDeliverer(amqptransport.SendAndForgetDeliverer),
-	)
+// 	publisher := amqptransport.NewPublisher(
+// 		channel,
+// 		queue,
+// 		encodeFunc,
+// 		rabbit.NoopResponseDecoder,
+// 		amqptransport.PublisherBefore(
+// 			amqptransport.SetCorrelationID(corrid),
+// 			amqptransport.SetPublishDeliveryMode(2), // queue implementation use - non-persistent (1) or persistent (2)
+// 			amqptransport.SetPublishExchange(exchangeName)),
+// 		amqptransport.PublisherTimeout(duration),
+// 		amqptransport.PublisherDeliverer(amqptransport.SendAndForgetDeliverer),
+// 	)
 
-	return publisher.Endpoint()
-}
+// 	return publisher.Endpoint()
+// }
 
 // NoopResponseDecoder is a no operation needed
 // Used for One way messages
-func (rabbit *Client) NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interface{}, err error) {
-	return struct{}{}, nil
-}
+// func (rabbit *Client) NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interface{}, err error) {
+// 	return struct{}{}, nil
+//}
 
-// DefaultRequestEncoder ...
-func (rabbit *Client) DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
-	f := func(ctx context.Context, p *amqp.Publishing, request interface{}) error {
-		var err error
-		marshall := MessageMarshall{}
-		*p, err = marshall.Marshal(ctx, exchangeName, request)
-		return err
-	}
-	return f
-}
+// // DefaultRequestEncoder ...
+// func (rabbit *Client) DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
+// 	f := func(ctx context.Context, p *amqp.Publishing, request interface{}) error {
+// 		var err error
+// 		marshall := MessageMarshall{}
+// 		*p, err = marshall.Marshal(ctx, exchangeName, request)
+// 		return err
+// 	}
+// 	return f
+// }
 
-func (rabbit *Client) newSubscriberChannel(sub *Subscriber) {
-	if sub.Channel != nil {
-		return
-	}
+// func (rabbit *Client) newSubscriberChannel(sub *Subscriber) {
+// 	if sub.Channel != nil {
+// 		return
+// 	}
 
-	var err error
-	var ch *amqp.Channel
-	ch, err = rabbit.NewChannel()
+// 	var err error
+// 	var ch *amqp.Channel
+// 	ch, err = rabbit.NewChannel()
 
-	if err == nil {
-		sub.Channel = ch
-	}
-}
+// 	if err == nil {
+// 		sub.Channel = ch
+// 	}
+// }
 
 // NewChannel will create a new rabbitMQ channel
-func (rabbit *Client) NewChannel() (*amqp.Channel, error) {
+func (c *Client) NewChannel() (*amqp.Channel, error) {
 	var err error
 	var ch *amqp.Channel
-	if rabbit.AMQPConnection == nil {
+	if c.AMQPConnection == nil {
 		err = errors.NewApplicationErrorf("Connect to rabbit before tring to get a channel")
 	} else {
-		ch, err = rabbit.AMQPConnection.Channel()
+		ch, err = c.AMQPConnection.Channel()
 	}
 
 	return ch, err
