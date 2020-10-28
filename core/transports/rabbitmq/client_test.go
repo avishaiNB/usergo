@@ -26,12 +26,17 @@ const (
 func TestPublisherEndpoint(t *testing.T) {
 	ctx := context.Background()
 	req := rabbitRequest{ID: 1, Name: "guy kolbis"}
-	logManager := tlelogger.NewNopManager()
-	conn := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
-	rabbit := rabbitmq.NewRabbitMQ(&logManager, conn)
 
-	rabbit.OpenConnection()
-	err := rabbit.PublishOneWay(ctx, req, exchangeName, rabbit.DefaultRequestEncoder(exchangeName))
+	message := rabbitmq.Message{
+		Data: req,
+	}
+
+	logManager := tlelogger.NewNopManager()
+	connInfo := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
+	conn := rabbitmq.NewConnectionManager(connInfo)
+	publisher := rabbitmq.NewPublisher(&conn)
+	client := rabbitmq.NewClient(&conn, &logManager, &publisher, nil)
+	err := client.Publish(ctx, &message, exchangeName, rabbitmq.DefaultRequestEncoder(exchangeName))
 
 	if err != nil {
 		t.Error(err)

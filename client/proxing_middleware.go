@@ -15,9 +15,10 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	tlecb "github.com/thelotter-enterprise/usergo/core/circuitbreaker"
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	tlectxhttp "github.com/thelotter-enterprise/usergo/core/context/transport/http"
 	tleloadbalancer "github.com/thelotter-enterprise/usergo/core/loadbalancer"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
+	tlelimiter "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
@@ -27,11 +28,11 @@ import (
 
 // Proxy ...
 type Proxy struct {
-	cb         tlecb.CircuitBreaker
 	limmitermw endpoint.Middleware
 	router     *mux.Router
-	limiter    tleratelimit.RateLimiter
-	sd         tlesd.ServiceDiscovery
+	limiter    tleratelimit.RateLimiterConfig
+	consul     *tlesd.ConsulServiceDiscovery
+	dns        *tlesd.DNSServiceDiscovery
 	logger     *tlelogger.Manager
 }
 
@@ -50,24 +51,23 @@ type userByIDProxyMiddleware struct {
 }
 
 // NewProxy ..
-func NewProxy(cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, sd *tlesd.ServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
+func NewProxy(limiter tleratelimit.RateLimiterConfig, consul *tlesd.ConsulServiceDiscovery, dns *tlesd.DNSServiceDiscovery, logger *tlelogger.Manager, router *mux.Router) Proxy {
 	return Proxy{
-		cb:      cb,
 		limiter: limiter,
 		router:  router,
-		sd:      *sd,
+		consul:  consul,
+		dns:     dns,
 		logger:  logger,
 	}
 }
 
 // UserByIDMiddleware ..
 func (proxy Proxy) UserByIDMiddleware(ctx context.Context, id int) ServiceMiddleware {
-	consulInstancer, _ := proxy.sd.ConsulInstance("user", []string{}, true)
-	//consulInstancer := proxy.sd.DNSInstance("user")
+	consulInstancer, _ := proxy.consul.ConsulInstance(ctx, "user", []string{}, true)
+	//dnsInstancer := proxy.dns.DNSInstance("user")
 	logger := *proxy.logger
 	endpointer := sd.NewEndpointer(consulInstancer, proxy.factoryForGetUserByID(ctx, id), logger.(kitlog.Logger))
-	//TODO: refactor. dont like the nil. consider New().With()
-	lb := tleloadbalancer.NewLoadBalancer(nil, endpointer)
+	lb := tleloadbalancer.NewDynamicLoadBalancer(endpointer)
 	retry := lb.DefaultRoundRobinWithRetryEndpoint(ctx)
 
 	return func(next Service) Service {
@@ -80,13 +80,20 @@ func (proxy Proxy) factoryForGetUserByID(ctx context.Context, id int) sd.Factory
 	path := fmt.Sprintf(shared.UserByIDClientRoute, id)
 
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
-		breakermw := proxy.cb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
-		limitermw := proxy.limiter.NewDefaultErrorLimitterMiddleware()
+		breakermw := tlecb.NewDefaultHystrixCommandMiddleware("get_user_by_id")
+		limitermw := tlelimiter.NewDefaultErrorLimitterMiddleware()
 
 		tgt, _ := url.Parse(instance) // e.g. parse http://localhost:8080"
 		tgt.Path = path
 
-		endpoint := httptransport.NewClient("GET", tgt, encodeGetUserByIDRequest, decodeGetUserByIDResponse, tlectx.WriteBefore()).Endpoint()
+		// TODO: need to create a client with defaults...
+		endpoint := httptransport.NewClient(
+			"GET",
+			tgt,
+			encodeGetUserByIDRequest,
+			decodeGetUserByIDResponse,
+			tlectxhttp.WriteBefore()).Endpoint()
+
 		endpoint = breakermw(endpoint)
 		endpoint = limitermw(endpoint)
 

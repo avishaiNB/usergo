@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	kithttp "github.com/go-kit/kit/transport/http"
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
@@ -32,7 +33,7 @@ func main() {
 		rabbitMQPort     int                       = 32672
 		env              string                    = "dev"
 		logLevel         tlelogger.AtomicLevelName = tlelogger.Debug
-		ctx              context.Context           = context.Background()
+		ctx              context.Context           = tlectx.Root()
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -71,14 +72,16 @@ func main() {
 	}()
 
 	// setting up RabbitMQ server
-	conn := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
-	rabbitmq := tlerabbitmq.NewRabbitMQ(&logManager, conn)
-	consumers := svcamqp.NewService(endpoints, &logManager)
-	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &rabbitmq)
+	connInfo := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
+	conn := tlerabbitmq.NewConnectionManager(connInfo)
+	subscribers := svcamqp.NewService(endpoints, &logManager, &conn)
+	publisher := tlerabbitmq.NewPublisher(&conn)
+	client := tlerabbitmq.NewClient(&conn, &logManager, &publisher, subscribers)
+	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &client, &conn)
 
 	go func() {
 		logManager.Info(ctx, fmt.Sprintf("listening for amqp messages"))
-		err := amqpServer.Run(ctx, &consumers)
+		err := amqpServer.Run(ctx)
 		if err != nil {
 			errs <- err
 			fmt.Println(err)

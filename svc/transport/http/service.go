@@ -11,7 +11,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	tlectx "github.com/thelotter-enterprise/usergo/core/context"
+	tlectxhttp "github.com/thelotter-enterprise/usergo/core/context/transport/http"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
@@ -20,14 +20,15 @@ import (
 	"github.com/thelotter-enterprise/usergo/svc/transport"
 )
 
-// NewService ..
+// NewService will set-up router and initialize http endpoints
 func NewService(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Manager) http.Handler {
-	// set-up router and initialize http endpoints
 	var (
-		router        = mux.NewRouter()
+		router = mux.NewRouter()
+
+		// server options:
 		errorLogger   = kithttp.ServerErrorLogger(logger.(log.Logger))
 		errorEncoder  = kithttp.ServerErrorEncoder(encodeErrorResponse)
-		contextReader = tlectx.ReadBefore()
+		contextReader = tlectxhttp.ReadBefore()
 	)
 
 	options = append(options, errorLogger, errorEncoder, contextReader)

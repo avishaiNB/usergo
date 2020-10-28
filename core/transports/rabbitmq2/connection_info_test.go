@@ -1,9 +1,9 @@
-package rabbitmq_test
+package rabbitmq2_test
 
 import (
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	rabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq2"
 )
 
 func TestConnectionInfoURL(t *testing.T) {
@@ -16,7 +16,7 @@ func TestConnectionInfoURL(t *testing.T) {
 	connectionMeta := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
 
 	want := "amqp://user:pwd@localhost:5672/thelotter"
-	is := connectionMeta.ConnectionString
+	is := connectionMeta.URL
 	if is != want {
 		t.Fail()
 	}

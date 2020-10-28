@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gorilla/mux"
-	tlecb "github.com/thelotter-enterprise/usergo/core/circuitbreaker"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
@@ -15,21 +14,21 @@ import (
 // ServiceClient is a facade for all APIs exposed by the service
 type ServiceClient struct {
 	Logger      *tlelogger.Manager
-	SD          *tlesd.ServiceDiscovery
+	Consul      *tlesd.ConsulServiceDiscovery
 	ServiceName string
-	CB          tlecb.CircuitBreaker
-	Limiter     tleratelimit.RateLimiter
+	DNS         *tlesd.DNSServiceDiscovery
+	Limiter     tleratelimit.RateLimiterConfig
 	Inst        tlemetrics.PrometheusInstrumentor
 	Router      *mux.Router
 }
 
 // NewServiceClientWithDefaults with defaults
-func NewServiceClientWithDefaults(logger *tlelogger.Manager, sd *tlesd.ServiceDiscovery, serviceName string) ServiceClient {
+func NewServiceClientWithDefaults(logger *tlelogger.Manager, consul *tlesd.ConsulServiceDiscovery, dns *tlesd.DNSServiceDiscovery, serviceName string) ServiceClient {
 	return NewServiceClient(
 		logger,
-		sd,
-		tlecb.NewCircuitBreakerator(),
-		tleratelimit.NewRateLimitator(),
+		consul,
+		dns,
+		tleratelimit.NewDefaultRateLimiterConfig(),
 		tlemetrics.NewPrometheusInstrumentor(serviceName),
 		mux.NewRouter(),
 		serviceName,
@@ -37,12 +36,12 @@ func NewServiceClientWithDefaults(logger *tlelogger.Manager, sd *tlesd.ServiceDi
 }
 
 // NewServiceClient will create a new instance of ServiceClient
-func NewServiceClient(logger *tlelogger.Manager, sd *tlesd.ServiceDiscovery, cb tlecb.CircuitBreaker, limiter tleratelimit.RateLimiter, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
+func NewServiceClient(logger *tlelogger.Manager, consul *tlesd.ConsulServiceDiscovery, dns *tlesd.DNSServiceDiscovery, limiter tleratelimit.RateLimiterConfig, inst tlemetrics.PrometheusInstrumentor, router *mux.Router, serviceName string) ServiceClient {
 	client := ServiceClient{
 		Logger:      logger,
-		SD:          sd,
+		Consul:      consul,
+		DNS:         dns,
 		ServiceName: serviceName,
-		CB:          cb,
 		Limiter:     limiter,
 		Inst:        inst,
 		Router:      router,
@@ -54,7 +53,7 @@ func NewServiceClient(logger *tlelogger.Manager, sd *tlesd.ServiceDiscovery, cb 
 // If an error occurs it will hold error information that cab be used to decide how to proceed
 func (client ServiceClient) GetUserByID(ctx context.Context, id int) tlehttp.Response {
 	var service Service
-	proxy := NewProxy(client.CB, client.Limiter, client.SD, client.Logger, client.Router)
+	proxy := NewProxy(client.Limiter, client.Consul, client.DNS, client.Logger, client.Router)
 	instMiddleware := NewInstrumentingMiddleware(client.Inst)
 	logMiddleware := NewLoggingMiddleware(client.Logger)
 	proxyMiddleware := proxy.UserByIDMiddleware(ctx, id)

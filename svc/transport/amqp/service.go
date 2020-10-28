@@ -13,20 +13,26 @@ import (
 
 // NewService will create all the rabbitMQ consumers information
 // it will not run them.
-func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager) []tlerabbitmq.Consumer {
-	consumers := make([]tlerabbitmq.Consumer, 0)
+func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, connMgr *tlerabbitmq.ConnectionManager) *[]tlerabbitmq.Subscriber {
+	subscribers := make([]tlerabbitmq.Subscriber, 0)
 
-	loggedInConsumer := tlerabbitmq.NewConsumer(
-		"user_login_consumer",
-		"exchange1",
-		"queueq",
+	exchangeName := "exchange1"
+	queueName := "queue1"
+	subscriberName := "command_subscriber"
+	subMgr := tlerabbitmq.NewSubscriberManager(connMgr)
+
+	loggedInSubscriber := subMgr.NewCommandSubscriber(
+		subscriberName,
+		exchangeName,
+		queueName,
 		svcEndpoints.UserLoggedInConsumerEndpoint,
 		decodeLoggedInUserCommand,
 		amqptransport.EncodeJSONResponse,
 	)
 
-	consumers = append(consumers, loggedInConsumer)
-	return consumers
+	// here we can have additional private subscribers
+	subscribers = append(subscribers, loggedInSubscriber)
+	return &subscribers
 }
 
 func decodeLoggedInUserCommand(_ context.Context, d *amqp.Delivery) (interface{}, error) {
