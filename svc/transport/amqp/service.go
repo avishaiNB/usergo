@@ -2,10 +2,12 @@ package amqp
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/streadway/amqp"
 
 	amqptransport "github.com/go-kit/kit/transport/amqp"
+	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/svc/transport"
@@ -35,6 +37,13 @@ func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, con
 	return &subscribers
 }
 
-func decodeLoggedInUserCommand(_ context.Context, d *amqp.Delivery) (interface{}, error) {
-	return nil, nil
+func decodeLoggedInUserCommand(_ context.Context, msg *amqp.Delivery) (interface{}, error) {
+	m := tlerabbitmq.Message{
+		Payload: &tlerabbitmq.MessagePayload{},
+	}
+	err := json.Unmarshal(msg.Body, &m)
+	if err != nil {
+		return &tlerabbitmq.MessagePayload{}, errors.NewApplicationError(err, "failed to decode loggedInUserCommand")
+	}
+	return m.Payload, nil
 }

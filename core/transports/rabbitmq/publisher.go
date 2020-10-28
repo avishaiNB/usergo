@@ -2,17 +2,20 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	"github.com/thelotter-enterprise/usergo/core/errors"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 // Publisher ...
 type Publisher interface {
-	PublishOneWay(context.Context, string, amqptransport.EncodeRequestFunc) (endpoint.Endpoint, error)
+	PublishEndpoint(context.Context, string, amqptransport.EncodeRequestFunc, ...amqptransport.PublisherOption) (endpoint.Endpoint, error)
 	Close(context.Context) error
 }
 
@@ -20,44 +23,62 @@ type publisher struct {
 	connectionManager *ConnectionManager
 	ch                *amqp.Channel
 	isConnected       bool
+	topology          Topology
 }
 
 // NewPublisher will create a new publisher and will establish a connection to rabbit
 func NewPublisher(conn *ConnectionManager) Publisher {
 	p := publisher{
 		connectionManager: conn,
+		topology:          NewTopology(),
 	}
 	p.connect()
 	return &p
 }
 
-func (p publisher) PublishOneWay(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) (endpoint.Endpoint, error) {
+func (p publisher) PublishEndpoint(ctx context.Context, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc, options ...amqptransport.PublisherOption) (endpoint.Endpoint, error) {
 	if p.isConnected == false {
 		return nil, errors.NewApplicationErrorf("before publishing, you must connect to rabbitMQ")
 	}
 
-	// TODO: create the exchnage if it does not exist!!!
+	p.buildExchange(exchangeName)
 
 	corrid := tlectx.GetCorrelation(ctx)
-	duration, _ := tlectx.GetTimeout(ctx)
-	var queue *amqp.Queue
+	duration, deadline := tlectx.GetTimeout(ctx)
 
+	var queue *amqp.Queue
 	queue = &amqp.Queue{Name: ""}
 
-	publisher := amqptransport.NewPublisher(
-		p.ch,
-		queue,
-		encodeFunc,
-		NoopResponseDecoder,
-		amqptransport.PublisherBefore(
-			amqptransport.SetCorrelationID(corrid),
-			amqptransport.SetPublishDeliveryMode(2), // queue implementation use - non-persistent (1) or persistent (2)
-			amqptransport.SetPublishExchange(exchangeName)),
+	// building the publisher options
+	ops := make([]amqptransport.PublisherOption, 0)
+	ops = append(ops, options...)
+	before := amqptransport.PublisherBefore(
+		setMessageID(),
+		setMessageTimestamp(),
+		setHeaders(deadline, duration),
+		amqptransport.SetContentType("application/vnd.masstransit+json"),
+		amqptransport.SetCorrelationID(corrid),
+		amqptransport.SetPublishDeliveryMode(2),
+		amqptransport.SetPublishExchange(exchangeName),
+	)
+	ops = append(ops, before)
+	ops = append(ops,
 		amqptransport.PublisherTimeout(duration),
 		amqptransport.PublisherDeliverer(amqptransport.SendAndForgetDeliverer),
 	)
 
+	publisher := amqptransport.NewPublisher(p.ch, queue, encodeFunc, NoopResponseDecoder, ops...)
+
 	return publisher.Endpoint(), nil
+}
+
+func (p publisher) buildExchange(exchanegName string) {
+	conn := *p.connectionManager
+	ch, err := conn.GetChannel()
+	if err == nil {
+		defer ch.Close()
+		p.topology.BuildDurableExchange(ch, exchanegName)
+	}
 }
 
 // NoopResponseDecoder is a no operation needed
@@ -69,9 +90,9 @@ func NoopResponseDecoder(ctx context.Context, d *amqp.Delivery) (response interf
 // DefaultRequestEncoder ...
 func DefaultRequestEncoder(exchangeName string) func(context.Context, *amqp.Publishing, interface{}) error {
 	f := func(ctx context.Context, p *amqp.Publishing, request interface{}) error {
-		var err error
-		marshall := MessageMarshall{}
-		*p, err = marshall.Marshal(ctx, exchangeName, request)
+		message := request.(*Message)
+		body, err := json.Marshal(message)
+		p.Body = body
 		return err
 	}
 	return f
@@ -103,4 +124,40 @@ func (p *publisher) connect() error {
 		p.isConnected = true
 	}
 	return err
+}
+
+func setMessageID() amqptransport.RequestFunc {
+	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
+		pub.MessageId = utils.NewUUID()
+		return ctx
+	}
+}
+
+func setMessageTimestamp() amqptransport.RequestFunc {
+	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
+		pub.Timestamp = utils.NewDateTime().Now()
+		return ctx
+	}
+}
+
+func setHeaders(deadline time.Time, duration time.Duration) amqptransport.RequestFunc {
+	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
+		headers := pub.Headers
+		if headers == nil {
+			headers = amqp.Table{}
+		}
+		conv := utils.NewConvertor()
+		durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))
+		deadlineHeader := conv.FromInt64ToString(conv.FromTimeToUnix(deadline))
+
+		headers["tle-deadline-unix"] = deadlineHeader
+		headers["tle-duration-ms"] = durationHeader
+		headers["tle-caller-process"] = utils.ProcessName()
+		headers["tle-caller-hostname"] = utils.HostName()
+		headers["tle-caller-processid"] = utils.ProcessID()
+		headers["tle-caller-os"] = utils.OperatingSystem()
+
+		pub.Headers = headers
+		return ctx
+	}
 }

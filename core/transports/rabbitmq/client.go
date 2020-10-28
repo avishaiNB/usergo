@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	amqptransport "github.com/go-kit/kit/transport/amqp"
-	"github.com/streadway/amqp"
 	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 )
@@ -50,10 +49,10 @@ func (c *client) Consume(ctx context.Context) {
 
 		if err == nil {
 			go func() {
-				for d := range messages {
+				for msg := range messages {
 					// logger.Debug(ctx, "Received a message: %s", d.Body)
-					fmt.Printf("Received a message: %s", d.Body)
-					sub.KitSubscriber.ServeDelivery(sub.Channel)(&amqp.Delivery{})
+					fmt.Printf("Received raw message: %s", msg.Body)
+					sub.KitSubscriber.ServeDelivery(sub.Channel)(&msg)
 				}
 			}()
 		}
@@ -64,7 +63,7 @@ func (c *client) Consume(ctx context.Context) {
 // if the exchange do not exist it will create it
 func (c *client) Publish(ctx context.Context, message *Message, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
 	p := *c.publisher
-	ep, _ := p.PublishOneWay(ctx, exchangeName, encodeFunc)
+	ep, _ := p.PublishEndpoint(ctx, exchangeName, encodeFunc)
 	_, err := ep(ctx, message)
 
 	return err
