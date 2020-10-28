@@ -31,7 +31,7 @@ type Client interface {
 	GetFloat(string) float64
 	//GetTime represents convention of get function which return time.Time
 	GetTime(string) time.Time
-	//GetTime represents convention of get function which return time.Duration
+	//GetDuration represents convention of get function which return time.Duration
 	GetDuration(string) time.Duration
 }
 
