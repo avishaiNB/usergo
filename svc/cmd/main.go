@@ -13,7 +13,7 @@ import (
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
-	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 	tleimpl "github.com/thelotter-enterprise/usergo/svc/implementation"
 	svcmw "github.com/thelotter-enterprise/usergo/svc/middleware"
 	svctrans "github.com/thelotter-enterprise/usergo/svc/transport"

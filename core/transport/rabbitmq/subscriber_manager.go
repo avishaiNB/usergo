@@ -7,7 +7,7 @@ import (
 	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
-	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
+	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/rabbitmq"
 )
 
 // SubscribeManager ...

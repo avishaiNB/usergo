@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	tlectxhttp "github.com/thelotter-enterprise/usergo/core/context/transport/http"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc"

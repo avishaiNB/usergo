@@ -1,6 +1,6 @@
 package client
 
-import tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+import tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 
 // ServiceMiddleware used to chain behaviors on the UserService using middleware pattern
 type ServiceMiddleware func(Service) Service

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 )
 
 // NewLoggingMiddleware ...

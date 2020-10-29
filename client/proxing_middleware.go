@@ -21,7 +21,7 @@ import (
 	tlelimiter "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 )

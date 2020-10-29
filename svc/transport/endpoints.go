@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
-	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc"

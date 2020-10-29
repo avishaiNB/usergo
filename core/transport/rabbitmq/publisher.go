@@ -8,7 +8,7 @@ import (
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
-	tlectxrabbit "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
+	tlectxrabbit "github.com/thelotter-enterprise/usergo/core/context/transport/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/core/errors"
 )
 

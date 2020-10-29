@@ -6,7 +6,7 @@ import (
 
 	metrics "github.com/go-kit/kit/metrics"
 	tleinst "github.com/thelotter-enterprise/usergo/core/metrics"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 )
 
 // NewInstrumentingMiddleware ...

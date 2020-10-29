@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	"github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 )
 
 func TestCommandQueueName(t *testing.T) {

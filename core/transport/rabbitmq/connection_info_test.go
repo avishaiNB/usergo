@@ -3,7 +3,7 @@ package rabbitmq_test
 import (
 	"testing"
 
-	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	"github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 )
 
 func TestConnectionInfoURL(t *testing.T) {

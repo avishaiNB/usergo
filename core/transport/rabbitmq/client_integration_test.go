@@ -7,7 +7,7 @@ import (
 
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
-	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	"github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/shared"
 )
 

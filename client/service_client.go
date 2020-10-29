@@ -8,7 +8,7 @@ import (
 	tlemetrics "github.com/thelotter-enterprise/usergo/core/metrics"
 	tleratelimit "github.com/thelotter-enterprise/usergo/core/ratelimit"
 	tlesd "github.com/thelotter-enterprise/usergo/core/servicediscovery"
-	tlehttp "github.com/thelotter-enterprise/usergo/core/transports/http"
+	tlehttp "github.com/thelotter-enterprise/usergo/core/transport/http"
 )
 
 // ServiceClient is a facade for all APIs exposed by the service

@@ -9,7 +9,7 @@ import (
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/thelotter-enterprise/usergo/core/errors"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
-	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
+	tlerabbitmq "github.com/thelotter-enterprise/usergo/core/transport/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/core/utils"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc/transport"
