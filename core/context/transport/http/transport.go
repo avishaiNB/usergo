@@ -14,8 +14,8 @@ import (
 type httptransport struct {
 }
 
-// NewHTTPTransport will create a new HTTP transport
-func NewHTTPTransport() transport.Transport {
+// NewTransport will create a new HTTP transport
+func NewTransport() transport.Transport {
 	return httptransport{}
 }
 
@@ -70,13 +70,13 @@ func (httptrans httptransport) Write(ctx context.Context, req interface{}) (cont
 }
 
 func write(ctx context.Context, r *http.Request) context.Context {
-	t := NewHTTPTransport()
+	t := NewTransport()
 	newCtx, _ := t.Write(ctx, r)
 	return newCtx
 }
 
 func read(ctx context.Context, r *http.Request) context.Context {
-	t := NewHTTPTransport()
+	t := NewTransport()
 	newCtx, _ := t.Read(ctx, r)
 	return newCtx
 }

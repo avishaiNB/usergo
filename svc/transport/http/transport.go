@@ -20,8 +20,8 @@ import (
 	"github.com/thelotter-enterprise/usergo/svc/transport"
 )
 
-// NewService will set-up router and initialize http endpoints
-func NewService(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Manager) http.Handler {
+// NewTransport will set-up router and initialize http endpoints
+func NewTransport(ctx context.Context, svcEndpoints transport.Endpoints, options []kithttp.ServerOption, logger tlelogger.Manager) http.Handler {
 	var (
 		router = mux.NewRouter()
 

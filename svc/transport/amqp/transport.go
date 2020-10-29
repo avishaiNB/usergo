@@ -15,9 +15,9 @@ import (
 	"github.com/thelotter-enterprise/usergo/svc/transport"
 )
 
-// NewService will create all the rabbitMQ consumers information
+// NewTransport will create all the rabbitMQ consumers information
 // it will not run them.
-func NewService(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, connMgr *tlerabbitmq.ConnectionManager) *[]tlerabbitmq.Subscriber {
+func NewTransport(svcEndpoints transport.Endpoints, logger *tlelogger.Manager, connMgr *tlerabbitmq.ConnectionManager) *[]tlerabbitmq.Subscriber {
 	subscribers := make([]tlerabbitmq.Subscriber, 0)
 
 	exchangeName := "exchange1"

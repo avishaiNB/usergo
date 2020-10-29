@@ -1,5 +1,4 @@
 rabbitmq:
-- context between processes: read from message into context
 - ack and nack properly (when we have an error we need to return the message back to the queue)
 
 documentation

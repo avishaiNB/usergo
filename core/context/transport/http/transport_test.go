@@ -11,7 +11,7 @@ import (
 )
 
 func TestReadWriteWhenCorrelationAndTimeoutExistOnCaller(t *testing.T) {
-	httpTransport := http.NewHTTPTransport()
+	httpTransport := http.NewTransport()
 
 	// root context
 	ctxRoot := tlectx.Root()
@@ -48,7 +48,7 @@ func TestReadWriteWhenCorrelationAndTimeoutExistOnCaller(t *testing.T) {
 }
 
 func TestReadWriteWhenCorrelationAndTimeoutNotExistOnCaller(t *testing.T) {
-	httpTransport := http.NewHTTPTransport()
+	httpTransport := http.NewTransport()
 
 	ctx := context.Background()
 	req := httptest.NewRequest("GET", "http://example.com/foo", nil)

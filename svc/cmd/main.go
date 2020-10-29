@@ -60,7 +60,7 @@ func main() {
 	endpoints := svctrans.MakeEndpoints(service)
 
 	// http
-	handler := svchttp.NewService(ctx, endpoints, make([]kithttp.ServerOption, 0), logManager)
+	handler := svchttp.NewTransport(ctx, endpoints, make([]kithttp.ServerOption, 0), logManager)
 	go func() {
 		server := &http.Server{
 			Addr:    hostAddress,
@@ -74,7 +74,7 @@ func main() {
 	// setting up RabbitMQ server
 	connInfo := tlerabbitmq.NewConnectionInfo(rabbitMQHost, rabbitMQPort, rabbitMQUsername, rabbitMQPwd, rabbitMQVhost)
 	conn := tlerabbitmq.NewConnectionManager(connInfo)
-	subscribers := svcamqp.NewService(endpoints, &logManager, &conn)
+	subscribers := svcamqp.NewTransport(endpoints, &logManager, &conn)
 	publisher := tlerabbitmq.NewPublisher(&conn)
 	client := tlerabbitmq.NewClient(&conn, &logManager, &publisher, subscribers)
 	amqpServer := tlerabbitmq.NewServer(&logManager, tracer, &client, &conn)

@@ -1,5 +1,3 @@
-// +build integration
-
 package rabbitmq_test
 
 import (

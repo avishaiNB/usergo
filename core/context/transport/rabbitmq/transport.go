@@ -11,24 +11,51 @@ import (
 	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
+const (
+	deadlineHeaderKey       string = "tle-deadline-unix"
+	durationHeaderKey       string = "tle-duration-ms"
+	callerProcessHeaderKey  string = "tle-caller-process"
+	callerHostNameHeaderKey string = "tle-caller-hostname"
+	callerPIDHeaderKey      string = "tle-caller-processid"
+	callerOSHeaderKey       string = "tle-caller-os"
+)
+
 type amqptransport struct {
 }
 
-// NewAMQPTransport will create a new AMQP transport
-func NewAMQPTransport() transport.Transport {
+// NewTransport will create a new AMQP transport
+func NewTransport() transport.Transport {
 	return amqptransport{}
 }
 
 func (amqptrans amqptransport) Read(ctx context.Context, req interface{}) (context.Context, context.CancelFunc) {
-	pub := req.(*amqp.Publishing)
-	corrid := pub.CorrelationId
+	del := req.(*amqp.Delivery)
 
-	ctx = tlectx.SetCorrealtion(ctx, corrid)
+	headerCorrelationID := del.CorrelationId
+	headerDuration := del.Headers[durationHeaderKey].(string)
+	headerDeadline := del.Headers[deadlineHeaderKey].(string)
 
-	// need to read the deadline and duration and apply deadline
-	// ctx.Deadline()
+	correlationID := headerCorrelationID
+	if headerCorrelationID == "" {
+		correlationID = tlectx.NewCorrelation()
+	}
 
-	return ctx, nil
+	var duration time.Duration
+	var deadline time.Time
+	if headerDuration == "" || headerDeadline == "" {
+		t := tlectx.NewTimeoutCalculator()
+		duration, deadline = t.NewTimeout()
+	} else {
+		conv := utils.NewConvertor()
+		duration = conv.MilisecondsToDuration(conv.FromStringToInt64(headerDuration))
+		deadline = conv.FromUnixToTime(conv.FromStringToInt64(headerDeadline))
+	}
+
+	ctx = tlectx.SetCorrealtion(ctx, correlationID)
+	ctx = tlectx.SetTimeout(ctx, duration, deadline)
+	ctx, cancel := context.WithDeadline(ctx, deadline)
+
+	return ctx, cancel
 }
 
 func (amqptrans amqptransport) Write(ctx context.Context, req interface{}) (context.Context, context.CancelFunc) {
@@ -50,9 +77,9 @@ func (amqptrans amqptransport) Write(ctx context.Context, req interface{}) (cont
 // ReadMessageRequestFunc will be executed once a message is consumed
 // it will read from the delivery and will create a context
 func ReadMessageRequestFunc() kitamqptransport.RequestFunc {
-	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
-		t := NewAMQPTransport()
-		newCtx, _ := t.Read(ctx, pub)
+	return func(ctx context.Context, _ *amqp.Publishing, del *amqp.Delivery) context.Context {
+		t := NewTransport()
+		newCtx, _ := t.Read(ctx, del)
 		return newCtx
 	}
 }
@@ -60,7 +87,7 @@ func ReadMessageRequestFunc() kitamqptransport.RequestFunc {
 // WriteMessageRequestFunc ...
 func WriteMessageRequestFunc() kitamqptransport.RequestFunc {
 	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
-		t := NewAMQPTransport()
+		t := NewTransport()
 		newCtx, _ := t.Write(ctx, pub)
 		return newCtx
 	}
@@ -75,12 +102,12 @@ func setHeaders(headers amqp.Table, duration time.Duration, deadline time.Time) 
 	durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))
 	deadlineHeader := conv.FromInt64ToString(conv.FromTimeToUnix(deadline))
 
-	headers["tle-deadline-unix"] = deadlineHeader
-	headers["tle-duration-ms"] = durationHeader
-	headers["tle-caller-process"] = utils.ProcessName()
-	headers["tle-caller-hostname"] = utils.HostName()
-	headers["tle-caller-processid"] = utils.ProcessID()
-	headers["tle-caller-os"] = utils.OperatingSystem()
+	headers[deadlineHeaderKey] = deadlineHeader
+	headers[durationHeaderKey] = durationHeader
+	headers[callerProcessHeaderKey] = utils.ProcessName()
+	headers[callerHostNameHeaderKey] = utils.HostName()
+	headers[callerPIDHeaderKey] = utils.ProcessID()
+	headers[callerOSHeaderKey] = utils.OperatingSystem()
 
 	return headers
 }

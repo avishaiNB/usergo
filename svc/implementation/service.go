@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tletracer "github.com/thelotter-enterprise/usergo/core/tracer"
 	"github.com/thelotter-enterprise/usergo/shared"
 	"github.com/thelotter-enterprise/usergo/svc"
@@ -34,6 +35,8 @@ func (s *service) GetUserByID(ctx context.Context, userID int) (shared.User, err
 }
 
 func (s *service) ConsumeLoginCommand(ctx context.Context, userID int) error {
-	fmt.Printf("consumed LoggedInCommand, user: %d", userID)
+	corrid := tlectx.GetCorrelation(ctx)
+	duration, deadline := tlectx.GetTimeout(ctx)
+	fmt.Printf("consumed LoggedInCommand, user: %d, correation %s, duration %s, deadline %s", userID, corrid, duration, deadline)
 	return nil
 }
