@@ -2,11 +2,13 @@ package amqp
 
 import (
 	"context"
+	"time"
 
 	kitamqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	"github.com/thelotter-enterprise/usergo/core/context/transport"
+	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 type amqptransport struct {
@@ -30,15 +32,19 @@ func (amqptrans amqptransport) Read(ctx context.Context, req interface{}) (conte
 }
 
 func (amqptrans amqptransport) Write(ctx context.Context, req interface{}) (context.Context, context.CancelFunc) {
-	// message := req.(*rabbitmq.Message)
-	// newCtx, cancel := transport.CreateTransportContext(parentContext)
-	// duration, deadline := tlectx.GetTimeout(newCtx)
-	// corrid := tlectx.GetCorrelation(newCtx)
-	// message.CorrelationID = payload.CorrelationID
-	// message.Deadline = deadline
-	// message.Duration = duration
+	newCtx, cancel := transport.CreateTransportContext(ctx)
+	corrid := tlectx.GetCorrelation(newCtx)
+	duration, deadline := tlectx.GetTimeout(newCtx)
 
-	return ctx, nil
+	pub := req.(*amqp.Publishing)
+	pub.MessageId = utils.NewUUID()
+	pub.Timestamp = utils.NewDateTime().Now()
+	pub.CorrelationId = corrid
+	pub.ContentType = "application/vnd.masstransit+json"
+	headers := setHeaders(pub.Headers, duration, deadline)
+	pub.Headers = headers
+
+	return newCtx, cancel
 }
 
 // ReadMessageRequestFunc will be executed once a message is consumed
@@ -49,4 +55,32 @@ func ReadMessageRequestFunc() kitamqptransport.RequestFunc {
 		newCtx, _ := t.Read(ctx, pub)
 		return newCtx
 	}
+}
+
+// WriteMessageRequestFunc ...
+func WriteMessageRequestFunc() kitamqptransport.RequestFunc {
+	return func(ctx context.Context, pub *amqp.Publishing, _ *amqp.Delivery) context.Context {
+		t := NewAMQPTransport()
+		newCtx, _ := t.Write(ctx, pub)
+		return newCtx
+	}
+}
+
+func setHeaders(headers amqp.Table, duration time.Duration, deadline time.Time) amqp.Table {
+	if headers == nil {
+		headers = amqp.Table{}
+	}
+
+	conv := utils.NewConvertor()
+	durationHeader := conv.FromInt64ToString(conv.DurationToMiliseconds(duration))
+	deadlineHeader := conv.FromInt64ToString(conv.FromTimeToUnix(deadline))
+
+	headers["tle-deadline-unix"] = deadlineHeader
+	headers["tle-duration-ms"] = durationHeader
+	headers["tle-caller-process"] = utils.ProcessName()
+	headers["tle-caller-hostname"] = utils.HostName()
+	headers["tle-caller-processid"] = utils.ProcessID()
+	headers["tle-caller-os"] = utils.OperatingSystem()
+
+	return headers
 }

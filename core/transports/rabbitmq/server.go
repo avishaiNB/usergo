@@ -37,8 +37,10 @@ func (s server) Run(ctx context.Context) error {
 	defer s.Shutdown(ctx)
 
 	forever := make(chan bool)
+
 	c := *s.client
 	c.Consume(ctx)
+
 	<-forever
 
 	return nil
@@ -46,7 +48,10 @@ func (s server) Run(ctx context.Context) error {
 
 // Shutdown will close the server and call client to close resources
 func (s server) Shutdown(ctx context.Context) {
+	// TODO: should be log
+	fmt.Print("Shutdown amqp server")
+
 	c := *s.client
 	c.Close(ctx)
-	fmt.Print("Shutdown amqp server")
+
 }

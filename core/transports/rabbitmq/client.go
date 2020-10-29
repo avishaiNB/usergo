@@ -10,6 +10,7 @@ import (
 )
 
 // Client is a rabbit contract to publish and consume messages
+// It provide an easy access to the publish anc consume APIs
 type Client interface {
 	Consume(context.Context)
 	Publish(context.Context, *Message, string, amqptransport.EncodeRequestFunc) error
@@ -34,7 +35,7 @@ func NewClient(connMgr *ConnectionManager, logManager *tlelogger.Manager, publis
 	}
 }
 
-// Consume will start consuming messages from all the subscribers
+// Consume will call consume on all the subscribers
 // For each subscriber it will create a new go routine and will wait on it for incoming messages
 func (c *client) Consume(ctx context.Context) {
 	conn := *c.connectionManager
@@ -45,6 +46,7 @@ func (c *client) Consume(ctx context.Context) {
 		if err == nil {
 			go func() {
 				for msg := range messages {
+					//TODO: replace with logger
 					fmt.Printf("Received message: %s", msg.Body)
 					sub.KitSubscriber.ServeDelivery(sub.Channel)(&msg)
 				}
@@ -53,17 +55,14 @@ func (c *client) Consume(ctx context.Context) {
 	}
 }
 
-// Publish will publish a message into the requested exchange
-// if the exchange do not exist it will create it
+// Publish will call the publisher to publish the message
 func (c *client) Publish(ctx context.Context, message *Message, exchangeName string, encodeFunc amqptransport.EncodeRequestFunc) error {
 	p := *c.publisher
-	ep, _ := p.PublishEndpoint(ctx, exchangeName, encodeFunc)
-	_, err := ep(ctx, message)
-
-	return err
+	return p.Publish(ctx, message, exchangeName, encodeFunc)
 }
 
-// Close will close the open connections and channels
+// Close will call the close functions on the publisher and subscribers
+// Basically it will close all the open connections and channels
 // This must be called before the application terminate to prevent connection or channel leaks
 func (c *client) Close(ctx context.Context) error {
 	var err error

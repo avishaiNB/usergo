@@ -1,9 +1,11 @@
+// +build integration
+
 package rabbitmq_test
 
 import (
-	"context"
 	"testing"
 
+	tlectx "github.com/thelotter-enterprise/usergo/core/context"
 	tlelogger "github.com/thelotter-enterprise/usergo/core/logger"
 	"github.com/thelotter-enterprise/usergo/core/transports/rabbitmq"
 	"github.com/thelotter-enterprise/usergo/shared"
@@ -18,18 +20,17 @@ const (
 	port         int    = 32672
 )
 
-// Integration Test! Should not run on automated build
-func TestPublisherEndpoint(t *testing.T) {
-	ctx := context.Background()
+func TestPublishMessage(t *testing.T) {
+	ctx := tlectx.Root()
 	req := shared.LoggedInCommandData{ID: 1, Name: "guy kolbis"}
-	message, newCtx, _ := rabbitmq.NewMessage(ctx, req, "thelotter.userloggedin")
+	message := rabbitmq.NewMessage(req, "thelotter.userloggedin")
 
 	logManager := tlelogger.NewNopManager()
 	connInfo := rabbitmq.NewConnectionInfo(host, port, username, pwd, vhost)
 	conn := rabbitmq.NewConnectionManager(connInfo)
 	publisher := rabbitmq.NewPublisher(&conn)
 	client := rabbitmq.NewClient(&conn, &logManager, &publisher, nil)
-	err := client.Publish(newCtx, &message, exchangeName, rabbitmq.DefaultRequestEncoder(exchangeName))
+	err := client.Publish(ctx, &message, exchangeName, rabbitmq.DefaultRequestEncoder(exchangeName))
 
 	if err != nil {
 		t.Error(err)
