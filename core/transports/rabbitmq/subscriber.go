@@ -7,7 +7,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Subscriber ...
+// Subscriber stored the configurations and services required to build a subsripber to incoming messages
+// It defines the topology required for the subscriber including how to constract a queue and exchange
 type Subscriber struct {
 	KitSubscriber         *amqpkit.Subscriber
 	ConnectionManager     *ConnectionManager
@@ -23,7 +24,8 @@ type Subscriber struct {
 	QosTopology           func(ch *amqp.Channel) error
 }
 
-// Consume ...
+// Consume will create a delivery channel which messages will be send to as the are consumed from the queue
+// It will ensure that the queue, exchange are configured before opening the delivery channel
 func (sub *Subscriber) Consume(ch *amqp.Channel) (<-chan amqp.Delivery, error) {
 	sub.Channel = ch
 	sub.QosTopology(sub.Channel)
@@ -35,7 +37,7 @@ func (sub *Subscriber) Consume(ch *amqp.Channel) (<-chan amqp.Delivery, error) {
 	return c, err
 }
 
-// Close will shutdown the client gracely
+// Close will shutdown the associated subscriber resources (channel)
 func (sub *Subscriber) Close(ctx context.Context) error {
 	conn := *sub.ConnectionManager
 	err := conn.CloseChannel(ctx, sub.Channel)

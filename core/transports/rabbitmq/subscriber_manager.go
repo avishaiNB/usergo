@@ -2,14 +2,12 @@ package rabbitmq
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-kit/kit/endpoint"
 	amqpkit "github.com/go-kit/kit/transport/amqp"
 	amqptransport "github.com/go-kit/kit/transport/amqp"
 	"github.com/streadway/amqp"
 	tlectxamqp "github.com/thelotter-enterprise/usergo/core/context/transport/amqp"
-	"github.com/thelotter-enterprise/usergo/core/utils"
 )
 
 // SubscribeManager ...
@@ -44,7 +42,7 @@ func (s submgr) NewCommandSubscriber(
 	options ...amqptransport.SubscriberOption,
 ) Subscriber {
 
-	queueName = queueName + "-command"
+	queueName = BuildCommandQueueName(queueName)
 	sub := newKitSubscriber(endpoint, exchangeName, dec, enc, options...)
 	return Subscriber{
 		ConnectionManager:     s.connMgr,
@@ -71,7 +69,7 @@ func (s submgr) NewPrivateSubscriber(
 	options ...amqptransport.SubscriberOption,
 ) Subscriber {
 
-	queueName = fmt.Sprintf("%s-private-%s", queueName, utils.NewUUID())
+	queueName = BuildPrivateQueueName(queueName)
 	sub := newKitSubscriber(endpoint, exchangeName, dec, enc, options...)
 	return Subscriber{
 		ConnectionManager:     s.connMgr,
